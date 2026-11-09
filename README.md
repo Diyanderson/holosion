@@ -49,11 +49,13 @@
 
 ## 🎬 Vídeos
 
-| Vídeo | Formato | Arquivo |
-|-------|---------|---------|
-| **Short** (YouTube Shorts / Reels) | 1080 × 1920, 43 s | [`midia/holosion-short.mp4`](midia/holosion-short.mp4) |
-| **Viral v6** | 1280 × 720, 85 s | [`midia/holosion-viral-v6.mp4`](midia/holosion-viral-v6.mp4) |
-| **Console em L** (zoom na tela, 360° com os raios, jogo) | 1280 × 720, 52 s | [`midia/console-L-meialua.mp4`](midia/console-L-meialua.mp4) |
+> 🔔 **Inscreva-se no canal** e acompanhe as novidades: [Short](https://youtube.com/shorts/5B7cIvesN00) · [vídeo completo](https://youtu.be/F41QjDo_Cyk)
+
+| Vídeo | Formato | Assistir | Arquivo |
+|:---|:---|:---|:---|
+| **Short** (YouTube Shorts / Reels) | 1080 × 1920, 43 s | [▶️ YouTube](https://youtube.com/shorts/5B7cIvesN00) | [`midia/holosion-short.mp4`](midia/holosion-short.mp4) |
+| **Viral v6** | 1280 × 720, 85 s | [▶️ YouTube](https://youtu.be/F41QjDo_Cyk) | [`midia/holosion-viral-v6.mp4`](midia/holosion-viral-v6.mp4) |
+| **Console em L** (zoom na tela, 360° com os raios, jogo) | 1280 × 720, 52 s | — | [`midia/console-L-meialua.mp4`](midia/console-L-meialua.mp4) |
 
 <p align="center">
   <img src="midia/console-L-raios.gif" width="480" alt="Raios do celular até a imagem"/><br>
