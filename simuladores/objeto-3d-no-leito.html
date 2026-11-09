@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Objeto no leito — imagem aérea traçada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1317; --panel:#111E25; --line:#26424E; --line-soft:#1A2E37;
+  --mint:#8FE3C8; --amber:#F2B25C; --rose:#F2668B; --sky:#7FB6E8;
+  --paper:#DDE8EB; --mute:#7C99A4; --warn:#E2694A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--ink)}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--paper)}
+#stage{position:fixed;inset:0}
+canvas{display:block}
+
+#title{position:fixed;top:18px;left:22px;pointer-events:none;max-width:min(40ch,38vw);z-index:5}
+#title .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 5px}
+#title h1{font-family:"Archivo Narrow","Arial Narrow",sans-serif;font-weight:700;
+  font-size:clamp(20px,2.4vw,31px);line-height:1;margin:0;text-transform:uppercase}
+#title h1 em{font-style:normal;color:var(--mint)}
+#title p{font-size:12px;color:var(--mute);margin:8px 0 0;line-height:1.45}
+
+#ui{position:fixed;top:18px;right:18px;width:274px;max-height:calc(100vh - 36px);
+  overflow-y:auto;background:rgba(17,30,37,.95);border:1px solid var(--line-soft);
+  padding:15px 14px;z-index:6;backdrop-filter:blur(8px)}
+#ui::-webkit-scrollbar{width:5px}
+#ui::-webkit-scrollbar-thumb{background:var(--line)}
+.grp{border-top:1px solid var(--line-soft);padding-top:12px;margin-top:13px}
+.grp:first-child{border-top:0;padding-top:0;margin-top:0}
+.grp h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mint);margin:0 0 10px;font-weight:500}
+.row{margin-bottom:11px}
+.row label{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nm{font-size:11.5px}
+.vl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;
+  background:var(--line);outline:none;margin:7px 0 0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+  background:var(--mint);transform:rotate(45deg);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--mint);border:0;cursor:pointer}
+input[type=range]:disabled{opacity:.32;cursor:not-allowed}
+input[type=range]:focus-visible{outline:2px solid var(--sky);outline-offset:4px}
+.seg{display:flex;border:1px solid var(--line);margin-bottom:10px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mute);padding:6px 2px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase}
+.seg button[aria-pressed=true]{background:var(--mint);color:#08130F;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.chk{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer;margin-bottom:6px}
+.chk input{accent-color:var(--mint);width:13px;height:13px}
+.btn{width:100%;margin-top:5px;background:transparent;border:1px solid var(--line);color:var(--paper);
+  padding:7px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase}
+.btn:hover{border-color:var(--mint);color:var(--mint)}
+.btn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.note{font-size:10.5px;color:var(--mute);line-height:1.4;margin:2px 0 0}
+
+#hud{position:fixed;left:22px;bottom:18px;z-index:6;display:grid;
+  grid-template-columns:repeat(5,minmax(88px,auto));
+  border:1px solid var(--line-soft);background:rgba(13,24,30,.93);backdrop-filter:blur(8px)}
+#hud div{padding:8px 12px;border-right:1px solid var(--line-soft)}
+#hud div:last-child{border-right:0}
+#hud .k{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);display:block;margin-bottom:2px}
+#hud .v{font-family:"IBM Plex Mono",monospace;font-size:14px}
+#hud .v.good{color:var(--mint)} #hud .v.bad{color:var(--warn)} #hud .v.warn{color:var(--amber)}
+#hud .v small{font-size:9px;color:var(--mute);margin-left:1px}
+
+#spec{position:fixed;left:22px;top:158px;z-index:6;width:274px;
+  max-height:calc(100vh - 300px);overflow-y:auto;
+  background:rgba(13,24,30,.94);border:1px solid var(--line-soft);backdrop-filter:blur(8px)}
+#spec::-webkit-scrollbar{width:5px}
+#spec::-webkit-scrollbar-thumb{background:var(--line)}
+#spec h4{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-family:"Archivo Narrow",sans-serif;font-weight:600;font-size:12px;letter-spacing:.07em;
+  text-transform:uppercase;margin:0;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+#spec h4 span{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.12em;
+  color:var(--mute);text-transform:none;font-weight:400}
+#presets{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px}
+#presets button{background:transparent;border:1px solid var(--line);color:var(--mute);
+  padding:6px 2px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.35}
+#presets button b{display:block;font-size:12px;color:var(--paper);font-weight:600}
+#presets button:hover{border-color:var(--mint);color:var(--mint)}
+#presets button[aria-pressed=true]{background:var(--mint);border-color:var(--mint);color:#08130F}
+#presets button[aria-pressed=true] b{color:#08130F}
+#presets button:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+#spec .r3{display:grid;grid-template-columns:1fr auto auto;gap:9px;padding:3.5px 12px;align-items:baseline}
+#spec .r3 .lb{padding-left:12px}
+#spec .r3 .e{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mute);text-align:right;min-width:44px}
+#spec .r3 .m{font-family:"IBM Plex Mono",monospace;font-size:11.5px;text-align:right;min-width:44px}
+#spec .r3 .m.ok{color:var(--mint)} #spec .r3 .m.off{color:var(--warn)}
+#spec .r{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3.5px 12px}
+#spec .r.sub{padding-left:24px}
+#spec .r.hd{border-top:1px solid var(--line-soft);margin-top:3px;padding-top:7px}
+#spec .lb{font-size:11px;color:var(--mute);line-height:1.3}
+#spec .r.hd .lb{color:var(--mint);font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase}
+#spec .vv{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--paper);
+  text-align:right;white-space:nowrap}
+#spec .vv.good{color:var(--mint)} #spec .vv.bad{color:var(--warn)} #spec .vv.warn{color:var(--amber)}
+@media (max-height:820px){#spec{top:152px;max-height:calc(100vh - 250px)}}
+@media (max-width:1180px){#spec{display:none}}
+
+#ergo{position:fixed;right:310px;bottom:18px;z-index:6;width:min(470px,calc(100vw - 340px));
+  background:rgba(13,24,30,.94);border:1px solid var(--line-soft);backdrop-filter:blur(8px)}
+#ergo .eh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+#ergo h4{font-family:"Archivo Narrow",sans-serif;font-weight:600;font-size:12px;
+  letter-spacing:.07em;text-transform:uppercase;margin:0}
+#ergo .eh span{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--mute)}
+#ergo canvas{display:block;width:100%;height:auto}
+#ergoTab{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line-soft)}
+#ergoTab div{padding:7px 10px;border-right:1px solid var(--line-soft)}
+#ergoTab div:last-child{border-right:0}
+#ergoTab .d{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.14em;
+  color:var(--mute);text-transform:uppercase;display:block}
+#ergoTab .a{font-family:"IBM Plex Mono",monospace;font-size:13px;display:block;margin:1px 0}
+#ergoTab .t{font-size:10px;line-height:1.3;display:block}
+#ergoTab .ok .a{color:var(--mint)} #ergoTab .no .a{color:var(--warn)}
+#ergoTab .ok .t{color:var(--mute)} #ergoTab .no .t{color:var(--amber)}
+@media (max-width:1180px){#ergo{display:none}}
+
+#hint{position:fixed;left:22px;bottom:calc(18px + 82px);z-index:6;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mute)}
+#err{position:fixed;inset:0;display:none;place-items:center;text-align:center;padding:40px;
+  font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--warn);z-index:20}
+@media (max-width:900px){
+  #title{max-width:52vw} #ui{width:238px}
+  #hud{grid-template-columns:repeat(3,1fr);left:14px;right:14px} #hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<div id="title">
+  <p class="eyebrow">Objeto sólido · auto-oclusão · traçado por amostra</p>
+  <h1>Gire a peça<br><em>a imagem gira junto</em></h1>
+  <p>Cada ponto visível do objeto é traçado pelo par de espelhos até seu ponto de convergência.
+  Nada da imagem é desenhado — ela é o resultado.</p>
+</div>
+
+<div id="ui">
+  <div class="grp">
+    <h3>Presets de projeto</h3>
+    <div id="presets"></div>
+    <p class="note" id="presetNote">Cada botão aplica D, abertura e foco já otimizados, e passa a conferir o resultado medido contra o previsto.</p>
+  </div>
+
+  <div class="grp">
+    <h3>O que emite</h3>
+    <div class="seg" role="group" aria-label="Fonte">
+      <button id="kObj" aria-pressed="true">Objeto</button>
+      <button id="kElip" aria-pressed="false">Elipsoide</button>
+      <button id="kCil" aria-pressed="false">Cilindro</button>
+    </div>
+    <canvas id="cMap" style="width:100%;display:block;border:1px solid var(--line-soft);background:#060C0F"></canvas>
+    <p class="note" id="mapNote" style="margin-top:6px"></p>
+    <div class="row" id="cylRow" style="display:none">
+      <label for="cylR"><span class="nm">Raio do cilindro</span><span class="vl" id="cylRv"></span></label>
+      <input type="range" id="cylR" min="0.55" max="1.6" step="0.02">
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3>Objeto no leito</h3>
+    <div class="row">
+      <label for="oyaw"><span class="nm">Giro no próprio eixo</span><span class="vl" id="oyawv"></span></label>
+      <input type="range" id="oyaw" min="0" max="360" step="1">
+    </div>
+    <div class="row">
+      <label for="opit"><span class="nm">Inclinação</span><span class="vl" id="opitv"></span></label>
+      <input type="range" id="opit" min="-45" max="45" step="1">
+    </div>
+    <div class="row">
+      <label for="ooff"><span class="nm">Fora do centro</span><span class="vl" id="ooffv"></span></label>
+      <input type="range" id="ooff" min="0" max="22" step="0.5">
+    </div>
+    <div class="row">
+      <label for="osz"><span class="nm">Altura da peça</span><span class="vl" id="oszv"></span></label>
+      <input type="range" id="osz" min="6" max="34" step="0.5">
+    </div>
+    <div class="row">
+      <label for="lean"><span class="nm">Inclinação do corpo</span><span class="vl" id="leanv"></span></label>
+      <input type="range" id="lean" min="0" max="42" step="1">
+    </div>
+    <div class="row">
+      <label for="arm"><span class="nm">Braço erguido</span><span class="vl" id="armv"></span></label>
+      <input type="range" id="arm" min="0" max="165" step="1">
+    </div>
+    <label class="chk"><input type="checkbox" id="cSpinObj"> Girar a peça sozinha</label>
+  </div>
+
+  <div class="grp">
+    <h3>Altura da ilusão</h3>
+    <div class="row">
+      <label for="dz"><span class="nm">Imagem acima da abertura</span><span class="vl" id="dzv"></span></label>
+      <input type="range" id="dz" min="0" max="70" step="0.5">
+    </div>
+    <div class="row">
+      <label for="D"><span class="nm">Separação dos vértices</span><span class="vl" id="Dv"></span></label>
+      <input type="range" id="D" min="80" max="285" step="1">
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3>Foco intermediário</h3>
+    <div class="seg" role="group" aria-label="Critério do foco intermediário">
+      <button id="mUnit" aria-pressed="true">Aumento</button>
+      <button id="mMax" aria-pressed="false">Mais luz</button>
+      <button id="mMan" aria-pressed="false">Manual</button>
+    </div>
+    <div class="row">
+      <label for="magT"><span class="nm">Aumento alvo</span><span class="vl" id="magTv"></span></label>
+      <input type="range" id="magT" min="1" max="3.4" step="0.05">
+    </div>
+    <label class="chk"><input type="checkbox" id="cPre" checked> Pré-comprimir a fonte por 1/m</label>
+    <button class="btn" id="btnOpt">Configuração ótima</button>
+    <div class="row">
+      <label for="z1"><span class="nm">z₁ / D</span><span class="vl" id="z1v"></span></label>
+      <input type="range" id="z1" min="0.20" max="0.80" step="0.005" disabled>
+    </div>
+    <p class="note" id="modeNote"></p>
+  </div>
+
+  <div class="grp">
+    <h3>Diâmetros</h3>
+    <div class="row">
+      <label for="rho1"><span class="nm">Espelho superior</span><span class="vl" id="rho1v"></span></label>
+      <input type="range" id="rho1" min="0.30" max="0.96" step="0.01">
+    </div>
+    <label class="chk"><input type="checkbox" id="autoR2" checked> Dimensionar o inferior para capturar tudo</label>
+    <div class="row">
+      <label for="rho2"><span class="nm">Espelho inferior</span><span class="vl" id="rho2v"></span></label>
+      <input type="range" id="rho2" min="0.30" max="0.999" step="0.005" disabled>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3>Observador</h3>
+    <div class="row">
+      <label for="stature"><span class="nm">Estatura</span><span class="vl" id="staturev"></span></label>
+      <input type="range" id="stature" min="145" max="205" step="1">
+    </div>
+    <div class="seg" role="group" aria-label="Postura">
+      <button id="pPe" aria-pressed="true">Em pé</button>
+      <button id="pSent" aria-pressed="false">Sentado</button>
+    </div>
+    <div class="row">
+      <label for="tableH"><span class="nm">Altura da mesa</span><span class="vl" id="tableHv"></span></label>
+      <input type="range" id="tableH" min="0" max="130" step="1">
+    </div>
+    <label class="chk"><input type="checkbox" id="cAuto" checked> Distância ótima automática</label>
+    <div class="row">
+      <label for="distH"><span class="nm">Distância horizontal</span><span class="vl" id="distHv"></span></label>
+      <input type="range" id="distH" min="5" max="200" step="1">
+    </div>
+    <label class="chk"><input type="checkbox" id="cCone" checked> Desenhar o lóbulo</label>
+    <label class="chk"><input type="checkbox" id="cFam" checked> Lóbulos das outras aberturas</label>
+    <label class="chk"><input type="checkbox" id="cWorld" checked> Piso, mesa e observador</label>
+    <p class="note" id="seeNote"></p>
+  </div>
+
+  <div class="grp">
+    <h3>Cena</h3>
+    <div class="seg" role="group" aria-label="Render da imagem">
+      <button id="rPts" aria-pressed="false">Pontos</button>
+      <button id="rSplat" aria-pressed="false">Splat</button>
+      <button id="rAniso" aria-pressed="true">Aniso</button>
+    </div>
+    <p class="note" style="margin:-4px 0 10px">Como a imagem real é exibida. <b>Splat</b>: gaussiana isótropa, raio = borrão RMS medido. <b>Aniso</b>: elipse orientada pela covariância completa do spot traçado — mostra coma e astigmatismo, forte fora do eixo e em ×2/×3. Nada é desenhado além do traçado.</p>
+    <label class="chk"><input type="checkbox" id="cRays" checked> Feixe traçado</label>
+    <label class="chk"><input type="checkbox" id="cCut" checked> Espelhos em corte</label>
+    <label class="chk"><input type="checkbox" id="cGhost"> Contorno paraxial previsto</label>
+    <label class="chk"><input type="checkbox" id="cSpinCam"> Girar a câmera</label>
+    <button class="btn" id="reset">Recentrar câmera</button>
+  </div>
+</div>
+
+<section id="ergo">
+  <div class="eh">
+    <h4>Elevação · aparato, lóbulo e observador</h4>
+    <span id="ergoNote"></span>
+  </div>
+  <canvas id="cErgo"></canvas>
+  <div id="ergoTab"></div>
+</section>
+
+<section id="spec">
+  <h4>Ficha de fabricação <span>tudo em cm</span></h4>
+  <div id="specList"></div>
+</section>
+
+<div id="hint">arrastar gira · roda aproxima · botão direito sobe e desce</div>
+
+<div id="hud">
+  <div><span class="k">Aumento lateral</span><span class="v" id="hMt">—</span></div>
+  <div><span class="k">Aumento em altura</span><span class="v" id="hMl">—</span></div>
+  <div><span class="k">Esticamento</span><span class="v" id="hAn">—</span></div>
+  <div><span class="k">Borrão médio</span><span class="v" id="hRms">—</span></div>
+  <div><span class="k">Luz aproveitada</span><span class="v" id="hThru">—</span></div>
+  <div><span class="k">⌀ superior</span><span class="v" id="hD1">—</span></div>
+  <div><span class="k">⌀ inferior</span><span class="v" id="hD2">—</span></div>
+  <div><span class="k">⌀ do furo</span><span class="v" id="hHole">—</span></div>
+  <div><span class="k">Flecha sup / inf</span><span class="v" id="hSag">—</span></div>
+  <div><span class="k">Pontos na imagem</span><span class="v" id="hPts">—</span></div>
+  <div><span class="k">Fidelidade de proporção</span><span class="v" id="hProp">—</span></div>
+</div>
+
+<div id="err">Não foi possível carregar a biblioteca 3D.<br>Verifique a conexão e recarregue.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+if (typeof THREE === "undefined") { document.getElementById("err").style.display = "grid"; }
+else {
+
+/* ==========================================================
+   ESTADO
+   ========================================================== */
+const S = {
+  oyaw: 35, opit: 0, ooff: 0, osz: 16, spinObj: false, lean: 22, arm: 105,
+  srcMode: 'obj', cylR: 1.0, magT: 1.0, precomp: true,
+  dz: 20, D: 130, zmode: "unit", z1f: 0.5,
+  rho1: 0.82, autoR2: true, rho2: 0.9,
+  rays: true, cut: true, ghost: false, spinCam: false, render: 'aniso',
+  showCone: true, showWorld: true, lobeFamily: true,
+  stature: 180, tableH: 80, posture: 'pe', distH: 35, autoDist: true
+};
+
+/* ==========================================================
+   ÓPTICA
+   --------------------------------------------------------
+   Dois elipsoides prolatos coaxiais.
+   Superior : focos em O(z=0) e no foco intermediário z1, vértice superior em z=D
+   Inferior : focos em z1 e na imagem z2, vértice inferior em z=0
+   Cada elipsoide leva um foco ao outro sem aberração alguma; o par
+   herda isso, então o ponto axial é estigmático em qualquer altura z2.
+   Semi-eixos que saem da construção:
+     b1² = D(D - z1)      b2² = z1·z2
+   Aumentos paraxiais:
+     m_t = (D - z1)·z2 / (D·z1)      m_L = m_t²
+   Escolhas de z1:
+     z1 = D²/(D+z2)   -> maximiza a abertura útil
+     z1 = D·z2/(D+z2) -> m_t = m_L = 1, cópia fiel em qualquer altura
+   ========================================================== */
+function design() {
+  const D = S.D, z2 = D + S.dz;
+  let z1;
+  if (S.zmode === "max") z1 = D * D / (D + z2);
+  else if (S.zmode === "unit") z1 = D * z2 / (S.magT * D + z2);   // aumento alvo
+  else z1 = S.z1f * D;
+  z1 = Math.max(0.15 * D, Math.min(0.90 * D, z1));
+
+  const c1 = z1 / 2, a1 = D - z1 / 2, b1 = Math.sqrt(Math.max(1e-6, D * (D - z1)));
+  const c2 = (z1 + z2) / 2, a2 = (z1 + z2) / 2, b2 = Math.sqrt(Math.max(1e-6, z1 * z2));
+  const mt = (D - z1) * z2 / (D * z1);
+  return {
+    D, z1, z2, c1, a1, b1, c2, a2, b2, mt, mL: mt * mt,
+    R1: S.rho1 * b1, R2: S.rho2 * b2, hole: 4
+  };
+}
+const zTop = (r, g) => g.c1 + g.a1 * Math.sqrt(Math.max(0, 1 - r * r / (g.b1 * g.b1)));
+const zBot = (r, g) => g.c2 - g.a2 * Math.sqrt(Math.max(0, 1 - r * r / (g.b2 * g.b2)));
+
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+function unit(v) { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / m, v[1] / m, v[2] / m]; }
+function refl(d, n) { const u = unit(n), k = 2 * dot(d, u); return [d[0] - k * u[0], d[1] - k * u[1], d[2] - k * u[2]]; }
+function qroots(A, B, C) {
+  const dd = B * B - 4 * A * C; if (dd < 0) return null;
+  const s = Math.sqrt(dd); return [(-B - s) / (2 * A), (-B + s) / (2 * A)];
+}
+function hitEll(O, d, c, a, b, cap, rmin, rmax) {
+  const w = O[2] - c;
+  const A = d[2] * d[2] / (a * a) + (d[0] * d[0] + d[1] * d[1]) / (b * b);
+  const B = 2 * (w * d[2] / (a * a) + (O[0] * d[0] + O[1] * d[1]) / (b * b));
+  const C = w * w / (a * a) + (O[0] * O[0] + O[1] * O[1]) / (b * b) - 1;
+  const rt = qroots(A, B, C); if (!rt) return null;
+  let best = null;
+  for (const t of rt) {
+    if (t < 1e-6) continue;
+    const P = [O[0] + t * d[0], O[1] + t * d[1], O[2] + t * d[2]];
+    if (cap === "up" ? P[2] < c : P[2] > c) continue;
+    const r = Math.hypot(P[0], P[1]);
+    if (r < rmin - 1e-9 || r > rmax + 1e-9) continue;
+    if (!best || t < best.t) best = { t, P };
+  }
+  return best;
+}
+const nEll = (P, c, a, b) => [P[0] / (b * b), P[1] / (b * b), (P[2] - c) / (a * a)];
+
+/* --- oclusão pelo próprio objeto (união de esferas) --- */
+let OCC = [], OCC_BS = null;   // união de esferas + esfera envolvente
+function occluded(O, T, skip) {
+  if (S.srcMode !== "obj") return convexBlocks(O, T);
+  const d = sub(T, O), L2 = dot(d, d);
+  if (OCC_BS) {                       // descarte rápido: o trecho passa longe da peça?
+    const w = sub(OCC_BS.c, O);
+    let t = dot(w, d) / L2; t = t < 0 ? 0 : (t > 1 ? 1 : t);
+    const ax = O[0] + t * d[0] - OCC_BS.c[0], ay = O[1] + t * d[1] - OCC_BS.c[1], az = O[2] + t * d[2] - OCC_BS.c[2];
+    if (ax * ax + ay * ay + az * az > OCC_BS.r * OCC_BS.r) return false;
+  }
+  for (let i = 0; i < OCC.length; i++) {
+    if (i === skip) continue;
+    const s = OCC[i], w = sub(O, s.c);
+    const b = dot(w, d), c = dot(w, w) - s.r * s.r;
+    const disc = b * b - L2 * c;
+    if (disc <= 0) continue;
+    const sd = Math.sqrt(disc);
+    const t1 = (-b - sd) / L2, t2 = (-b + sd) / L2;
+    if ((t1 > 1e-4 && t1 < 1) || (t2 > 1e-4 && t2 < 1)) return true;
+  }
+  return false;
+}
+
+/* --- um raio completo: objeto -> espelho superior -> inferior -> saída --- */
+function trace(O, P1, g, skip, checkOcc) {
+  if (checkOcc && occluded(O, P1, skip)) return null;      // 1ª perna: sombra própria
+  const d1 = unit(sub(P1, O));
+  const d2 = refl(d1, nEll(P1, g.c1, g.a1, g.b1));
+  const h2 = hitEll(P1, d2, g.c2, g.a2, g.b2, "low", 0, g.R2);
+  if (!h2) return null;
+  const P2 = h2.P;
+  if (checkOcc && occluded(P1, P2, -1)) return null;        // 2ª perna: desce rente à peça
+  const d3 = refl(d2, nEll(P2, g.c2, g.a2, g.b2));
+  if (d3[2] <= 1e-9) return null;
+  if (hitEll(P2, d3, g.c1, g.a1, g.b1, "up", g.hole, g.R1)) return null;
+  if (checkOcc) {                                          // 3ª perna: sobe até a abertura
+    const k = (g.D - P2[2]) / d3[2];
+    if (k > 0 && occluded(P2, [P2[0] + k * d3[0], P2[1] + k * d3[1], g.D], -1)) return null;
+  }
+  return { P1, P2, d: d3 };
+}
+const apRadius = (t, g) => {
+  const k = (g.D - t.P2[2]) / t.d[2];
+  return Math.hypot(t.P2[0] + k * t.d[0], t.P2[1] + k * t.d[1]);
+};
+
+/* --- pupila anular no espelho superior --- */
+function pupil(n, g) {
+  const p = [], a2 = g.hole * g.hole, R2 = g.R1 * g.R1;
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n, r = Math.sqrt(a2 + u * (R2 - a2)), ph = i * 2.399963229728653;
+    p.push([r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)]);
+  }
+  return p;
+}
+
+/* --- cone de visão -------------------------------------------------
+   A imagem só é vista de onde chega luz. Cada raio que sobrevive sai da
+   imagem com um ângulo θ em relação ao eixo; o conjunto desses ângulos é
+   um ANEL, não um disco: o miolo do espelho superior virou furo, então
+   existe um cone cego bem acima da imagem.
+   θ vem do raio; a elevação que o observador enxerga sobre o plano da
+   abertura é 90° - θ.                                                   */
+function viewCone(g, fieldR) {
+  const scan = (O, n) => {
+    const A = [];
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.5) / n;
+      const r = Math.sqrt(g.hole * g.hole + u * (g.R1 * g.R1 - g.hole * g.hole));
+      const ph = i * 2.399963229728653;
+      const t = trace(O, [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)], g, -1, false);
+      if (t) A.push(Math.acos(Math.max(-1, Math.min(1, unit(t.d)[2]))) * 180 / Math.PI);
+    }
+    A.sort((a, b) => a - b);
+    return A;
+  };
+  const ax = scan([0, 0, 0], 300);
+  if (!ax.length) return null;
+  let lo = ax[0], hi = ax[ax.length - 1];
+  for (let k = 0; k < 6; k++) {
+    const a = k / 6 * 6.2832;
+    const c = scan([fieldR * Math.cos(a), fieldR * Math.sin(a), 0], 150);
+    if (!c.length) continue;
+    lo = Math.max(lo, c[0]); hi = Math.min(hi, c[c.length - 1]);
+  }
+  if (hi <= lo) { lo = ax[0]; hi = ax[ax.length - 1]; }
+  return { tmin: lo, tmax: hi, tmed: ax[Math.floor(ax.length / 2)] };
+}
+
+/* --- dimensionamento automático: furo e espelho inferior ---
+   O furo precisa deixar passar o cone de saída de TODO o campo, não só
+   do ponto axial. Em Δ pequeno o vínculo é a própria imagem, que fica
+   no plano da abertura e seria recortada pelo espelho.
+   O espelho inferior precisa ser grande o bastante para interceptar o
+   feixe que desce do superior — e ele é sempre maior que o superior. */
+function fitAperture(g, fieldR) {
+  const field = [[0, 0]];
+  for (let k = 0; k < 6; k++) {
+    const a = k / 6 * Math.PI * 2;
+    field.push([fieldR * Math.cos(a), fieldR * Math.sin(a)]);
+  }
+  for (let it = 0; it < 3; it++) {
+    let needR2 = 0, needHole = 0;
+    for (const f of field) {
+      const O = [f[0], f[1], 0];
+      for (let i = 0; i < 46; i++) {
+        const r = g.hole + (g.R1 - g.hole) * (i + 0.5) / 46;
+        for (let j = 0; j < 4; j++) {
+          const ph = j * Math.PI / 2;
+          const P1 = [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)];
+          const d1 = unit(sub(P1, O));
+          const d2 = refl(d1, nEll(P1, g.c1, g.a1, g.b1));
+          const h2 = hitEll(P1, d2, g.c2, g.a2, g.b2, "low", 0, g.b2 * 0.9995);
+          if (!h2) continue;
+          needR2 = Math.max(needR2, Math.hypot(h2.P[0], h2.P[1]));
+          const d3 = refl(d2, nEll(h2.P, g.c2, g.a2, g.b2));
+          if (d3[2] <= 0) continue;
+          const k2 = (g.D - h2.P[2]) / d3[2];
+          needHole = Math.max(needHole, Math.hypot(h2.P[0] + k2 * d3[0], h2.P[1] + k2 * d3[1]));
+        }
+      }
+    }
+    if (S.autoR2) g.R2 = Math.min(g.b2 * 0.999, needR2 * 1.02);
+    g.hole = Math.max(2.5, Math.min(g.R1 * 0.88, needHole * 1.05));
+  }
+}
+
+/* --- ponto de convergência de um feixe (mínimos quadrados sobre retas) --- */
+function converge(rays) {
+  const m = [0, 0, 0, 0, 0, 0, 0, 0, 0], v = [0, 0, 0];
+  for (const { P2, d } of rays) {
+    const u = unit(d);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      const w = (i === j ? 1 : 0) - u[i] * u[j];
+      m[i * 3 + j] += w; v[i] += w * P2[j];
+    }
+  }
+  const det = m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]);
+  if (Math.abs(det) < 1e-9) return null;
+  const dt2 = (a, b, c, d) => a * d - b * c;
+  const col = k => {
+    const n = m.slice(); n[k] = v[0]; n[k + 3] = v[1]; n[k + 6] = v[2];
+    return (n[0] * dt2(n[4], n[5], n[7], n[8]) - n[1] * dt2(n[3], n[5], n[6], n[8]) + n[2] * dt2(n[3], n[4], n[6], n[7])) / det;
+  };
+  const X = [col(0), col(1), col(2)];
+  let s = 0, cxx = 0, cyy = 0, czz = 0, cxy = 0, cxz = 0, cyz = 0;
+  for (const { P2, d } of rays) {
+    const u = unit(d), w = sub(X, P2), t = dot(w, u);
+    const ex = w[0] - t * u[0], ey = w[1] - t * u[1], ez = w[2] - t * u[2];  // desvio perpendicular do raio ao ponto-imagem
+    s += ex * ex + ey * ey + ez * ez;
+    cxx += ex * ex; cyy += ey * ey; czz += ez * ez;
+    cxy += ex * ey; cxz += ex * ez; cyz += ey * ez;
+  }
+  const N = rays.length;
+  // cov = segundo momento da nuvem de cruzamentos dos raios em torno de X = a forma real do spot
+  return { P: X, rms: Math.sqrt(s / N), cov: [cxx / N, cyy / N, czz / N, cxy / N, cxz / N, cyz / N] };
+}
+
+/* autossolver simétrico 3×3 (Jacobi clássico) — devolve autovalores em ordem
+   decrescente e autovetores ortonormais. Testado: erro de reconstrução ~1e-15. */
+function mMul(A, B) {
+  const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { let s = 0; for (let k = 0; k < 3; k++) s += A[i][k] * B[k][j]; C[i][j] = s; }
+  return C;
+}
+function mT(A) { return [[A[0][0], A[1][0], A[2][0]], [A[0][1], A[1][1], A[2][1]], [A[0][2], A[1][2], A[2][2]]]; }
+function eig3(sym) {
+  let A = [[sym[0], sym[3], sym[4]], [sym[3], sym[1], sym[5]], [sym[4], sym[5], sym[2]]];
+  let V = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  for (let it = 0; it < 24; it++) {
+    let p = 0, q = 1, mx = Math.abs(A[0][1]);
+    if (Math.abs(A[0][2]) > mx) { mx = Math.abs(A[0][2]); p = 0; q = 2; }
+    if (Math.abs(A[1][2]) > mx) { mx = Math.abs(A[1][2]); p = 1; q = 2; }
+    if (mx < 1e-14) break;
+    const app = A[p][p], aqq = A[q][q], apq = A[p][q];
+    const theta = (aqq - app) / (2 * apq);
+    const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+    const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+    const G = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+    G[p][p] = c; G[q][q] = c; G[p][q] = s; G[q][p] = -s;
+    A = mMul(mMul(mT(G), A), G);
+    V = mMul(V, G);
+  }
+  const vals = [A[0][0], A[1][1], A[2][2]];
+  const vecs = [[V[0][0], V[1][0], V[2][0]], [V[0][1], V[1][1], V[2][1]], [V[0][2], V[1][2], V[2][2]]];
+  const idx = [0, 1, 2].sort((i, j) => vals[j] - vals[i]);
+  return { vals: idx.map(i => vals[i]), vecs: idx.map(i => vecs[i]) };
+}
+
+/* ==========================================================
+   OBJETO — união de esferas (mesmo modelo para desenhar,
+   amostrar e testar oclusão, então não há divergência
+   entre o que se vê e o que se traça)
+   ========================================================== */
+const COL = {
+  mint: [0.42, 0.86, 0.74], paper: [0.88, 0.93, 0.94], rose: [0.95, 0.42, 0.56],
+  amber: [0.95, 0.71, 0.36], sky: [0.50, 0.72, 0.91], deep: [0.22, 0.55, 0.52]
+};
+function buildFigure(H) {
+  const J = {                      // esqueleto em frações da altura total
+    ankle: [0, 0, 0.045], knee: [0, 0, 0.27], hip: [0, 0, 0.50],
+    waist: [0, 0, 0.615], chest: [0, 0, 0.755], neck: [0, 0, 0.845],
+    head: [0, 0, 0.905], shoulder: [0, 0.088, 0.815]
+  };
+  const lean = S.lean * Math.PI / 180;      // corpo rígido girando sobre o tornozelo
+  const arm = S.arm * Math.PI / 180;        // braço direito erguido
+  const cl = Math.cos(lean), sl = Math.sin(lean), pz = J.ankle[2];
+  const tip = p => [p[0] * cl + (p[2] - pz) * sl, p[1], pz - p[0] * sl + (p[2] - pz) * cl];
+
+  const raw = [];
+  const add = (p, r, c) => raw.push({ p, r, c });
+  const bone = (A, B, r0, r1, n, c) => {
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      add([A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t],
+          r0 + (r1 - r0) * t, c);
+    }
+  };
+  const mir = p => [p[0], -p[1], p[2]];
+  const off = (p, dy) => [p[0], p[1] + dy, p[2]];
+
+  // pernas — uma à frente, passada aberta
+  for (const sgn of [1, -1]) {
+    const step = sgn > 0 ? 0.055 : -0.045;
+    const ank = [step, sgn * 0.055, J.ankle[2]];
+    const kne = [step * 0.5, sgn * 0.052, J.knee[2]];
+    const hip = [0, sgn * 0.048, J.hip[2]];
+    bone(ank, kne, 0.036, 0.044, 3, COL.deep);
+    bone(kne, hip, 0.044, 0.056, 3, COL.deep);
+  }
+  // quadril e tronco
+  bone(off(J.hip, 0), J.waist, 0.078, 0.070, 2, COL.mint);
+  bone(J.waist, J.chest, 0.070, 0.090, 3, COL.mint);
+  bone(J.chest, J.neck, 0.090, 0.048, 2, COL.mint);
+  bone([0, -0.088, J.shoulder[2]], [0, 0.088, J.shoulder[2]], 0.052, 0.052, 3, COL.mint);
+
+  // braço direito (+y) erguido pelo ângulo "arm"
+  {
+    const sh = [0, 0.088, J.shoulder[2]];
+    const el = [sh[0] + 0.10 * Math.sin(arm), sh[1] + 0.115 * Math.cos(arm * 0.55),
+                sh[2] - 0.155 * Math.cos(arm)];
+    const wr = [el[0] + 0.16 * Math.sin(arm * 1.25), el[1] + 0.045,
+                el[2] - 0.145 * Math.cos(arm * 1.25)];
+    bone(sh, el, 0.044, 0.034, 3, COL.rose);
+    bone(el, wr, 0.034, 0.026, 3, COL.rose);
+    add([wr[0] + 0.02, wr[1] + 0.01, wr[2] - 0.02], 0.034, COL.paper);   // mão
+  }
+  // braço esquerdo (-y) descendo cruzado à frente
+  {
+    const sh = [0, -0.088, J.shoulder[2]];
+    const el = [0.055, -0.105, J.shoulder[2] - 0.16];
+    const wr = [0.115, -0.035, J.shoulder[2] - 0.275];
+    bone(sh, el, 0.044, 0.034, 3, COL.amber);
+    bone(el, wr, 0.034, 0.026, 3, COL.amber);
+    add([wr[0] + 0.02, wr[1] + 0.015, wr[2] - 0.015], 0.034, COL.paper);
+  }
+  // cabeça e chapéu de aba
+  add(J.head, 0.062, COL.paper);
+  add([0.030, 0, J.head[2] + 0.010], 0.030, COL.paper);                   // face, marca de frente
+  for (let i = 0; i < 12; i++) {                                          // aba
+    const a = i / 12 * 6.2832;
+    add([0.012 + 0.108 * Math.cos(a), 0.108 * Math.sin(a), J.head[2] + 0.058], 0.026, COL.sky);
+  }
+  add([0.012, 0, J.head[2] + 0.075], 0.070, COL.sky);                     // copa
+  add([0.012, 0, J.head[2] + 0.105], 0.056, COL.sky);
+
+  // pés ficam no chão; o resto acompanha a inclinação
+  const P = [];
+  for (const s0 of raw) {
+    const q = s0.p[2] <= J.ankle[2] + 1e-6 ? s0.p : tip(s0.p);
+    P.push({ b: [q[0] * H, q[1] * H, q[2] * H], r: s0.r * H, c: s0.c });
+  }
+  for (const sgn of [1, -1]) {                                            // sapatos
+    const step = sgn > 0 ? 0.055 : -0.045;
+    P.push({ b: [(step + 0.035) * H, sgn * 0.055 * H, 0.028 * H], r: 0.038 * H, c: COL.deep });
+    P.push({ b: [(step - 0.022) * H, sgn * 0.055 * H, 0.030 * H], r: 0.034 * H, c: COL.deep });
+  }
+  return P;
+}
+/* orientação: giro em torno do eixo óptico, depois inclinação, depois
+   deslocamento radial, e por fim a peça é assentada no leito curvo */
+function placeFigure(fig, g) {
+  const ya = S.oyaw * Math.PI / 180, pi = S.opit * Math.PI / 180;
+  const cy = Math.cos(ya), sy = Math.sin(ya), cp = Math.cos(pi), sp = Math.sin(pi);
+  const out = fig.map(s => {
+    const [x0, y0, z0] = s.b;
+    const y1 = y0 * cp - z0 * sp, z1 = y0 * sp + z0 * cp;          // inclina em torno de x
+    const x2 = x0 * cy - y1 * sy, y2 = x0 * sy + y1 * cy;          // gira em torno de z
+    return { c: [x2 + S.ooff, y2, z1], r: s.r, c0: s.c };
+  });
+  /* Lagrange manda m_L = m_t². Para a imagem sair proporcional, a fonte
+     precisa entrar achatada por 1/m_t no eixo — e só no eixo. */
+  if (S.precomp && S.zmode === "unit" && S.magT > 1.001) {
+    let z0 = 1e9;
+    for (const s of out) z0 = Math.min(z0, s.c[2]);
+    for (const s of out) s.c[2] = z0 + (s.c[2] - z0) / S.magT;
+  }
+  let lift = 0;
+  for (const s of out) {
+    const d = s.c[2] - s.r - zBot(Math.hypot(s.c[0], s.c[1]), g);
+    lift = Math.min(lift, d);
+  }
+  if (lift < 0) for (const s of out) s.c[2] -= lift;
+  return out;
+}
+/* ==========================================================
+   ENVOLTÓRIA — pseudo-elipsoide + mapa equirretangular
+   --------------------------------------------------------
+   Para cada direção (θ,φ) parte-se do ponto correspondente na
+   envoltória e caminha-se para o centro até tocar o objeto. Guarda-se
+   a cor e a FRAÇÃO RADIAL em que o toque aconteceu. Essa fração é
+   exatamente a profundidade — e é ela que um mapa 2D joga fora quando
+   vira textura de uma superfície fixa.
+   ========================================================== */
+let ENV = null;
+function buildEnvelope(sph, pts, res) {
+  let cx = 0, cy = 0, cz = 0, n = 0;
+  let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  for (const q of sph) for (let k = 0; k < 3; k++) {
+    lo[k] = Math.min(lo[k], q.c[k] - q.r); hi[k] = Math.max(hi[k], q.c[k] + q.r);
+  }
+  cx = (lo[0] + hi[0]) / 2; cy = (lo[1] + hi[1]) / 2; cz = (lo[2] + hi[2]) / 2;
+  const h = [Math.max(0.6, (hi[0] - lo[0]) / 2), Math.max(0.6, (hi[1] - lo[1]) / 2),
+             Math.max(0.6, (hi[2] - lo[2]) / 2)];
+  let sMax = 1e-6;
+  for (const q of pts) {
+    const d = Math.sqrt(((q.p[0] - cx) / h[0]) ** 2 + ((q.p[1] - cy) / h[1]) ** 2 + ((q.p[2] - cz) / h[2]) ** 2);
+    if (d > sMax) sMax = d;
+  }
+  const A = h[0] * sMax * 1.02, B = h[1] * sMax * 1.02, C = h[2] * sMax * 1.02;
+  const c = [cx, cy, cz];
+
+  // mapa equirretangular
+  const W = res, H = res >> 1;
+  const rgb = new Float32Array(W * H * 3), dep = new Float32Array(W * H), al = new Uint8Array(W * H);
+  const surfPt = (th, ph) => [c[0] + A * Math.sin(ph) * Math.cos(th),
+                              c[1] + B * Math.sin(ph) * Math.sin(th),
+                              c[2] + C * Math.cos(ph)];
+  for (let j = 0; j < H; j++) {
+    const ph = Math.PI * (j + 0.5) / H;
+    for (let i = 0; i < W; i++) {
+      const th = 2 * Math.PI * (i + 0.5) / W;
+      const P = surfPt(th, ph), d = sub(c, P);
+      const L2 = dot(d, d);
+      let best = 2, col = null;
+      for (const q of sph) {                            // primeiro toque vindo de fora
+        const w = sub(P, q.c), b = dot(w, d), cc = dot(w, w) - q.r * q.r;
+        const disc = b * b - L2 * cc; if (disc <= 0) continue;
+        const sd = Math.sqrt(disc), t1 = (-b - sd) / L2;
+        if (t1 > 0 && t1 < best) { best = t1; col = q.c0; }
+      }
+      const k = j * W + i;
+      if (col) {
+        al[k] = 1; dep[k] = 1 - best;                   // 1 = na envoltória, 0 = no centro
+        rgb[k * 3] = col[0]; rgb[k * 3 + 1] = col[1]; rgb[k * 3 + 2] = col[2];
+      }
+    }
+  }
+  const cyl = { R: S.cylR * Math.max(A, B), z0: c[2] - C, z1: c[2] + C };
+  return { c, A, B, C, W, H, rgb, dep, al, cyl, surfPt };
+}
+
+/* amostragem das superfícies convexas emissoras */
+function sampleEnvelope(E, step) {
+  const pts = [], GA = Math.PI * (3 - Math.sqrt(5));
+  const N = Math.round(900 / step);
+  const look = (u, v) => {
+    const i = Math.min(E.W - 1, Math.max(0, Math.floor(u * E.W)));
+    const j = Math.min(E.H - 1, Math.max(0, Math.floor(v * E.H)));
+    const k = j * E.W + i;
+    return E.al[k] ? { c: [E.rgb[k * 3], E.rgb[k * 3 + 1], E.rgb[k * 3 + 2]], d: E.dep[k], j, i } : null;
+  };
+  if (S.srcMode === "elip") {
+    for (let m = 0; m < N; m++) {
+      const zz = 1 - (2 * m + 1) / N, rr = Math.sqrt(Math.max(0, 1 - zz * zz)), th = m * GA;
+      const ph = Math.acos(Math.max(-1, Math.min(1, zz)));
+      const u = ((th / 6.2832) % 1 + 1) % 1, v = ph / Math.PI;
+      const s0 = look(u, v); if (!s0) continue;
+      const p = [E.c[0] + E.A * rr * Math.cos(th), E.c[1] + E.B * rr * Math.sin(th), E.c[2] + E.C * zz];
+      const nn = unit([(p[0] - E.c[0]) / (E.A * E.A), (p[1] - E.c[1]) / (E.B * E.B), (p[2] - E.c[2]) / (E.C * E.C)]);
+      const tp = [E.c[0] + (p[0] - E.c[0]) * s0.d, E.c[1] + (p[1] - E.c[1]) * s0.d,
+                  E.c[2] + (p[2] - E.c[2]) * s0.d];
+      pts.push({ p, n: nn, c: s0.c, si: -2, dep: s0.d, t: tp });
+    }
+  } else {
+    const R = E.cyl.R, HZ = E.cyl.z1 - E.cyl.z0;
+    const rows = Math.round(Math.sqrt(N / 2.2)), cols = Math.round(N / Math.max(1, rows));
+    for (let jr = 0; jr < rows; jr++) {
+      const v = (jr + 0.5) / rows, z = E.cyl.z1 - v * HZ;
+      for (let ic = 0; ic < cols; ic++) {
+        const u = (ic + 0.5) / cols, th = u * 6.2832;
+        const s0 = look(u, v); if (!s0) continue;
+        const Pe = E.surfPt(th, v * Math.PI);
+        const tp = [E.c[0] + (Pe[0] - E.c[0]) * s0.d, E.c[1] + (Pe[1] - E.c[1]) * s0.d,
+                    E.c[2] + (Pe[2] - E.c[2]) * s0.d];
+        pts.push({ p: [R * Math.cos(th), R * Math.sin(th), z], n: [Math.cos(th), Math.sin(th), 0],
+                   c: s0.c, si: -2, dep: s0.d, t: tp });
+      }
+    }
+  }
+  return pts;
+}
+
+/* desenho do mapa equirretangular — é literalmente o que iria para o display */
+function drawMap(E, errRms, depRange) {
+  const cv = document.getElementById("cMap");
+  if (!cv) return;
+  const W = cv.parentElement.clientWidth;
+  const H = Math.round(W / 2);
+  cv.width = E.W; cv.height = E.H;
+  cv.style.height = H + "px";
+  const x = cv.getContext("2d");
+  const img = x.createImageData(E.W, E.H);
+  for (let k = 0; k < E.W * E.H; k++) {
+    if (E.al[k]) {
+      img.data[k * 4] = E.rgb[k * 3] * 255;
+      img.data[k * 4 + 1] = E.rgb[k * 3 + 1] * 255;
+      img.data[k * 4 + 2] = E.rgb[k * 3 + 2] * 255;
+    } else { img.data[k * 4] = 6; img.data[k * 4 + 1] = 12; img.data[k * 4 + 2] = 15; }
+    img.data[k * 4 + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  const n = document.getElementById("mapNote");
+  if (n) n.innerHTML = "Profundidade descartada: <b style=\"color:var(--warn)\">"
+    + depRange.toFixed(1) + " mm</b> de variação radial vira zero.<br>"
+    + "Luz emitida fora de lugar, RMS <b style=\"color:var(--warn)\">" + errRms.toFixed(2) + " mm</b>.";
+}
+
+/* bloqueio por superfície convexa (usado nas pernas 2 e 3 do traçado) */
+function convexBlocks(O, T) {
+  if (!ENV) return false;
+  const k = 0.995;
+  if (S.srcMode === "elip") {
+    const A = ENV.A * k, B = ENV.B * k, C = ENV.C * k;
+    const o = [(O[0] - ENV.c[0]) / A, (O[1] - ENV.c[1]) / B, (O[2] - ENV.c[2]) / C];
+    const d = [(T[0] - O[0]) / A, (T[1] - O[1]) / B, (T[2] - O[2]) / C];
+    const a = dot(d, d), b = 2 * dot(o, d), c2 = dot(o, o) - 1;
+    const disc = b * b - 4 * a * c2; if (disc <= 0) return false;
+    const sd = Math.sqrt(disc), t1 = (-b - sd) / (2 * a), t2 = (-b + sd) / (2 * a);
+    return (t1 > 1e-4 && t1 < 1) || (t2 > 1e-4 && t2 < 1);
+  }
+  const R = ENV.cyl.R * k, z0 = ENV.cyl.z0 + 0.02, z1 = ENV.cyl.z1 - 0.02;
+  const dx = T[0] - O[0], dy = T[1] - O[1], dz = T[2] - O[2];
+  const a = dx * dx + dy * dy;
+  if (a > 1e-12) {
+    const b = 2 * (O[0] * dx + O[1] * dy), c2 = O[0] * O[0] + O[1] * O[1] - R * R;
+    const disc = b * b - 4 * a * c2;
+    if (disc > 0) {
+      const sd = Math.sqrt(disc);
+      for (const t of [(-b - sd) / (2 * a), (-b + sd) / (2 * a)]) {
+        if (t > 1e-4 && t < 1) { const z = O[2] + t * dz; if (z > z0 && z < z1) return true; }
+      }
+    }
+  }
+  if (Math.abs(dz) > 1e-9) for (const zc of [z0, z1]) {
+    const t = (zc - O[2]) / dz;
+    if (t > 1e-4 && t < 1) {
+      const x = O[0] + t * dx, y = O[1] + t * dy;
+      if (x * x + y * y < R * R) return true;
+    }
+  }
+  return false;
+}
+
+/* pontos de superfície visíveis (rejeita o que está dentro de outra esfera) */
+function sampleFigure(sph, step) {
+  const pts = [];
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  let rmax = 1e-6;
+  for (const s of sph) rmax = Math.max(rmax, s.r);
+  sph.forEach((s, si) => {
+    const n = Math.max(12, Math.round(115 * (s.r / rmax) ** 2 / step));
+    for (let i = 0; i < n; i++) {
+      const zz = 1 - (2 * i + 1) / n, rr = Math.sqrt(Math.max(0, 1 - zz * zz)), th = i * GA;
+      const p = [s.c[0] + s.r * rr * Math.cos(th), s.c[1] + s.r * rr * Math.sin(th), s.c[2] + s.r * zz];
+      let inside = false;
+      for (let j = 0; j < sph.length; j++) {
+        if (j === si) continue;
+        const o = sph[j], dx = p[0] - o.c[0], dy = p[1] - o.c[1], dz = p[2] - o.c[2];
+        if (dx * dx + dy * dy + dz * dz < o.r * o.r * 0.998) { inside = true; break; }
+      }
+      if (!inside) pts.push({ p, si, c: s.c0,
+        n: [(p[0]-s.c[0])/s.r, (p[1]-s.c[1])/s.r, (p[2]-s.c[2])/s.r] });
+    }
+  });
+  return pts;
+}
+
+/* ==========================================================
+   CENA
+   ========================================================== */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0B1317);
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 1, 4000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.getElementById("stage").appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0x9FD8E8, 0x0A1418, 0.8));
+const k1 = new THREE.DirectionalLight(0xFFF0DA, 1.1); k1.position.set(180, 260, 200); scene.add(k1);
+const k2 = new THREE.DirectionalLight(0x7FB6E8, 0.5); k2.position.set(-220, 90, -140); scene.add(k2);
+
+const gMirror = new THREE.Group(), gRay = new THREE.Group(),
+      gObj = new THREE.Group(), gImg = new THREE.Group(), gRef = new THREE.Group(),
+      gView = new THREE.Group(), gWorld = new THREE.Group(), gSrc = new THREE.Group();
+scene.add(gMirror, gRay, gObj, gImg, gRef, gView, gWorld, gSrc);
+const clear = grp => {
+  while (grp.children.length) {
+    const c = grp.children.pop();
+    if (c.geometry) c.geometry.dispose();
+    if (c.material && c.material.dispose && c.material !== cloudMat && c.material !== objMat && c.material !== splatMat && c.material !== splatAnisoMat) c.material.dispose();
+    grp.remove(c);
+  }
+};
+
+/* órbita manual */
+const orbit = { th: Math.PI * 0.16, ph: Math.PI * 0.42, rad: 430, tgt: new THREE.Vector3(0, 75, 0) };
+function place() {
+  const s = Math.sin(orbit.ph), c = Math.cos(orbit.ph);
+  camera.position.set(
+    orbit.tgt.x + orbit.rad * s * Math.sin(orbit.th),
+    orbit.tgt.y + orbit.rad * c,
+    orbit.tgt.z + orbit.rad * s * Math.cos(orbit.th));
+  camera.lookAt(orbit.tgt);
+}
+let drag = null;
+renderer.domElement.addEventListener("pointerdown", e => {
+  drag = { x: e.clientX, y: e.clientY, btn: e.button };
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.btn === 2) orbit.tgt.y -= dy * orbit.rad * 0.0016;
+  else { orbit.th -= dx * 0.006; orbit.ph = Math.max(0.08, Math.min(Math.PI - 0.08, orbit.ph - dy * 0.006)); }
+  place();
+});
+addEventListener("pointerup", () => { drag = null; });
+renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+renderer.domElement.addEventListener("wheel", e => {
+  e.preventDefault();
+  orbit.rad = Math.max(80, Math.min(1300, orbit.rad * (1 + Math.sign(e.deltaY) * 0.09)));
+  place();
+}, { passive: false });
+
+/* materiais compartilhados */
+const cloudMat = new THREE.ShaderMaterial({
+  vertexShader: `attribute float size; attribute vec3 tint; varying vec3 vT;
+    void main(){ vT=tint; vec4 mv=modelViewMatrix*vec4(position,1.0);
+      gl_PointSize=size*(250.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+  fragmentShader: `varying vec3 vT;
+    void main(){ vec2 c=gl_PointCoord-vec2(0.5); float d=length(c);
+      if(d>0.5) discard; float a=smoothstep(0.5,0.05,d);
+      gl_FragColor=vec4(vT,a); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+/* splat gaussiano: quad billboard por instância, tamanho em mm de mundo.
+   A largura da gaussiana carrega o borrão MEDIDO do relé (cv.rms), não um
+   valor de aparência — o splat é do tamanho do ponto que a óptica entrega. */
+const splatMat = new THREE.ShaderMaterial({
+  vertexShader: `attribute vec3 iPos; attribute float iSize; attribute vec3 iTint;
+    varying vec2 vUv; varying vec3 vT;
+    void main(){ vT=iTint; vUv=position.xy;
+      vec4 mv=modelViewMatrix*vec4(iPos,1.0);
+      mv.xy += position.xy * iSize;             // billboard em mm, encara a câmera
+      gl_Position=projectionMatrix*mv; }`,
+  fragmentShader: `varying vec2 vUv; varying vec3 vT;
+    void main(){ float d2=dot(vUv,vUv); if(d2>1.0) discard;
+      float a=exp(-4.0*d2);                      // perfil gaussiano
+      gl_FragColor=vec4(vT,a); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+/* splat ANISOTRÓPICO (nível 2): elipse orientada no mundo, girada pelos
+   autovetores da covariância traçada do spot. Não é billboard — a orientação
+   3D É o dado. Vista de frente mostra a elipse do spot (coma/astigmatismo);
+   vista de lado fica fina porque o spot óptico é quase plano (transverso). */
+const splatAnisoMat = new THREE.ShaderMaterial({
+  vertexShader: `attribute vec3 iPos; attribute vec3 iA0; attribute vec3 iA1; attribute vec3 iTint;
+    varying vec2 vUv; varying vec3 vT;
+    void main(){ vT=iTint; vUv=position.xy;
+      vec3 world = iPos + position.x*iA0 + position.y*iA1;   // eixos principais * σ
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(world,1.0); }`,
+  fragmentShader: `varying vec2 vUv; varying vec3 vT;
+    void main(){ float d2=dot(vUv,vUv); if(d2>1.0) discard;
+      float a=exp(-4.0*d2); gl_FragColor=vec4(vT,a); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+const objMat = new THREE.MeshStandardMaterial({ metalness: 0.15, roughness: 0.55, vertexColors: false });
+
+/* ==========================================================
+   CONSTRUÇÃO — óptica
+   ========================================================== */
+let G = null, FIG = null, meshes = [], VC = null, IMGZ = 0, eyeMesh = null;
+let FAM = [], obsPost = null;
+
+function buildOptics() {
+  G = design();
+  fitAperture(G, Math.max(4, S.osz * 0.55 + S.ooff));
+
+  clear(gMirror); clear(gRef);
+  const phiLen = S.cut ? Math.PI * 1.5 : Math.PI * 2, phiSt = S.cut ? Math.PI * 0.32 : 0;
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x5FBFA4, metalness: 0.5, roughness: 0.26,
+    side: THREE.DoubleSide, transparent: true, opacity: 0.34
+  });
+  const eMat = new THREE.LineBasicMaterial({ color: 0x8FE3C8, transparent: true, opacity: 0.7 });
+  const prof = (fn, r0, r1) => {
+    const p = [];
+    for (let i = 0; i <= 76; i++) {
+      const r = r0 + (r1 - r0) * i / 76;
+      p.push(new THREE.Vector2(Math.max(1e-4, r), fn(r, G)));
+    }
+    return p;
+  };
+  for (const pr of [prof(zTop, G.hole, G.R1), prof(zBot, 0, G.R2)]) {
+    gMirror.add(new THREE.Mesh(new THREE.LatheGeometry(pr, 100, phiSt, phiLen), mat));
+    const pos = [];
+    for (let i = 0; i < pr.length - 1; i++) {
+      pos.push(pr[i].x, pr[i].y, 0, pr[i + 1].x, pr[i + 1].y, 0,
+               -pr[i].x, pr[i].y, 0, -pr[i + 1].x, pr[i + 1].y, 0);
+    }
+    const eg = new THREE.BufferGeometry();
+    eg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+    gMirror.add(new THREE.LineSegments(eg, eMat));
+  }
+
+  const ax = new THREE.BufferGeometry();
+  ax.setAttribute("position", new THREE.BufferAttribute(new Float32Array([0, -25, 0, 0, G.z2 + 45, 0]), 3));
+  gRef.add(new THREE.LineSegments(ax, new THREE.LineBasicMaterial({ color: 0x7FB6E8, transparent: true, opacity: 0.28 })));
+  const ring = (rad, y, col, op) => {
+    const pos = [];
+    for (let i = 0; i < 120; i++) {
+      const a = i / 120 * 6.2832, b = (i + 1) / 120 * 6.2832;
+      pos.push(rad * Math.cos(a), y, rad * Math.sin(a), rad * Math.cos(b), y, rad * Math.sin(b));
+    }
+    const gg = new THREE.BufferGeometry();
+    gg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+    gRef.add(new THREE.LineSegments(gg, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: op })));
+  };
+  ring(G.hole, zTop(G.hole, G), 0xF2B25C, 0.85);
+  ring(Math.max(8, S.osz * 0.7), G.z2, 0x7FB6E8, 0.35);
+  const fieldR = Math.max(3, S.osz * 0.5 + S.ooff);
+  VC = viewCone(G, fieldR);
+  FAM = [];
+  if (S.lobeFamily) {
+    const save = S.rho1;
+    for (const r of [0.50, 0.68, 0.94]) {
+      if (Math.abs(r - save) < 0.03) continue;
+      S.rho1 = r;
+      const gg = design();
+      fitAperture(gg, fieldR);
+      const vc = viewCone(gg, fieldR);
+      if (vc) FAM.push(vc);
+    }
+    S.rho1 = save;
+  }
+}
+
+/* ==========================================================
+   ERGONOMIA
+   --------------------------------------------------------
+   O olho fica a Δh acima da imagem. Para uma distância horizontal d,
+   o ângulo em relação ao eixo é θ = atan(d/Δh) — ou seja, d = Δh·tanθ.
+   Afastar-se ABRE θ; aproximar-se FECHA θ. A regra é direta:
+     θ < θmin (agudo demais, caiu no ponto cego)  -> afastar
+     θ > θmax (aberto demais, rasante demais)     -> aproximar
+   A distância ótima é a que põe θ no meio do lóbulo.
+   ========================================================== */
+const EYE_STAND = 0.936, EYE_SIT_K = 0.445, SEAT_H = 45;
+function ergo() {
+  const eyeCm = S.posture === "pe" ? EYE_STAND * S.stature : SEAT_H + EYE_SIT_K * S.stature;
+  const imgCm = S.tableH + IMGZ / 10;
+  const dh = eyeCm - imgCm;
+  const tmin = VC ? VC.tmin : 10, tmax = VC ? VC.tmax : 40, tmed = VC ? VC.tmed : 25;
+  const rad = x => x * Math.PI / 180;
+  const ok = dh > 1;
+  const near = ok ? dh * Math.tan(rad(tmin)) : NaN;
+  const far = ok ? dh * Math.tan(rad(tmax)) : NaN;
+  const opt = ok ? dh * Math.tan(rad(tmed)) : NaN;
+  const d = (S.autoDist && isFinite(opt)) ? Math.max(5, Math.min(200, opt)) : S.distH;
+  const th = ok ? Math.atan2(d, dh) * 180 / Math.PI : 90;
+  return { eyeCm, imgCm, dh, near, far, opt, d, th, elev: 90 - th, tmin, tmax, tmed,
+           inside: ok && th >= tmin && th <= tmax, slant: Math.hypot(d, dh), ok };
+}
+function statusAt(d, E) {
+  if (!E.ok) return { cls: "no", th: NaN, txt: "olho abaixo da imagem" };
+  const th = Math.atan2(d, E.dh) * 180 / Math.PI;
+  if (th < E.tmin) return { cls: "no", th, txt: "agudo demais — afastar até " + E.near.toFixed(0) + " cm" };
+  if (th > E.tmax) return { cls: "no", th, txt: "aberto demais — aproximar até " + E.far.toFixed(0) + " cm" };
+  return { cls: "ok", th, txt: "dentro do lóbulo" };
+}
+
+/* ==========================================================
+   MUNDO — piso, mesa e observador, em escala real
+   ========================================================== */
+function buildWorld() {
+  clear(gWorld);
+  if (!S.showWorld) return;
+  const floorY = -S.tableH * 10, span = 2200;
+  const pos = [];
+  for (let i = -6; i <= 6; i++) {
+    const v = i * 200;
+    pos.push(v, floorY, -span / 2, v, floorY, span / 2, -span / 2, floorY, v, span / 2, floorY, v);
+  }
+  const fg = new THREE.BufferGeometry();
+  fg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+  gWorld.add(new THREE.LineSegments(fg, new THREE.LineBasicMaterial({
+    color: 0x26424E, transparent: true, opacity: 0.5 })));
+
+  if (S.tableH > 4) {
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(320, 320, 14, 48),
+      new THREE.MeshStandardMaterial({ color: 0x1B2E38, roughness: 0.9, metalness: 0 }));
+    top.position.y = -7; gWorld.add(top);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(28, 28, S.tableH * 10 - 14, 20),
+      new THREE.MeshStandardMaterial({ color: 0x16262E, roughness: 0.95 }));
+    leg.position.y = -14 - (S.tableH * 10 - 14) / 2; gWorld.add(leg);
+  }
+}
+
+/* ==========================================================
+   CONSTRUÇÃO — cone de visão e olho do observador
+   ========================================================== */
+function buildView() {
+  clear(gView); eyeMesh = null; obsPost = null;
+  if (!VC) return;
+  const E = ergo();
+  const apex = IMGZ, L = Math.max(320, E.slant * 10);
+
+  const capsule = (thDeg, col, op, nRad) => {
+    const th = thDeg * Math.PI / 180;
+    const rr = L * Math.sin(th), yy = apex + L * Math.cos(th);
+    const pos = [];
+    for (let i = 0; i < 96; i++) {
+      const a = i / 96 * 6.2832, b = (i + 1) / 96 * 6.2832;
+      pos.push(rr * Math.cos(a), yy, rr * Math.sin(a), rr * Math.cos(b), yy, rr * Math.sin(b));
+    }
+    for (let i = 0; i < nRad; i++) {
+      const a = i / nRad * 6.2832;
+      pos.push(0, apex, 0, rr * Math.cos(a), yy, rr * Math.sin(a));
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+    gView.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+      color: col, transparent: true, opacity: op })));
+  };
+
+  if (S.lobeFamily) for (const f of FAM) {
+    capsule(f.tmax, 0x3E6B7A, 0.55, 0);
+    capsule(f.tmin, 0x3E6B7A, 0.35, 0);
+  }
+  if (S.showCone) {
+    capsule(VC.tmax, 0x8FE3C8, 0.42, 16);   // limite externo: view mais rasante
+    capsule(VC.tmin, 0xE2694A, 0.38, 16);   // limite interno: borda do ponto cego
+    // casca do anel visível
+    const th1 = VC.tmin * Math.PI / 180, th2 = VC.tmax * Math.PI / 180, N = 72;
+    const pos = [];
+    for (let i = 0; i < N; i++) {
+      const a = i / N * 6.2832, b = (i + 1) / N * 6.2832;
+      const P = (t, an) => [L * Math.sin(t) * Math.cos(an), apex + L * Math.cos(t), L * Math.sin(t) * Math.sin(an)];
+      const A = P(th1, a), B = P(th2, a), C = P(th2, b), Dd = P(th1, b);
+      pos.push(...A, ...B, ...C, ...A, ...C, ...Dd);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.computeVertexNormals();
+    gView.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color: 0x8FE3C8, transparent: true, opacity: 0.055, side: THREE.DoubleSide, depthWrite: false })));
+  }
+
+  eyeMesh = new THREE.Mesh(new THREE.SphereGeometry(7, 18, 14),
+    new THREE.MeshStandardMaterial({ color: 0x8FE3C8, emissive: 0x2A5C4C, roughness: 0.4 }));
+  gView.add(eyeMesh);
+  const pg = new THREE.BufferGeometry();
+  pg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+  obsPost = new THREE.LineSegments(pg, new THREE.LineBasicMaterial({
+    color: 0x8FE3C8, transparent: true, opacity: 0.55 }));
+  gView.add(obsPost);
+  placeEye();
+}
+
+function placeEye() {
+  if (!eyeMesh || !VC) return;
+  const E = ergo(), az = orbit.th, r = E.d * 10;
+  const eyeY = (E.eyeCm - S.tableH) * 10;
+  eyeMesh.position.set(r * Math.sin(az), eyeY, r * Math.cos(az));
+  eyeMesh.material.color.setHex(E.inside ? 0x8FE3C8 : 0xE2694A);
+  eyeMesh.material.emissive.setHex(E.inside ? 0x2A5C4C : 0x4A1E14);
+
+  if (obsPost) {                                   // haste do observador até o piso
+    const a = obsPost.geometry.attributes.position;
+    const floorY = -S.tableH * 10;
+    a.setXYZ(0, r * Math.sin(az), floorY, r * Math.cos(az));
+    a.setXYZ(1, r * Math.sin(az), eyeY, r * Math.cos(az));
+    a.needsUpdate = true;
+    obsPost.material.color.setHex(E.inside ? 0x8FE3C8 : 0xE2694A);
+  }
+  const n = document.getElementById("seeNote");
+  if (n) n.textContent = !E.ok ? "O olho está abaixo da imagem: baixe a mesa ou levante-se."
+    : E.inside ? "θ = " + E.th.toFixed(0) + "°, dentro do lóbulo (" + E.tmin.toFixed(0) + "–" + E.tmax.toFixed(0) + "°)."
+    : E.th < E.tmin ? "θ = " + E.th.toFixed(0) + "°, agudo demais: afaste-se para " + E.near.toFixed(0) + " cm."
+    : "θ = " + E.th.toFixed(0) + "°, aberto demais: aproxime-se para " + E.far.toFixed(0) + " cm.";
+  drawErgo(E);
+}
+
+/* ==========================================================
+   PRESETS — mpar é o alvo PARAXIAL calibrado para que o aumento
+   REAL, medido no traçado, caia exatamente em ×1, ×2 ou ×3.
+   A diferença (até 5%) é o deslocamento do centroide pela coma.
+   ========================================================== */
+const PRESETS = [
+ {m:1,dz:10,mpar:1.0000,rho:0.5389,dsup:210,dinf:233.9,hole:24.0,gap:205.6,mt:1.000,str:1.000,blur:0.098,pts:81,lo:2.6,hi:23.1},
+ {m:1,dz:30,mpar:1.0000,rho:0.5745,dsup:220,dinf:260.4,hole:41.0,gap:193.0,mt:1.000,str:1.000,blur:0.101,pts:79,lo:4.3,hi:24.5},
+ {m:1,dz:70,mpar:1.0000,rho:0.6963,dsup:258,dinf:340.0,hole:91.9,gap:141.0,mt:1.000,str:1.000,blur:0.123,pts:65,lo:9.7,hi:30.1},
+ {m:2,dz:10,mpar:2.0739,rho:0.5154,dsup:234,dinf:137.2,hole:34.3,gap:227.2,mt:1.998,str:2.048,blur:0.518,pts:31,lo:1.8,hi:12.4},
+ {m:2,dz:30,mpar:2.0727,rho:0.5147,dsup:231,dinf:144.3,hole:39.8,gap:226.8,mt:1.998,str:2.048,blur:0.503,pts:32,lo:2.0,hi:12.3},
+ {m:2,dz:70,mpar:2.0828,rho:0.5507,dsup:242,dinf:168.3,hole:54.3,gap:217.4,mt:1.998,str:2.056,blur:0.554,pts:29,lo:2.7,hi:12.9},
+ {m:3,dz:10,mpar:3.1529,rho:0.5162,dsup:249,dinf:101.5,hole:51.1,gap:231.0,mt:2.998,str:3.104,blur:1.013,pts:24,lo:1.7,hi:8.7},
+ {m:3,dz:30,mpar:3.1491,rho:0.5144,dsup:246,dinf:106.6,hole:49.5,gap:231.0,mt:2.998,str:3.101,blur:0.985,pts:24,lo:1.7,hi:8.6},
+ {m:3,dz:70,mpar:3.1622,rho:0.5397,dsup:254,dinf:122.0,hole:55.7,gap:225.3,mt:2.998,str:3.111,blur:1.053,pts:23,lo:1.8,hi:8.9}
+];
+const PRESET_D = 278, PRESET_FIELD = 8;
+let ACTIVE = -1, VER = null;
+
+/* mede exatamente as mesmas grandezas da tabela, no mesmo campo de projeto */
+function convAt(O, n) {
+  const rays = [];
+  for (const p1 of pupil(n, G)) {
+    const t = trace(O, p1, G, -1, false);
+    if (t) rays.push(t);
+  }
+  return rays.length < 8 ? null : converge(rays);
+}
+function verify() {
+  if (!G) return null;
+  const e = 0.05, F = PRESET_FIELD;
+  const xp = convAt([e, 0, 0], 140), xm = convAt([-e, 0, 0], 140);
+  const zp = convAt([0, 0, e], 140), zm = convAt([0, 0, -e], 140);
+  const hf = convAt([F, 0, 0], 300);
+  if (!xp || !xm || !zp || !zm || !hf) return null;
+  const mt = (xp.P[0] - xm.P[0]) / (2 * e), mL = (zp.P[2] - zm.P[2]) / (2 * e);
+  return { mt, mL, str: mL / mt, blur: hf.rms, pts: Math.round(mt * F / hf.rms),
+           dsup: 2 * G.R1, dinf: 2 * G.R2, hole: 2 * G.hole,
+           gap: zTop(G.R1, G) - zBot(G.R2, G),
+           lo: VC ? VC.tmin : NaN, hi: VC ? VC.tmax : NaN };
+}
+function applyPreset(i) {
+  const P = PRESETS[i];
+  ACTIVE = i;
+  S.zmode = "unit"; S.magT = P.mpar; S.D = PRESET_D; S.dz = P.dz;
+  S.rho1 = P.rho; S.precomp = true; S.autoR2 = true;
+  const set = (id, val, fmt) => {
+    const el = document.getElementById(id); if (!el) return;
+    el.value = val;
+    const o = document.getElementById(id + "v"); if (o) o.textContent = fmt(val);
+  };
+  set("magT", S.magT, v => "×" + (+v).toFixed(2));
+  set("D", S.D, v => (+v).toFixed(0) + " mm");
+  set("dz", S.dz, v => "+" + (+v).toFixed(1) + " mm");
+  set("rho1", S.rho1, v => (v * 100).toFixed(0) + " %");
+  document.getElementById("cPre").checked = true;
+  document.getElementById("autoR2").checked = true;
+  document.getElementById("z1").disabled = true;
+  for (let k = 0; k < PRESETS.length; k++)
+    document.getElementById("pr" + k).setAttribute("aria-pressed", k === i);
+  document.getElementById("mUnit").setAttribute("aria-pressed", true);
+  document.getElementById("mMax").setAttribute("aria-pressed", false);
+  document.getElementById("mMan").setAttribute("aria-pressed", false);
+  document.getElementById("presetNote").textContent =
+    "×" + P.m + " a " + (P.dz / 10) + " cm — a coluna medida abaixo é recalculada do traçado, não copiada.";
+  mark(true);
+}
+(function buildPresets() {
+  const box = document.getElementById("presets");
+  if (!box) return;
+  box.innerHTML = PRESETS.map((P, i) =>
+    '<button id="pr' + i + '" aria-pressed="false"><b>×' + P.m + '</b>' + (P.dz / 10) + ' cm</button>').join("");
+  PRESETS.forEach((P, i) => document.getElementById("pr" + i).addEventListener("click", () => applyPreset(i)));
+})();
+
+/* ==========================================================
+   FICHA DE FABRICAÇÃO — tudo em cm
+   --------------------------------------------------------
+   Raio de curvatura no vértice de um elipsoide de semi-eixos
+   a (axial) e b (transversal):  Rv = b²/a
+   Constante cônica:             k  = b²/a² - 1   (elipse: -1 < k < 0)
+   No modo cópia 1:1 os dois espelhos saem com o MESMO k e semelhantes
+   por um fator linear z₂/D — um único molde, duas escalas.
+   ========================================================== */
+function specSheet() {
+  const box = document.getElementById("specList");
+  if (!box || !G) return;
+  const cm = x => (x / 10).toFixed(1).replace(".", ",");
+  const cm2 = x => (x / 10).toFixed(2).replace(".", ",");
+
+  const zR1 = zTop(G.R1, G), zR2 = zBot(G.R2, G);
+  const sag1 = G.D - zR1, sag2 = zR2;
+  const Rv1 = G.b1 * G.b1 / G.a1, k1 = G.b1 * G.b1 / (G.a1 * G.a1) - 1;
+  const Rv2 = G.b2 * G.b2 / G.a2, k2 = G.b2 * G.b2 / (G.a2 * G.a2) - 1;
+  const gap = zR1 - zR2;
+  const W = 2 * Math.max(G.R1, G.R2);
+  const imgTop = IMGZ + G.mL * S.osz * 0.55;
+  const sim = G.a2 / G.a1, mesmaCurva = Math.abs(k1 - k2) < 1e-3;
+
+  const R = [];
+  const row = (lb, vv, cls, mod) => R.push(
+    '<div class="r' + (mod ? " " + mod : "") + '"><span class="lb">' + lb +
+    '</span><span class="vv' + (cls ? " " + cls : "") + '">' + vv + '</span></div>');
+
+  row("Espelho superior", "⌀ " + cm(2 * G.R1), "", "hd");
+  row("flecha", cm(sag1), "", "sub");
+  row("raio no vértice", cm(Rv1), "", "sub");
+  row("constante cônica k", k1.toFixed(3).replace(".", ","), "", "sub");
+  row("semi-eixos a · b", cm(G.a1) + " · " + cm(G.b1), "", "sub");
+
+  row("Espelho inferior", "⌀ " + cm(2 * G.R2), "", "hd");
+  row("flecha", cm(sag2), "", "sub");
+  row("raio no vértice", cm(Rv2), "", "sub");
+  row("constante cônica k", k2.toFixed(3).replace(".", ","), mesmaCurva ? "good" : "", "sub");
+  row("semi-eixos a · b", cm(G.a2) + " · " + cm(G.b2), "", "sub");
+
+  row("Abertura e montagem", "", "", "hd");
+  row("furo no espelho superior", "⌀ " + cm(2 * G.hole), G.hole > G.R1 * 0.7 ? "bad" : "", "sub");
+  row("vértice a vértice", cm(G.D), "", "sub");
+  row("vão livre entre as bordas", cm(gap),
+      gap < 3 ? "bad" : gap < 10 ? "warn" : "good", "sub");
+
+  row("Envelope óptico", "", "", "hd");
+  row("largura × profundidade", cm(W) + " × " + cm(W), "", "sub");
+  row("altura dos espelhos", cm(G.D), "", "sub");
+  row("imagem acima do topo", cm(S.dz), "", "sub");
+  row("altura total na mesa", cm(imgTop), "good", "sub");
+
+  if (ACTIVE >= 0 && VER) {
+    const P = PRESETS[ACTIVE];
+    R.push('<div class="r hd"><span class="lb">Conferência ×' + P.m + ' · ' + (P.dz / 10)
+      + ' cm</span><span class="vv" style="font-size:9px;color:var(--mute)">prev · medido</span></div>');
+    const chk = (lb, exp, got, tol, fmt) => {
+      const ok = Math.abs(got - exp) <= tol;
+      R.push('<div class="r3"><span class="lb">' + lb + '</span><span class="e">' + fmt(exp)
+        + '</span><span class="m ' + (ok ? "ok" : "off") + '">' + fmt(got) + '</span></div>');
+    };
+    const f2 = v => v.toFixed(2).replace(".", ",");
+    const f3 = v => v.toFixed(3).replace(".", ",");
+    const fc = v => (v / 10).toFixed(1).replace(".", ",");
+    const fi = v => String(Math.round(v));
+    chk("aumento lateral m", P.mt, VER.mt, 0.04, f2);
+    chk("esticamento axial", P.str, VER.str, 0.05, f3);
+    chk("⌀ superior (cm)", P.dsup, VER.dsup, 2, fc);
+    chk("⌀ inferior (cm)", P.dinf, VER.dinf, 4, fc);
+    chk("furo (cm)", P.hole, VER.hole, 3, fc);
+    chk("vão entre bordas (cm)", P.gap, VER.gap, 6, fc);
+    chk("borrão a 8 mm (mm)", P.blur, VER.blur, 0.06, f2);
+    chk("pontos resolvidos", P.pts, VER.pts, 4, fi);
+    chk("lóbulo θ mín (°)", P.lo, VER.lo, 1.5, f2);
+    chk("lóbulo θ máx (°)", P.hi, VER.hi, 1.5, f2);
+  }
+
+  row("Fabricação", "", "", "hd");
+  row(mesmaCurva ? "mesma cônica nos dois" : "cônicas diferentes",
+      mesmaCurva ? "sim" : "não", mesmaCurva ? "good" : "warn", "sub");
+  row("inferior = superior ×", sim.toFixed(3).replace(".", ","),
+      mesmaCurva ? "good" : "", "sub");
+  box.innerHTML = R.join("");
+}
+
+/* ==========================================================
+   RODAPÉ 2D — elevação em escala, o lóbulo visto de lado
+   ========================================================== */
+const DISTS = [30, 60, 120];
+function drawErgo(E) {
+  const cv = document.getElementById("cErgo");
+  if (!cv || !VC) return;
+  const W = cv.parentElement.clientWidth, H = 176;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.height = H + "px";
+  const x = cv.getContext("2d");
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.clearRect(0, 0, W, H);
+
+  const padL = 26, padR = 12, padB = 20, padT = 8;
+  const xMax = 200, yMax = Math.max(200, E.eyeCm + 18);
+  const sx = (W - padL - padR) / xMax, sy = (H - padT - padB) / yMax;
+  const sc = Math.min(sx, sy * 1.0);
+  const PX = c => padL + c * sc;
+  const PY = c => H - padB - c * sc;
+  const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+
+  // piso e cotas
+  x.strokeStyle = css("--line-soft"); x.lineWidth = 1;
+  x.beginPath(); x.moveTo(padL - 14, PY(0)); x.lineTo(W - padR, PY(0)); x.stroke();
+  x.fillStyle = css("--mute"); x.font = '8px "IBM Plex Mono", monospace'; x.textAlign = "center";
+  for (let c = 0; c <= xMax; c += 50) {
+    x.beginPath(); x.moveTo(PX(c), PY(0)); x.lineTo(PX(c), PY(0) + 4); x.stroke();
+    x.fillText(c, PX(c), PY(0) + 13);
+  }
+
+  // mesa
+  if (S.tableH > 2) {
+    x.fillStyle = "rgba(38,66,78,.55)";
+    x.fillRect(PX(-8), PY(S.tableH), (32) * sc, 3);
+    x.fillRect(PX(6) - 2, PY(S.tableH), 4, S.tableH * sc);
+    x.fillRect(PX(18) - 2, PY(S.tableH), 4, S.tableH * sc);
+  }
+
+  // aparato esquemático
+  const ai = E.imgCm, base = S.tableH;
+  x.strokeStyle = css("--mint"); x.lineWidth = 1.6; x.globalAlpha = 0.85;
+  const rr = (G ? G.R2 : 80) / 10, dd = (G ? G.D : 130) / 10;
+  x.beginPath(); x.moveTo(PX(-rr), PY(base + dd * 0.42)); x.quadraticCurveTo(PX(0), PY(base - 2), PX(rr), PY(base + dd * 0.42)); x.stroke();
+  const r1 = (G ? G.R1 : 65) / 10, hl = (G ? G.hole : 20) / 10;
+  x.beginPath(); x.moveTo(PX(-r1), PY(base + dd * 0.72)); x.quadraticCurveTo(PX(-hl / 2), PY(base + dd), PX(-hl), PY(base + dd)); x.stroke();
+  x.beginPath(); x.moveTo(PX(hl), PY(base + dd)); x.quadraticCurveTo(PX(hl / 2), PY(base + dd), PX(r1), PY(base + dd * 0.72)); x.stroke();
+  x.globalAlpha = 1;
+
+  // lóbulos das outras aberturas
+  const ray = (thDeg, len) => {
+    const t = thDeg * Math.PI / 180;
+    return [len * Math.sin(t), ai + len * Math.cos(t)];
+  };
+  if (S.lobeFamily) {
+    x.strokeStyle = "#3E6B7A"; x.lineWidth = 1; x.globalAlpha = 0.55;
+    for (const f of FAM) for (const t of [f.tmin, f.tmax]) {
+      const p = ray(t, 260);
+      x.beginPath(); x.moveTo(PX(0), PY(ai)); x.lineTo(PX(p[0]), PY(p[1])); x.stroke();
+    }
+    x.globalAlpha = 1;
+  }
+
+  // lóbulo atual, preenchido
+  const L = 260, A = ray(E.tmin, L), B = ray(E.tmax, L);
+  x.beginPath();
+  x.moveTo(PX(0), PY(ai)); x.lineTo(PX(A[0]), PY(A[1]));
+  for (let i = 0; i <= 24; i++) {
+    const t = E.tmin + (E.tmax - E.tmin) * i / 24, p = ray(t, L);
+    x.lineTo(PX(p[0]), PY(p[1]));
+  }
+  x.closePath();
+  x.fillStyle = "rgba(143,227,200,.10)"; x.fill();
+  x.strokeStyle = css("--mint"); x.lineWidth = 1.3;
+  x.beginPath(); x.moveTo(PX(0), PY(ai)); x.lineTo(PX(B[0]), PY(B[1])); x.stroke();
+  x.strokeStyle = css("--warn");
+  x.beginPath(); x.moveTo(PX(0), PY(ai)); x.lineTo(PX(A[0]), PY(A[1])); x.stroke();
+
+  // imagem aérea
+  x.fillStyle = css("--amber");
+  x.beginPath(); x.arc(PX(0), PY(ai), 3, 0, 7); x.fill();
+
+  // marcas 30/60/120
+  for (const d of DISTS) {
+    const st = statusAt(d, E);
+    x.strokeStyle = st.cls === "ok" ? css("--mint") : css("--warn");
+    x.globalAlpha = 0.55; x.setLineDash([2, 3]); x.lineWidth = 1;
+    x.beginPath(); x.moveTo(PX(d), PY(0)); x.lineTo(PX(d), PY(E.eyeCm)); x.stroke();
+    x.setLineDash([]); x.globalAlpha = 1;
+    x.fillStyle = st.cls === "ok" ? css("--mint") : css("--warn");
+    x.font = '8px "IBM Plex Mono", monospace'; x.textAlign = "center";
+    x.fillText(st.cls === "ok" ? "✓" : "✗", PX(d), PY(E.eyeCm) - 4);
+  }
+
+  // observador
+  const dx = E.d, eh = E.eyeCm;
+  x.strokeStyle = E.inside ? css("--mint") : css("--warn"); x.lineWidth = 1.8;
+  x.beginPath(); x.moveTo(PX(dx), PY(0)); x.lineTo(PX(dx), PY(eh - 11)); x.stroke();
+  x.beginPath(); x.arc(PX(dx), PY(eh - 5), Math.max(3, 5.5 * sc), 0, 7); x.stroke();
+  x.fillStyle = E.inside ? css("--mint") : css("--warn");
+  x.beginPath(); x.arc(PX(dx) - 2, PY(eh), 2.2, 0, 7); x.fill();
+  // linha de visada
+  x.strokeStyle = E.inside ? css("--mint") : css("--warn");
+  x.globalAlpha = 0.5; x.setLineDash([3, 3]); x.lineWidth = 1;
+  x.beginPath(); x.moveTo(PX(dx), PY(eh)); x.lineTo(PX(0), PY(ai)); x.stroke();
+  x.setLineDash([]); x.globalAlpha = 1;
+
+  // tabela
+  const tab = document.getElementById("ergoTab");
+  if (tab) tab.innerHTML = DISTS.map(d => {
+    const st = statusAt(d, E);
+    return '<div class="' + st.cls + '"><span class="d">' + d + ' cm</span>'
+      + '<span class="a">θ ' + (isFinite(st.th) ? st.th.toFixed(0) : "—") + '°</span>'
+      + '<span class="t">' + st.txt + '</span></div>';
+  }).join("");
+  const nt = document.getElementById("ergoNote");
+  if (nt) nt.textContent = "olho " + E.eyeCm.toFixed(0) + " cm · imagem " + E.imgCm.toFixed(0)
+    + " cm · janela " + (isFinite(E.near) ? E.near.toFixed(0) + "–" + E.far.toFixed(0) : "—")
+    + " cm · ótimo " + (isFinite(E.opt) ? E.opt.toFixed(0) : "—") + " cm";
+}
+
+/* ==========================================================
+   CONSTRUÇÃO — objeto e imagem
+   ========================================================== */
+function buildObject() {
+  FIG = buildFigure(S.osz);
+  clear(gObj); meshes = [];
+  for (const s of FIG) {
+    const m = new THREE.Mesh(
+      new THREE.SphereGeometry(s.r, 22, 16),
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color(s.c[0], s.c[1], s.c[2]), metalness: 0.1, roughness: 0.5
+      }));
+    gObj.add(m); meshes.push(m);
+  }
+}
+
+function pointsMesh(list) {
+  const n = list.length;
+  const pos = new Float32Array(n * 3), sz = new Float32Array(n), tn = new Float32Array(n * 3);
+  list.forEach((o, i) => {
+    pos[i * 3] = o.p[0]; pos[i * 3 + 1] = o.p[2]; pos[i * 3 + 2] = o.p[1];
+    sz[i] = o.s;
+    tn[i * 3] = o.c[0]; tn[i * 3 + 1] = o.c[1]; tn[i * 3 + 2] = o.c[2];
+  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("size", new THREE.BufferAttribute(sz, 1));
+  geo.setAttribute("tint", new THREE.BufferAttribute(tn, 3));
+  return new THREE.Points(geo, cloudMat);
+}
+
+/* Mesma nuvem, exibida como splats gaussianos anisotrópicos-isotrópicos.
+   Reaproveita o mesmo swap óptico→three (x, z↑, y) do pointsMesh. O raio
+   em mm vem de o.w (borrão medido); sem o.w, cai para o tamanho de tela. */
+const _splatQuad = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,-1,0, 1,1,0, -1,1,0]);
+function splatMesh(list) {
+  const n = list.length;
+  const g = new THREE.InstancedBufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(_splatQuad, 3));
+  const iPos = new Float32Array(n * 3), iSize = new Float32Array(n), iTint = new Float32Array(n * 3);
+  list.forEach((o, i) => {
+    iPos[i * 3] = o.p[0]; iPos[i * 3 + 1] = o.p[2]; iPos[i * 3 + 2] = o.p[1];
+    iSize[i] = (o.w !== undefined) ? o.w : Math.max(1.0, (o.s - 3.2) * 0.14 + 1.0);
+    iTint[i * 3] = o.c[0]; iTint[i * 3 + 1] = o.c[1]; iTint[i * 3 + 2] = o.c[2];
+  });
+  g.setAttribute("iPos", new THREE.InstancedBufferAttribute(iPos, 3));
+  g.setAttribute("iSize", new THREE.InstancedBufferAttribute(iSize, 1));
+  g.setAttribute("iTint", new THREE.InstancedBufferAttribute(iTint, 3));
+  g.instanceCount = n;
+  const mesh = new THREE.Mesh(g, splatMat);
+  mesh.frustumCulled = false;   // bounding sphere da instância não cobre os offsets
+  return mesh;
+}
+
+/* nível 2: elipses orientadas pela covariância. Cada item traz a0,a1 (eixos
+   principais * σ, em coords ópticas); aplica o mesmo swap óptico→three. */
+function splatAnisoMesh(list) {
+  const n = list.length;
+  const g = new THREE.InstancedBufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(_splatQuad, 3));
+  const iPos = new Float32Array(n * 3), iA0 = new Float32Array(n * 3), iA1 = new Float32Array(n * 3), iTint = new Float32Array(n * 3);
+  list.forEach((o, i) => {
+    iPos[i * 3] = o.p[0]; iPos[i * 3 + 1] = o.p[2]; iPos[i * 3 + 2] = o.p[1];
+    const a0 = o.a0 || [1, 0, 0], a1 = o.a1 || [0, 0, 1];
+    iA0[i * 3] = a0[0]; iA0[i * 3 + 1] = a0[2]; iA0[i * 3 + 2] = a0[1];
+    iA1[i * 3] = a1[0]; iA1[i * 3 + 1] = a1[2]; iA1[i * 3 + 2] = a1[1];
+    iTint[i * 3] = o.c[0]; iTint[i * 3 + 1] = o.c[1]; iTint[i * 3 + 2] = o.c[2];
+  });
+  g.setAttribute("iPos", new THREE.InstancedBufferAttribute(iPos, 3));
+  g.setAttribute("iA0", new THREE.InstancedBufferAttribute(iA0, 3));
+  g.setAttribute("iA1", new THREE.InstancedBufferAttribute(iA1, 3));
+  g.setAttribute("iTint", new THREE.InstancedBufferAttribute(iTint, 3));
+  g.instanceCount = n;
+  const mesh = new THREE.Mesh(g, splatAnisoMat);
+  mesh.frustumCulled = false;
+  return mesh;
+}
+function imageMesh(list) {
+  if (S.render === "aniso") return splatAnisoMesh(list);
+  if (S.render === "splat") return splatMesh(list);
+  return pointsMesh(list);
+}
+
+function buildImage(draft) {
+  const sph = placeFigure(FIG, G);
+  OCC = sph;
+  {                                    // envolvente da peça inteira
+    let cx = 0, cy = 0, cz = 0;
+    for (const q of sph) { cx += q.c[0]; cy += q.c[1]; cz += q.c[2]; }
+    cx /= sph.length; cy /= sph.length; cz /= sph.length;
+    let rr = 0;
+    for (const q of sph) rr = Math.max(rr, Math.hypot(q.c[0] - cx, q.c[1] - cy, q.c[2] - cz) + q.r);
+    OCC_BS = { c: [cx, cy, cz], r: rr * 1.02 };
+  }
+  sph.forEach((s, i) => meshes[i].position.set(s.c[0], s.c[2], s.c[1]));
+
+  gObj.visible = (S.srcMode === "obj");
+  clear(gSrc);
+  let pts, errRms = NaN, depRange = NaN;
+  if (S.srcMode === "obj") {
+    pts = sampleFigure(sph, draft ? 2.6 : 1);
+    ENV = null;
+    const mn = document.getElementById("mapNote");
+    if (mn) mn.textContent = "A peça emite de onde ela realmente está. Nada de mapa.";
+    const mc = document.getElementById("cMap");
+    if (mc) { mc.height = 1; mc.style.height = "0px"; }
+  } else {
+    const base = sampleFigure(sph, 2.2);
+    ENV = buildEnvelope(sph, base, draft ? 96 : 192);
+    pts = sampleEnvelope(ENV, draft ? 2.6 : 1);
+    let se = 0, dlo = 1, dhi = 0;
+    for (const q of pts) {
+      se += (q.p[0] - q.t[0]) ** 2 + (q.p[1] - q.t[1]) ** 2 + (q.p[2] - q.t[2]) ** 2;
+      dlo = Math.min(dlo, q.dep); dhi = Math.max(dhi, q.dep);
+    }
+    errRms = pts.length ? Math.sqrt(se / pts.length) : NaN;
+    depRange = (dhi - dlo) * Math.max(ENV.A, ENV.C);
+    if (!draft) drawMap(ENV, errRms, depRange);
+    gSrc.add(pointsMesh(pts.map(q => ({ p: q.p, s: 3.4, c: q.c }))));
+  }
+  const P = pupil(draft ? 8 : 16, G);
+  const img = [];
+  let rmsSum = 0, rmsN = 0, sent = 0, got = 0;
+
+  for (const q of pts) {
+    const rays = [];
+    for (const p1 of P) {
+      sent++;
+      const d = unit(sub(p1, q.p));
+      if (dot(d, q.n) < 0.06) continue;        // face voltada para o lado errado
+      const t = trace(q.p, p1, G, q.si, true);
+      if (!t) continue;
+      got++;
+      rays.push(t);
+    }
+    if (rays.length < 4) continue;
+    const cv = converge(rays);
+    if (!cv || !isFinite(cv.P[2])) continue;
+    rmsSum += cv.rms; rmsN++;
+    const bl = Math.min(1, cv.rms / (0.05 * S.osz + 0.25));
+    let a0, a1;
+    if (S.render === "aniso") {                       // eixos principais do spot medido
+      const e = eig3(cv.cov), K = 2.6, cap = 16;
+      const fl = draft ? 1.6 : 1.0;
+      const s0 = Math.min(cap, Math.max(fl, Math.sqrt(Math.max(0, e.vals[0])) * K));
+      const s1 = Math.min(cap, Math.max(fl * 0.7, Math.sqrt(Math.max(0, e.vals[1])) * K));
+      a0 = [e.vecs[0][0] * s0, e.vecs[0][1] * s0, e.vecs[0][2] * s0];
+      a1 = [e.vecs[1][0] * s1, e.vecs[1][1] * s1, e.vecs[1][2] * s1];
+    }
+    img.push({
+      p: cv.P, s: 3.2 + bl * 10, a0, a1,
+      w: Math.min(16, Math.max(draft ? 2.0 : 1.2, cv.rms * 2.2)),   // raio do splat = borrão medido (mm)
+      c: [q.c[0] * (0.55 + 0.45 * (1 - bl)) + bl * 0.5,
+          q.c[1] * (0.55 + 0.45 * (1 - bl)),
+          q.c[2] * (0.55 + 0.45 * (1 - bl))]
+    });
+  }
+
+  let prop = NaN;
+  if (img.length > 20) {
+    const bb = a => { const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+      for (const q of a) for (let k = 0; k < 3; k++) {
+        lo[k] = Math.min(lo[k], q[k]); hi[k] = Math.max(hi[k], q[k]); }
+      return [Math.max(hi[0] - lo[0], hi[1] - lo[1]), hi[2] - lo[2]]; };
+    const bo = bb(sph.map(q => q.c)), bi = bb(img.map(q => q.p));
+    const compress = (S.precomp && S.zmode === "unit" && S.magT > 1.001) ? S.magT : 1;
+    const aspObj = (bo[1] * compress) / Math.max(1e-6, bo[0]);   // proporção original
+    const aspImg = bi[1] / Math.max(1e-6, bi[0]);
+    prop = aspImg / Math.max(1e-6, aspObj);
+  }
+  clear(gImg);
+  if (img.length) {
+    gImg.add(imageMesh(img));
+    let zc = 0; for (const q of img) zc += q.p[2];
+    IMGZ = zc / img.length;
+  }
+
+  /* contorno paraxial previsto: escala lateral m_t, escala em altura m_L */
+  if (S.ghost) {
+    const gh = [];
+    for (const s of sph) {
+      for (let i = 0; i < 26; i++) {
+        const a = i / 26 * 6.2832;
+        gh.push({
+          p: [G.mt * (s.c[0] + s.r * Math.cos(a)), G.mt * (s.c[1] + s.r * Math.sin(a)),
+              G.z2 + G.mL * s.c[2]],
+          s: 2.2, c: [0.30, 0.42, 0.52]
+        });
+      }
+    }
+    gImg.add(pointsMesh(gh));
+  }
+
+  /* feixe ilustrativo a partir do topo e da base da peça */
+  clear(gRay);
+  if (S.rays) {
+    const pos = [], col = [];
+    const seg = (A, B, c) => {
+      pos.push(A[0], A[2], A[1], B[0], B[2], B[1]);
+      col.push(c[0], c[1], c[2], c[0], c[1], c[2]);
+    };
+    let top = sph[0], bot = sph[0];
+    for (const s of sph) { if (s.c[2] > top.c[2]) top = s; if (s.c[2] < bot.c[2]) bot = s; }
+    const shoot = (O, c) => {
+      const N = 26;
+      for (let i = 0; i < N; i++) {
+        const u = (i + 0.5) / N;
+        const r = Math.sqrt(G.hole ** 2 + u * (G.R1 ** 2 - G.hole ** 2));
+        const ph = i * 2.399963229728653;
+        const t = trace(O, [r * Math.cos(ph), r * Math.sin(ph), zTop(r, G)], G, -1, false);
+        if (!t) continue;
+        const k = (G.z2 + 12 - t.P2[2]) / t.d[2];
+        seg(O, t.P1, c); seg(t.P1, t.P2, c);
+        seg(t.P2, [t.P2[0] + k * t.d[0], t.P2[1] + k * t.d[1], G.z2 + 12], c);
+      }
+    };
+    shoot([top.c[0], top.c[1], top.c[2] + top.r], [0.50, 0.72, 0.91]);
+    shoot([bot.c[0], bot.c[1], bot.c[2]], [0.95, 0.71, 0.36]);
+    const rg = new THREE.BufferGeometry();
+    rg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+    rg.setAttribute("color", new THREE.BufferAttribute(new Float32Array(col), 3));
+    gRay.add(new THREE.LineSegments(rg, new THREE.LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0.28 })));
+  }
+
+  if (!draft) { VER = verify(); report(rmsN ? rmsSum / rmsN : NaN, sent ? got / sent : 0, img.length, prop); }
+}
+
+/* ==========================================================
+   LEITURAS
+   ========================================================== */
+function report(rms, thru, npts, prop) {
+  const set = (id, txt, cls) => {
+    const el = document.getElementById(id);
+    el.innerHTML = txt; el.className = "v" + (cls ? " " + cls : "");
+  };
+  const stretch = G.mL / G.mt;   // = m_t : quanto a imagem estica em altura
+  set("hMt", G.mt.toFixed(3) + "<small>×</small>", Math.abs(G.mt - 1) < 0.02 ? "good" : "");
+  set("hMl", G.mL.toFixed(3) + "<small>×</small>", Math.abs(G.mL - 1) < 0.04 ? "good" : "");
+  set("hAn", stretch.toFixed(2) + "<small>×</small>",
+      Math.abs(stretch - 1) < 0.03 ? "good" : Math.abs(stretch - 1) > 0.4 ? "bad" : "warn");
+  set("hRms", isFinite(rms) ? rms.toFixed(2) + "<small>mm</small>" : "—",
+      rms < 0.4 ? "good" : rms > 1.5 ? "bad" : "");
+  set("hThru", (thru * 100).toFixed(0) + "<small>%</small>",
+      thru > 0.75 ? "good" : thru < 0.35 ? "bad" : "warn");
+  set("hD1", (2 * G.R1).toFixed(0) + "<small>mm</small>");
+  set("hD2", (2 * G.R2).toFixed(0) + "<small>mm</small>");
+  set("hHole", (2 * G.hole).toFixed(0) + "<small>mm</small>",
+      G.hole > G.R1 * 0.7 ? "bad" : "");
+  set("hSag", (G.D - zTop(G.R1, G)).toFixed(0) + " / " + zBot(G.R2, G).toFixed(0) + "<small>mm</small>");
+  set("hPts", npts.toString());
+  set("hProp", isFinite(prop) ? prop.toFixed(2) + "<small>×</small>" : "—",
+      Math.abs(prop - 1) < 0.08 ? "good" : Math.abs(prop - 1) > 0.35 ? "bad" : "warn");
+  specSheet();
+
+
+  document.getElementById("modeNote").textContent =
+    S.zmode === "unit" ? "z₁ = D·z₂/(D+z₂) — a imagem sai do mesmo tamanho do objeto em qualquer altura."
+    : S.zmode === "max" ? "z₁ = D²/(D+z₂) — abertura útil máxima, mas a imagem estica em altura."
+    : "z₁ livre. Longe dos dois critérios acima a luz começa a escapar pela borda.";
+}
+
+
+
+/* ==========================================================
+   INTERFACE
+   ========================================================== */
+function bind(id, key, fmt, optics) {
+  const el = document.getElementById(id), out = document.getElementById(id + "v");
+  if (!el) return;
+  el.value = S[key]; if (out) out.textContent = fmt(S[key]);
+  el.addEventListener("input", () => {
+    S[key] = parseFloat(el.value);
+    if (out) out.textContent = fmt(S[key]);
+    if (optics === "eye") {
+      if (key === "distH") { S.autoDist = false; document.getElementById("cAuto").checked = false; }
+      buildView(); return;
+    }
+    if (optics === "world") { buildWorld(); buildView(); return; }
+    if (optics === true && ACTIVE >= 0 && ["D", "dz", "rho1", "magT", "z1"].indexOf(id) >= 0) {
+      for (let k = 0; k < PRESETS.length; k++)
+        document.getElementById("pr" + k).setAttribute("aria-pressed", false);
+    }
+    mark(optics);
+  });
+}
+const deg = v => v.toFixed(0) + "°";
+const mm = v => v.toFixed(1) + " mm";
+
+bind("oyaw", "oyaw", deg, false);
+bind("opit", "opit", deg, false);
+bind("ooff", "ooff", mm, true);
+bind("osz", "osz", mm, "figure");
+bind("lean", "lean", deg, "figure");
+bind("arm", "arm", deg, "figure");
+bind("dz", "dz", v => "+" + v.toFixed(1) + " mm", true);
+bind("D", "D", v => v.toFixed(0) + " mm", true);
+bind("z1", "z1f", v => v.toFixed(2) + " · D", true);
+bind("magT", "magT", v => "×" + v.toFixed(2), true);
+bind("rho1", "rho1", v => (v * 100).toFixed(0) + " %", true);
+bind("rho2", "rho2", v => (v * 100).toFixed(0) + " %", true);
+bind("stature", "stature", v => v.toFixed(0) + " cm", "eye");
+bind("tableH", "tableH", v => v.toFixed(0) + " cm", "world");
+bind("distH", "distH", v => v.toFixed(0) + " cm", "eye");
+
+const modeBtns = { unit: "mUnit", max: "mMax", man: "mMan" };
+function setMode(m) {
+  S.zmode = m;
+  for (const k in modeBtns) document.getElementById(modeBtns[k]).setAttribute("aria-pressed", k === m);
+  document.getElementById("z1").disabled = m !== "man";
+  if (m !== "man") {
+    const g = design();
+    S.z1f = g.z1 / g.D;
+    document.getElementById("z1").value = S.z1f;
+    document.getElementById("z1v").textContent = S.z1f.toFixed(2) + " · D";
+  }
+  mark(true);
+}
+for (const k in modeBtns) document.getElementById(modeBtns[k]).onclick = () => setMode(k);
+
+document.getElementById("autoR2").addEventListener("change", e => {
+  S.autoR2 = e.target.checked;
+  document.getElementById("rho2").disabled = S.autoR2;
+  mark(true);
+});
+const KMODE = { obj: "kObj", elip: "kElip", cil: "kCil" };
+for (const k in KMODE) document.getElementById(KMODE[k]).addEventListener("click", () => {
+  S.srcMode = k;
+  for (const j in KMODE) document.getElementById(KMODE[j]).setAttribute("aria-pressed", j === k);
+  document.getElementById("cylRow").style.display = k === "cil" ? "" : "none";
+  mark(false);
+});
+bind("cylR", "cylR", v => (v * 100).toFixed(0) + " % da envoltória", false);
+
+document.getElementById("cPre").addEventListener("change", e => {
+  S.precomp = e.target.checked; mark(false);
+});
+/* ⌀ do espelho superior ótimo, por aumento e altura de projeção (mm) */
+const OPT = { 1: { 10: 210, 30: 220, 70: 258 }, 2: { 10: 234, 30: 231, 70: 242 },
+              3: { 10: 249, 30: 246, 70: 254 } };
+document.getElementById("btnOpt").addEventListener("click", () => {
+  const m = Math.max(1, Math.min(3, Math.round(S.magT)));
+  const dz = [10, 30, 70].reduce((a, b) => Math.abs(b - S.dz) < Math.abs(a - S.dz) ? b : a);
+  S.zmode = "unit"; S.magT = m; S.D = 278; S.dz = dz; S.precomp = true;
+  const g = design();
+  S.rho1 = Math.max(0.3, Math.min(0.94, (OPT[m][dz] / 2) / g.b1));
+  for (const [id, k, f] of [["magT", "magT", v => "×" + v.toFixed(2)],
+                            ["D", "D", v => v.toFixed(0) + " mm"],
+                            ["dz", "dz", v => "+" + v.toFixed(1) + " mm"],
+                            ["rho1", "rho1", v => (v * 100).toFixed(0) + " %"]]) {
+    document.getElementById(id).value = S[k];
+    document.getElementById(id + "v").textContent = f(S[k]);
+  }
+  document.getElementById("cPre").checked = true;
+  setMode("unit");
+});
+
+const RMODE = { points: "rPts", splat: "rSplat", aniso: "rAniso" };
+for (const k in RMODE) document.getElementById(RMODE[k]).addEventListener("click", () => {
+  S.render = k;
+  for (const j in RMODE) document.getElementById(RMODE[j]).setAttribute("aria-pressed", j === k);
+  buildImage(false);
+});
+document.getElementById("cCone").addEventListener("change", e => {
+  S.showCone = e.target.checked; buildView();
+});
+document.getElementById("cFam").addEventListener("change", e => {
+  S.lobeFamily = e.target.checked; mark(true);
+});
+document.getElementById("cWorld").addEventListener("change", e => {
+  S.showWorld = e.target.checked; buildWorld(); buildView();
+});
+document.getElementById("cAuto").addEventListener("change", e => {
+  S.autoDist = e.target.checked;
+  if (S.autoDist) {
+    const E = ergo();
+    if (isFinite(E.opt)) {
+      S.distH = Math.max(5, Math.min(200, Math.round(E.opt)));
+      document.getElementById("distH").value = S.distH;
+      document.getElementById("distHv").textContent = S.distH + " cm";
+    }
+  }
+  buildView();
+});
+for (const [id, v] of [["pPe", "pe"], ["pSent", "sent"]]) {
+  document.getElementById(id).addEventListener("click", () => {
+    S.posture = v;
+    document.getElementById("pPe").setAttribute("aria-pressed", v === "pe");
+    document.getElementById("pSent").setAttribute("aria-pressed", v === "sent");
+    buildView();
+  });
+}
+for (const [id, k, o] of [["cRays", "rays", false], ["cCut", "cut", true],
+                          ["cGhost", "ghost", false], ["cSpinObj", "spinObj", null],
+                          ["cSpinCam", "spinCam", null]]) {
+  document.getElementById(id).addEventListener("change", e => {
+    S[k] = e.target.checked; if (o !== null) mark(o);
+  });
+}
+document.getElementById("reset").onclick = () => {
+  orbit.th = Math.PI * 0.16; orbit.ph = Math.PI * 0.42; orbit.rad = 430;
+  orbit.tgt.set(0, design().z2 * 0.52, 0); place();
+};
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ==========================================================
+   AGENDAMENTO — rascunho enquanto arrasta, versão fina ao parar
+   ========================================================== */
+let needOptics = false, needFigure = false, needImage = false, settle = 0;
+function mark(kind) {
+  if (kind === "figure") { needFigure = true; needOptics = true; }
+  else if (kind) needOptics = true;
+  needImage = true; settle = performance.now() + 170;
+}
+
+buildOptics(); buildWorld(); buildFigure(S.osz); buildObject(); buildImage(false);
+if (S.autoDist) {
+  const E0 = ergo();
+  if (isFinite(E0.opt)) {
+    S.distH = Math.max(5, Math.min(200, Math.round(E0.opt)));
+    document.getElementById("distH").value = S.distH;
+    document.getElementById("distHv").textContent = S.distH + " cm";
+  }
+}
+buildView(); place();
+setMode("unit");
+
+(function loop() {
+  requestAnimationFrame(loop);
+  if (S.spinObj) {
+    S.oyaw = (S.oyaw + 0.55) % 360;
+    document.getElementById("oyaw").value = S.oyaw;
+    document.getElementById("oyawv").textContent = deg(S.oyaw);
+    needImage = true; settle = performance.now() + 170;
+  }
+  if (S.spinCam && !drag) { orbit.th += 0.0022; place(); }
+
+  if (needOptics || needFigure || needImage) {
+    const fine = performance.now() > settle && !S.spinObj;
+    if (needFigure) { buildFigure(S.osz); buildObject(); needFigure = false; }
+    if (needOptics) {
+      buildOptics(); buildWorld(); needOptics = false;
+      if (S.autoDist) {
+        const E0 = ergo();
+        if (isFinite(E0.opt)) {
+          S.distH = Math.max(5, Math.min(200, Math.round(E0.opt)));
+          const el = document.getElementById("distH");
+          el.value = S.distH;
+          document.getElementById("distHv").textContent = S.distH + " cm";
+        }
+      }
+    }
+    buildImage(!fine);
+    if (fine) { buildView(); needImage = false; }
+  }
+  placeEye();
+  renderer.render(scene, camera);
+})();
+
+}
+</script>
+</body>
+</html>

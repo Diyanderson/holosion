@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gravura especular no leito — disco riscado relayado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1317; --panel:#111E25; --line:#26424E; --line-soft:#1A2E37;
+  --mint:#8FE3C8; --amber:#F2B25C; --rose:#F2668B; --sky:#7FB6E8;
+  --paper:#DDE8EB; --mute:#7C99A4; --warn:#E2694A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink)}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--paper);
+  display:grid;grid-template-columns:286px 1fr;min-height:100vh}
+canvas{display:block}
+
+#ui{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--panel);
+  border-right:1px solid var(--line-soft);padding:16px 14px}
+#ui::-webkit-scrollbar{width:5px}
+#ui::-webkit-scrollbar-thumb{background:var(--line)}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 5px}
+h1{font-family:"Archivo Narrow","Arial Narrow",sans-serif;font-weight:700;
+  font-size:26px;line-height:1;margin:0;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--mint)}
+.lead{font-size:11.5px;color:var(--mute);margin:8px 0 0;line-height:1.45}
+.grp{border-top:1px solid var(--line-soft);padding-top:12px;margin-top:13px}
+.grp h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mint);margin:0 0 10px;font-weight:500}
+.row{margin-bottom:11px}
+.row label{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nm{font-size:11.5px}
+.vl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;
+  background:var(--line);outline:none;margin:7px 0 0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+  background:var(--mint);transform:rotate(45deg);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--mint);border:0;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--sky);outline-offset:4px}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);margin-bottom:10px}
+.seg button{flex:1 1 30%;background:transparent;border:0;color:var(--mute);padding:6px 2px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase}
+.seg button[aria-pressed=true]{background:var(--mint);color:#08130F;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.chk{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer;margin-bottom:6px}
+.chk input{accent-color:var(--mint);width:13px;height:13px}
+.btn{width:100%;margin-top:5px;background:transparent;border:1px solid var(--line);color:var(--paper);
+  padding:7px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase}
+.btn:hover{border-color:var(--mint);color:var(--mint)}
+.btn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.note{font-size:10.5px;color:var(--mute);line-height:1.4;margin:2px 0 0}
+#presets{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px}
+#presets button{background:transparent;border:1px solid var(--line);color:var(--mute);
+  padding:6px 2px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.35}
+#presets button b{display:block;font-size:12px;color:var(--paper);font-weight:600}
+#presets button[aria-pressed=true]{background:var(--mint);border-color:var(--mint);color:#08130F}
+#presets button[aria-pressed=true] b{color:#08130F}
+
+main{padding:16px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-content:start}
+.pn{background:var(--panel);border:1px solid var(--line-soft);min-width:0}
+.pn .eh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+.pn h4{font-family:"Archivo Narrow",sans-serif;font-weight:600;font-size:12.5px;
+  letter-spacing:.07em;text-transform:uppercase;margin:0}
+.pn .eh span{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--mute);text-align:right}
+.pn canvas{width:100%;height:auto;background:#05090B}
+#camWrap{position:relative}
+#camLbl{position:absolute;left:10px;top:8px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--mute);pointer-events:none}
+#hud{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
+  border:1px solid var(--line-soft);background:var(--panel)}
+#hud div{padding:8px 12px;border-right:1px solid var(--line-soft)}
+#hud .k{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);display:block;margin-bottom:2px}
+#hud .v{font-family:"IBM Plex Mono",monospace;font-size:14px}
+#hud .v.good{color:var(--mint)} #hud .v.bad{color:var(--warn)} #hud .v.warn{color:var(--amber)}
+#hud .v small{font-size:9px;color:var(--mute);margin-left:2px}
+.math{padding:10px 14px 14px;font-size:12px;line-height:1.5;color:var(--paper)}
+.math h5{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mint);margin:12px 0 4px;font-weight:500}
+.math h5:first-child{margin-top:2px}
+.math p{margin:0 0 4px;color:var(--mute)}
+.math code,.math pre{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+.math pre{margin:3px 0 6px;padding:6px 8px;background:#0A1419;border-left:2px solid var(--line);white-space:pre-wrap}
+#ver .r{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:4px 12px;align-items:baseline;
+  border-bottom:1px solid var(--line-soft)}
+#ver .lb{font-size:11px;color:var(--mute);line-height:1.3}
+#ver .m{font-family:"IBM Plex Mono",monospace;font-size:11.5px;text-align:right;white-space:nowrap}
+#ver .e{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--mute);text-align:right;white-space:nowrap}
+#ver .m.ok{color:var(--mint)} #ver .m.off{color:var(--warn)} #ver .m.info{color:var(--paper)}
+#busy{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--amber);min-height:14px;margin-top:6px}
+@media (max-width:1100px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside id="ui">
+  <p class="eyebrow">Holosion · etapa 9</p>
+  <h1>Gravura <em>especular</em> no leito</h1>
+  <p class="lead">Placa espelhada riscada no vértice do espelho inferior, iluminada por uma lâmpada no eixo.
+  Cada ponto do objeto vira um sulco fechado calculado por traçado reverso pelo relé. O que a câmera mostra
+  é traçado do olho até a placa — nada é desenhado. Não é holograma: é radiância por direção, sem fase.</p>
+
+  <div class="grp">
+    <h3>Óptica (presets calibrados)</h3>
+    <div id="presets"></div>
+    <p class="note" id="optNote"></p>
+  </div>
+
+  <div class="grp">
+    <h3>Objeto no espaço da imagem</h3>
+    <div class="seg" id="objSeg">
+      <button data-v="naves">2 naves</button><button data-v="trevo">trevo</button><button data-v="borromeo">borromeo</button>
+      <button data-v="cubo">cubo</button><button data-v="helice">hélice</button><button data-v="ponto">ponto</button>
+    </div>
+    <div class="row"><label><span class="nm">pontos</span><span class="vl" id="nptsv"></span></label>
+      <input type="range" id="npts" min="8" max="160" step="1"></div>
+    <div class="row"><label><span class="nm">meia-largura</span><span class="vl" id="sizev"></span></label>
+      <input type="range" id="size" min="1" max="8" step="0.25"></div>
+    <div class="row"><label><span class="nm">altura sobre o plano conjugado</span><span class="vl" id="h0v"></span></label>
+      <input type="range" id="h0" min="-8" max="14" step="0.5"></div>
+    <div class="row"><label><span class="nm">profundidade relativa</span><span class="vl" id="zkv"></span></label>
+      <input type="range" id="zk" min="0" max="1" step="0.05"></div>
+  </div>
+
+  <div class="grp">
+    <h3>Gravura</h3>
+    <div class="seg" id="modoSeg"><button data-v="laco">laço único</button><button data-v="seg">segmentado</button></div>
+    <div class="row"><label><span class="nm">setores (segmentado)</span><span class="vl" id="nsegv"></span></label>
+      <input type="range" id="nseg" min="4" max="24" step="1"></div>
+    <div class="row"><label><span class="nm">elevação de projeto θ</span><span class="vl" id="thDv"></span></label>
+      <input type="range" id="thD" min="0" max="40" step="0.1"></div>
+    <div class="seg" id="perfSeg"><button data-v="faceta">faceta 1 lado</button><button data-v="calha">calha simétrica</button><button data-v="fita">fita (normal exata)</button></div>
+    <div class="row"><label><span class="nm">largura do sulco</span><span class="vl" id="wv"></span></label>
+      <input type="range" id="w" min="0.02" max="0.3" step="0.01"></div>
+    <div class="row"><label><span class="nm">inclinação máx. da faceta τ</span><span class="vl" id="tauv"></span></label>
+      <input type="range" id="tau" min="3" max="30" step="0.5"></div>
+  </div>
+
+  <div class="grp">
+    <h3>Lâmpada no eixo</h3>
+    <div class="row"><label><span class="nm">altura acima da imagem</span><span class="vl" id="lampHv"></span></label>
+      <input type="range" id="lampH" min="30" max="300" step="5"></div>
+    <div class="row"><label><span class="nm">diâmetro do emissor ℓ</span><span class="vl" id="lampDv"></span></label>
+      <input type="range" id="lampD" min="0.3" max="6" step="0.1"></div>
+    <div class="row"><label><span class="nm">raio da órbita ρ (fora do eixo)</span><span class="vl" id="lampRv"></span></label>
+      <input type="range" id="lampR" min="0" max="20" step="0.5"></div>
+    <label class="chk"><input type="checkbox" id="anel"> anel de N LEDs · placa parada com N cópias</label>
+    <div class="row"><label><span class="nm">LEDs no anel N</span><span class="vl" id="nLedv"></span></label>
+      <input type="range" id="nLed" min="2" max="48" step="1"></div>
+    <div class="row"><label><span class="nm">LED aceso k</span><span class="vl" id="ledv"></span></label>
+      <input type="range" id="led" min="0" max="47" step="1"></div>
+    <p class="note" id="lampNote"></p>
+  </div>
+
+  <div class="grp">
+    <h3>Disco girante</h3>
+    <label class="chk"><input type="checkbox" id="spin"> girar (a placa; com anel, a luz)</label>
+    <div class="row"><label><span class="nm">velocidade</span><span class="vl" id="ratev"></span></label>
+      <input type="range" id="rate" min="5" max="120" step="5"></div>
+    <div class="row"><label><span class="nm">ângulo da placa α</span><span class="vl" id="alphav"></span></label>
+      <input type="range" id="alpha" min="0" max="360" step="1"></div>
+  </div>
+
+  <div class="grp">
+    <h3>Observador</h3>
+    <div class="row"><label><span class="nm">θ do olho (no lóbulo)</span><span class="vl" id="eyeThv"></span></label>
+      <input type="range" id="eyeTh" min="0" max="40" step="0.1"></div>
+    <div class="row"><label><span class="nm">azimute φ</span><span class="vl" id="eyePhv"></span></label>
+      <input type="range" id="eyePh" min="-180" max="180" step="1"></div>
+    <div class="row"><label><span class="nm">distância à imagem</span><span class="vl" id="eyeDistv"></span></label>
+      <input type="range" id="eyeDist" min="200" max="700" step="10"></div>
+    <div class="row"><label><span class="nm">resolução</span><span class="vl" id="resv"></span></label>
+      <input type="range" id="res" min="80" max="280" step="10"></div>
+    <label class="chk"><input type="checkbox" id="stereo"> estéreo de vista cruzada</label>
+    <label class="chk"><input type="checkbox" id="alvo"> sobrepor alvo (referência, não traçado)</label>
+  </div>
+
+  <div class="grp">
+    <button class="btn" id="bVer">verificar (traçado direto)</button>
+    <div id="busy"></div>
+  </div>
+
+  <div class="grp">
+    <h3>Exportar para impressão</h3>
+    <div class="row"><label><span class="nm">escala s (aparato e lâmpada × s)</span><span class="vl" id="escv"></span></label>
+      <input type="range" id="esc" min="1" max="20" step="0.5"></div>
+    <div class="row"><label><span class="nm">largura da linha</span><span class="vl" id="lwv"></span></label>
+      <input type="range" id="lw" min="0.2" max="0.8" step="0.05"></div>
+    <div class="row"><label><span class="nm">altura da camada</span><span class="vl" id="lhv"></span></label>
+      <input type="range" id="lh" min="0.08" max="0.4" step="0.02"></div>
+    <div class="row"><label><span class="nm">velocidade de impressão</span><span class="vl" id="velv"></span></label>
+      <input type="range" id="vel" min="5" max="40" step="1"></div>
+    <div class="row"><label><span class="nm">temperatura do bico</span><span class="vl" id="tBicov"></span></label>
+      <input type="range" id="tBico" min="180" max="260" step="5"></div>
+    <div class="row"><label><span class="nm">temperatura da mesa</span><span class="vl" id="tMesav"></span></label>
+      <input type="range" id="tMesa" min="0" max="110" step="5"></div>
+    <div class="row"><label><span class="nm">centro da mesa (x = y)</span><span class="vl" id="cMesav"></span></label>
+      <input type="range" id="cMesa" min="50" max="200" step="5"></div>
+    <div class="row"><label><span class="nm">base do STL</span><span class="vl" id="baseEv"></span></label>
+      <input type="range" id="baseE" min="0" max="3" step="0.2"></div>
+    <button class="btn" id="bGcode">G-code · camada única contínua</button>
+    <button class="btn" id="bStl">STL · fitas com faceta exata</button>
+    <p class="note" id="expNote"></p>
+  </div>
+</aside>
+
+<main>
+  <div id="hud"></div>
+
+  <section class="pn">
+    <div class="eh"><h4>Câmera do observador</h4><span id="camInfo"></span></div>
+    <div id="camWrap"><canvas id="cam" width="720" height="560"></canvas><div id="camLbl"></div></div>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Placa riscada · pullback</h4><span>cor = ponto do objeto que o sulco alimenta · ✦ = brilhos vistos agora</span></div>
+    <canvas id="plate" width="560" height="560"></canvas>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Corte meridional</h4><span>plano do olho · raios dos brilhos traçados</span></div>
+    <canvas id="cut" width="720" height="470"></canvas>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Verificação</h4><span>medido por traçado direto, sem usar o alvo</span></div>
+    <div id="ver"><div class="r"><span class="lb">Clique em “verificar”.</span><span></span><span></span></div></div>
+  </section>
+
+  <section class="pn" style="grid-column:1 / -1">
+    <div class="eh"><h4>A matemática</h4><span>spec §3.7</span></div>
+    <div class="math" style="columns:2 360px;column-gap:28px">
+      <h5>1 · O relé (o que já existia)</h5>
+      <p>Dois elipsoides prolatos coaxiais. M1 (superior) tem focos em 0 e z₁; M2 (inferior) em z₁ e z₂. O vértice de M2 (z = 0) é conjugado da imagem em z₂.</p>
+      <pre>z₁ = D·z₂/(m·D + z₂)    b₁² = D(D − z₁)    b₂² = z₁z₂
+reflexão: d' = d − 2(d·n̂)n̂      n ∝ (Pₓ/b², P_y/b², (P_z − c)/a²)</pre>
+      <h5>2 · O micro-espelho de um ponto</h5>
+      <p>Um espelho que faz a lâmpada L parecer estar em P é uma cônica de focos L e P: elipsoide se P é real (acima da placa), hiperboloide se virtual (abaixo). O risco é a versão de uma dimensão disso.</p>
+      <h5>3 · Inverso do relé</h5>
+      <p>Para um ponto X da placa e o alvo P na imagem, achar o ponto p de M1 tal que o raio X → p → M2 → abertura passe por P. Newton 2D sobre p:</p>
+      <pre>F(p) = (x, y)_saída(z = P_z) − (Pₓ, P_y) = 0
+ô(X) = (p − X)/|p − X|        direção com que a luz tem de sair da placa</pre>
+      <h5>4 · Normal exigida e campo de tangentes</h5>
+      <pre>L̂ = (X − L)/|X − L|           luz chegando da lâmpada
+n̂ = (ô − L̂)/|ô − L̂|          refl() invertido
+t̂ = ẑ × n̂ / |ẑ × n̂|           tangente do sulco</pre>
+      <p>Um sulco tem normais só no plano perpendicular à sua tangente: reflete se e só se <code>n̂·t̂ = 0</code>. Logo o sulco correto é a <b>curva integral</b> do campo t̂:</p>
+      <pre>dX/ds = t̂(X)        (RK2, passo ds = 2πR₀/120)</pre>
+      <h5>5 · Ponto no eixo → círculo</h5>
+      <p>Com lâmpada e P no eixo, tudo é meridional, t̂ é azimutal e a curva integral é um círculo centrado: <code>r ≈ δ·tan θ</code>. É o caso do disco de vinil. Fora do eixo: laço fechado de centro deslocado.</p>
+      <h5>6 · Faceta e gêmeo</h5>
+      <pre>inclinação τ = arccos(n̂_z)      lado s = sinal(n̂·ν̂)</pre>
+      <p>(ν̂ aponta para fora do laço.) Uma calha simétrica reflete pelos dois flancos e acende também o ponto gêmeo, espelhado no plano da placa (≈ −δ). Uma faceta de um lado só, inclinada para o lado s, apaga o gêmeo.</p>
+      <h5>7 · O que a câmera calcula, pixel a pixel</h5>
+      <p>Cada pixel é um raio do olho, refeito ao contrário: abertura → M2 → M1 → placa, chegando em X com direção ô. Ele acende se houver sulco em X e se:</p>
+      <pre>dist(X, sulco) < (w + f)/2              f = pegada do pixel na placa
+|n̂·t̂| < sen(½·atan(ℓ / 2|L − X|))         ℓ = diâmetro da lâmpada
+lado e inclinação compatíveis com a faceta
+L → X passa pelo furo</pre>
+      <h5>8 · Ponto aparente (verificação)</h5>
+      <p>Para cada olho, achar no sulco onde <code>(ô − L̂)·t̂</code> troca de sinal: lá está o brilho. Os raios de saída de 5 olhos lado a lado vão para <code>converge()</code> (mínimos quadrados sobre retas). O alvo P não entra nessa conta.</p>
+      <h5>9 · Disco girante</h5>
+      <p>Relé, placa e lâmpada no eixo têm simetria de revolução, então girar a placa de α gira a imagem de α, rigidamente:</p>
+      <pre>imagem(R_α · placa) = R_α · imagem(placa)</pre>
+      <p>Um observador parado vê o objeto girar e percorre todos os azimutes do anel. A paralaxe continua só horizontal: a profundidade de cada ponto muda com a altura da cabeça.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ==========================================================
+   ESTADO
+   ========================================================== */
+const PRESETS = [
+ {m:1,dz:10,mpar:1.0000,rho:0.5389},{m:1,dz:30,mpar:1.0000,rho:0.5745},{m:1,dz:70,mpar:1.0000,rho:0.6963},
+ {m:2,dz:10,mpar:2.0739,rho:0.5154},{m:2,dz:30,mpar:2.0727,rho:0.5147},{m:2,dz:70,mpar:2.0828,rho:0.5507},
+ {m:3,dz:10,mpar:3.1529,rho:0.5162},{m:3,dz:30,mpar:3.1491,rho:0.5144},{m:3,dz:70,mpar:3.1622,rho:0.5397}
+];
+const PRESET_D = 278, FIELD = 8;
+const S = {
+  preset: 0, obj: "naves", npts: 70, size: 5, h0: 6, zk: 0.5,
+  modo: "laco", nseg: 12, thD: NaN, perfil: "faceta", w: 0.06, tau: 15,
+  esc: 8, lw: 0.4, lh: 0.2, vel: 15, tBico: 210, tMesa: 60, cMesa: 110, baseE: 0,
+  lampH: 100, lampD: 2, lampR: 0, anel: false, nLed: 24, led: 0, ledAng: 0,
+  spin: false, rate: 30, alpha: 0,
+  eyeTh: NaN, eyePh: -90, eyeDist: 350, res: 170, stereo: false, alvo: false
+};
+const deg = Math.PI / 180;
+
+/* ==========================================================
+   ÓPTICA — mesmo núcleo dos outros simuladores
+   ========================================================== */
+let g = null, VC = null, L = null;
+function design() {
+  const P = PRESETS[S.preset], D = PRESET_D, z2 = D + P.dz;
+  const z1 = D * z2 / (P.mpar * D + z2);
+  const G = { D, z1, z2, c1: z1 / 2, a1: D - z1 / 2, b1: Math.sqrt(D * (D - z1)),
+              c2: (z1 + z2) / 2, a2: (z1 + z2) / 2, b2: Math.sqrt(z1 * z2), hole: 4, plateR: 0 };
+  G.mt = (D - z1) * z2 / (D * z1); G.R1 = P.rho * G.b1; G.R2 = 0.9 * G.b2;
+  return G;
+}
+const zTop = (r, G) => G.c1 + G.a1 * Math.sqrt(Math.max(0, 1 - r * r / (G.b1 * G.b1)));
+const zBot = (r, G) => G.c2 - G.a2 * Math.sqrt(Math.max(0, 1 - r * r / (G.b2 * G.b2)));
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const lerp = (a, b, w) => [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w];
+function unit(v) { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / m, v[1] / m, v[2] / m]; }
+function refl(d, n) { const u = unit(n), k = 2 * dot(d, u); return [d[0] - k * u[0], d[1] - k * u[1], d[2] - k * u[2]]; }
+const rotz = (v, a) => { const c = Math.cos(a), s = Math.sin(a); return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]]; };
+const dirTP = (th, ph) => [Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph), Math.cos(th)];
+function qroots(A, B, C) {
+  const dd = B * B - 4 * A * C; if (dd < 0) return null;
+  const s = Math.sqrt(dd); return [(-B - s) / (2 * A), (-B + s) / (2 * A)];
+}
+function hitEll(O, d, c, a, b, cap, rmin, rmax) {
+  const w = O[2] - c;
+  const A = d[2] * d[2] / (a * a) + (d[0] * d[0] + d[1] * d[1]) / (b * b);
+  const B = 2 * (w * d[2] / (a * a) + (O[0] * d[0] + O[1] * d[1]) / (b * b));
+  const C = w * w / (a * a) + (O[0] * O[0] + O[1] * O[1]) / (b * b) - 1;
+  const rt = qroots(A, B, C); if (!rt) return null;
+  let best = null;
+  for (const t of rt) {
+    if (t < 1e-6) continue;
+    const P = [O[0] + t * d[0], O[1] + t * d[1], O[2] + t * d[2]];
+    if (cap === "up" ? P[2] < c : P[2] > c) continue;
+    const r = Math.hypot(P[0], P[1]);
+    if (r < rmin - 1e-9 || r > rmax + 1e-9) continue;
+    if (!best || t < best.t) best = { t, P };
+  }
+  return best;
+}
+const nEll = (P, c, a, b) => [P[0] / (b * b), P[1] / (b * b), (P[2] - c) / (a * a)];
+
+/* --- um raio: placa -> superior -> inferior -> saída.
+   A placa cobre o miolo do espelho inferior: raio que desce ali bate nela. --- */
+function trace(O, P1) {
+  const d1 = unit(sub(P1, O));
+  const d2 = refl(d1, nEll(P1, g.c1, g.a1, g.b1));
+  const h2 = hitEll(P1, d2, g.c2, g.a2, g.b2, "low", 0, g.R2);
+  if (!h2) return null;
+  const P2 = h2.P;
+  if (Math.hypot(P2[0], P2[1]) < g.plateR) return null;
+  const d3 = refl(d2, nEll(P2, g.c2, g.a2, g.b2));
+  if (d3[2] <= 1e-9) return null;
+  if (hitEll(P2, d3, g.c1, g.a1, g.b1, "up", g.hole, g.R1)) return null;
+  return { P1, P2, d: d3 };
+}
+
+function fitAperture(G, fieldR) {
+  const field = [[0, 0]];
+  for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; field.push([fieldR * Math.cos(a), fieldR * Math.sin(a)]); }
+  for (let it = 0; it < 3; it++) {
+    let needR2 = 0, needHole = 0;
+    for (const f of field) {
+      const O = [f[0], f[1], 0];
+      for (let i = 0; i < 46; i++) {
+        const r = G.hole + (G.R1 - G.hole) * (i + 0.5) / 46;
+        for (let j = 0; j < 4; j++) {
+          const ph = j * Math.PI / 2;
+          const P1 = [r * Math.cos(ph), r * Math.sin(ph), zTop(r, G)];
+          const d1 = unit(sub(P1, O));
+          const d2 = refl(d1, nEll(P1, G.c1, G.a1, G.b1));
+          const h2 = hitEll(P1, d2, G.c2, G.a2, G.b2, "low", 0, G.b2 * 0.9995);
+          if (!h2) continue;
+          needR2 = Math.max(needR2, Math.hypot(h2.P[0], h2.P[1]));
+          const d3 = refl(d2, nEll(h2.P, G.c2, G.a2, G.b2));
+          if (d3[2] <= 0) continue;
+          const k2 = (G.D - h2.P[2]) / d3[2];
+          needHole = Math.max(needHole, Math.hypot(h2.P[0] + k2 * d3[0], h2.P[1] + k2 * d3[1]));
+        }
+      }
+    }
+    G.R2 = Math.min(G.b2 * 0.999, needR2 * 1.02);
+    G.hole = Math.max(2.5, Math.min(G.R1 * 0.88, needHole * 1.05));
+  }
+}
+
+function viewCone(fieldR) {
+  const scan = (O, n) => {
+    const A = [];
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.5) / n, r = Math.sqrt(g.hole * g.hole + u * (g.R1 * g.R1 - g.hole * g.hole));
+      const ph = i * 2.399963229728653;
+      const t = trace(O, [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)]);
+      if (t) A.push(Math.acos(Math.max(-1, Math.min(1, unit(t.d)[2]))) / deg);
+    }
+    return A.sort((a, b) => a - b);
+  };
+  const ax = scan([0, 0, 0], 300);
+  if (!ax.length) return null;
+  let lo = ax[0], hi = ax[ax.length - 1];
+  for (let k = 0; k < 6; k++) {
+    const a = k / 6 * 6.2832, c = scan([fieldR * Math.cos(a), fieldR * Math.sin(a), 0], 150);
+    if (!c.length) continue;
+    lo = Math.max(lo, c[0]); hi = Math.min(hi, c[c.length - 1]);
+  }
+  if (hi <= lo) { lo = ax[0]; hi = ax[ax.length - 1]; }
+  return { tmin: lo, tmax: hi, tmed: ax[Math.floor(ax.length / 2)] };
+}
+
+/* --- ponto de convergência de um feixe (mínimos quadrados sobre retas) --- */
+function converge(rays) {
+  const m = [0, 0, 0, 0, 0, 0, 0, 0, 0], v = [0, 0, 0];
+  for (const { P2, d } of rays) {
+    const u = unit(d);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      const w = (i === j ? 1 : 0) - u[i] * u[j];
+      m[i * 3 + j] += w; v[i] += w * P2[j];
+    }
+  }
+  const det = m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]);
+  if (Math.abs(det) < 1e-12) return null;
+  const dt2 = (a, b, c, d) => a * d - b * c;
+  const col = k => {
+    const n = m.slice(); n[k] = v[0]; n[k + 3] = v[1]; n[k + 6] = v[2];
+    return (n[0] * dt2(n[4], n[5], n[7], n[8]) - n[1] * dt2(n[3], n[5], n[6], n[8]) + n[2] * dt2(n[3], n[4], n[6], n[7])) / det;
+  };
+  return { P: [col(0), col(1), col(2)] };
+}
+
+/* ==========================================================
+   TRAÇADO REVERSO E INVERSO DO RELÉ
+   ========================================================== */
+/* raio que desce de E com direção dd, refeito ao contrário: abertura -> M2 -> M1 -> placa (z = 0) */
+function backRay(E, dd) {
+  if (dd[2] >= 0) return null;
+  const k = (g.D - E[2]) / dd[2];
+  if (k > 0 && Math.hypot(E[0] + k * dd[0], E[1] + k * dd[1]) > g.hole) return null;   // verso do superior
+  const h2 = hitEll(E, dd, g.c2, g.a2, g.b2, "low", 0, g.R2);
+  if (!h2) return null;
+  if (Math.hypot(h2.P[0], h2.P[1]) < g.plateR) {                   // enxerga a placa direto pelo furo
+    const t = -E[2] / dd[2];
+    return { X: [E[0] + t * dd[0], E[1] + t * dd[1], 0], o: mul(dd, -1), direto: true };
+  }
+  const d1 = refl(dd, nEll(h2.P, g.c2, g.a2, g.b2));
+  const h1 = hitEll(h2.P, d1, g.c1, g.a1, g.b1, "up", g.hole, g.R1);
+  if (!h1) return null;
+  const d2 = refl(d1, nEll(h1.P, g.c1, g.a1, g.b1));
+  if (d2[2] >= 0) return null;
+  const t = -h1.P[2] / d2[2];
+  return { X: [h1.P[0] + t * d2[0], h1.P[1] + t * d2[1], 0], o: mul(d2, -1), P2: h2.P, P1: h1.P };
+}
+
+/* da placa X, qual direção sai e, depois do relé, passa por Q? Newton 2D no ponto de M1 */
+function exitThrough(X, Q, seed) {
+  const f = p => {
+    const r = Math.hypot(p[0], p[1]); if (r < g.hole || r > g.R1) return null;
+    const t = trace(X, [p[0], p[1], zTop(r, g)]); if (!t) return null;
+    const k = (Q[2] - t.P2[2]) / t.d[2];
+    return { e: [t.P2[0] + k * t.d[0] - Q[0], t.P2[1] + k * t.d[1] - Q[1]], t };
+  };
+  let p = seed ? seed.slice() : null;
+  if (!p) {
+    let best = 1e9;
+    for (let i = 0; i < 400; i++) {
+      const u = (i + .5) / 400, r = Math.sqrt(g.hole ** 2 + u * (g.R1 ** 2 - g.hole ** 2)), ph = i * 2.399963229728653;
+      const q = [r * Math.cos(ph), r * Math.sin(ph)], v = f(q);
+      if (v) { const e = Math.hypot(v.e[0], v.e[1]); if (e < best) { best = e; p = q; } }
+    }
+    if (!p) return null;
+  }
+  for (let it = 0; it < 25; it++) {
+    const v = f(p); if (!v) return null;
+    if (Math.hypot(v.e[0], v.e[1]) < 1e-10) {
+      return { p, t: v.t, o: unit(sub([p[0], p[1], zTop(Math.hypot(p[0], p[1]), g)], X)) };
+    }
+    const h = 1e-5, a = f([p[0] + h, p[1]]), b = f([p[0], p[1] + h]); if (!a || !b) return null;
+    const J0 = (a.e[0] - v.e[0]) / h, J1 = (b.e[0] - v.e[0]) / h, J2 = (a.e[1] - v.e[1]) / h, J3 = (b.e[1] - v.e[1]) / h;
+    const det = J0 * J3 - J1 * J2; if (Math.abs(det) < 1e-14) return null;
+    p = [p[0] - (J3 * v.e[0] - J1 * v.e[1]) / det, p[1] - (-J2 * v.e[0] + J0 * v.e[1]) / det];
+  }
+  return null;
+}
+
+/* lâmpada pontual, no eixo ou na órbita de raio ρ: a luz até X (referencial do mundo) tem de passar pelo furo.
+   No anel, o LED k fica em β_k = 2πk/N; a cópia k da placa é a cópia 0 girada de β_k. */
+const lampAt = k => { const b = S.anel ? 2 * Math.PI * k / S.nLed : 0; return [S.lampR * Math.cos(b), S.lampR * Math.sin(b), g.z2 + S.lampH]; };
+function setLamp() { S.led = S.anel ? Math.min(S.led, S.nLed - 1) : 0; L = lampAt(S.led); }
+const lampOK = X => { const k = g.D / L[2]; return Math.hypot(X[0] + (L[0] - X[0]) * k, X[1] + (L[1] - X[1]) * k) < g.hole; };
+
+/* ==========================================================
+   PROJETO DOS SULCOS
+   normal exigida n ∝ ô − L̂ ; tangente t ∝ ẑ × n ; sulco = curva integral de t
+   ========================================================== */
+function field(X, P, seed) {
+  const s = exitThrough(X, P, seed); if (!s) return null;
+  const n = unit(sub(s.o, unit(sub(X, L))));
+  const t = unit([-n[1], n[0], 0]);
+  return { t, n, p: s.p };
+}
+function integ(P, X0, p0, sgn, ds, nmax, stop) {
+  const out = []; let X = X0, p = p0, prevT = null, turn = 0;
+  for (let i = 0; i < nmax; i++) {
+    const f1 = field(X, P, p); if (!f1) break;
+    let t1 = f1.t;
+    if (prevT) { if (t1[0] * prevT[0] + t1[1] * prevT[1] < 0) t1 = mul(t1, -1); }
+    else if (sgn < 0) t1 = mul(t1, -1);
+    const Xm = [X[0] + t1[0] * ds / 2, X[1] + t1[1] * ds / 2, 0];
+    const f2 = field(Xm, P, f1.p); if (!f2) break;
+    let t2 = f2.t; if (t2[0] * t1[0] + t2[1] * t1[1] < 0) t2 = mul(t2, -1);
+    const Xn = [X[0] + t2[0] * ds, X[1] + t2[1] * ds, 0];
+    if (!lampOK(Xn)) break;
+    if (prevT) turn += Math.atan2(prevT[0] * t2[1] - prevT[1] * t2[0], prevT[0] * t2[0] + prevT[1] * t2[1]);
+    const f3 = field(Xn, P, f2.p); if (!f3) break;
+    out.push({ X: Xn, n: f3.n, p: f3.p });
+    X = Xn; p = f3.p; prevT = t2;
+    if (stop && stop(Xn, i, turn)) { out.stopped = true; break; }
+  }
+  return out;
+}
+function seedAt(P, ph) {                          // onde o olho na elevação de projeto, azimute ph, vê o brilho de P
+  const b = backRay(P, mul(dirTP(S.thD * deg, ph), -1));
+  return b && !b.direto ? b : null;
+}
+function finishGroove(pid, verts, c, closed) {
+  const N = verts.length; if (N < 3) return null;
+  const X = verts.map(v => v.X), n = verts.map(v => v.n), t = [], side = [];
+  for (let i = 0; i < N; i++) {
+    const a = closed ? X[(i - 1 + N) % N] : X[Math.max(0, i - 1)], b = closed ? X[(i + 1) % N] : X[Math.min(N - 1, i + 1)];
+    const ti = unit([b[0] - a[0], b[1] - a[1], 0]); t.push(ti);
+    const nu = unit([X[i][0] - c[0], X[i][1] - c[1], 0]);
+    side.push(Math.sign(dot(n[i], nu)) || 1);
+  }
+  let tmax = 0; for (const v of n) tmax = Math.max(tmax, Math.acos(Math.min(1, v[2])) / deg);
+  let len = 0; for (let i = 1; i < N; i++) len += Math.hypot(X[i][0] - X[i - 1][0], X[i][1] - X[i - 1][1]);
+  if (closed) len += Math.hypot(X[0][0] - X[N - 1][0], X[0][1] - X[N - 1][1]);
+  let R = 0; for (const x of X) R += Math.hypot(x[0] - c[0], x[1] - c[1]); R /= N;
+  return { pid, X, n, t, side, c, closed, tmax, len, R };
+}
+function designPoint(P, pid) {
+  const seeds = [];
+  for (let k = 0; k < 4; k++) { const s = seedAt(P, k * Math.PI / 2); if (s) seeds.push(s.X); }
+  if (seeds.length < 2) return [];
+  const c = [0, 0]; for (const s of seeds) { c[0] += s[0] / seeds.length; c[1] += s[1] / seeds.length; }
+  let R0 = 0; for (const s of seeds) R0 += Math.hypot(s[0] - c[0], s[1] - c[1]) / seeds.length;
+  if (R0 < 0.02) return [];                        // ponto no plano conjugado: brilho parado, sem sulco
+  const ds = 2 * Math.PI * R0 / 120;
+  const out = [];
+  if (S.modo === "laco") {
+    const b0 = seedAt(P, 0); if (!b0) return [];
+    const f0 = field(b0.X, P, [b0.P1[0], b0.P1[1]]); if (!f0) return [];
+    const v0 = { X: b0.X, n: f0.n, p: f0.p };
+    const fwd = integ(P, b0.X, f0.p, 1, ds, 200,
+      (X, i, turn) => i > 20 && (Math.hypot(X[0] - b0.X[0], X[1] - b0.X[1]) < ds * 0.9 || Math.abs(turn) > 2 * Math.PI - 0.02));
+    if (fwd.stopped) {
+      const last = fwd[fwd.length - 1];
+      if (Math.hypot(last.X[0] - b0.X[0], last.X[1] - b0.X[1]) < ds * 0.5) fwd.pop();
+      const gr = finishGroove(pid, [v0, ...fwd], c, true); if (gr) out.push(gr);
+    } else {
+      const bwd = integ(P, b0.X, f0.p, -1, ds, 200);
+      const gr = finishGroove(pid, [...bwd.reverse(), v0, ...fwd], c, false); if (gr) out.push(gr);
+    }
+  } else {
+    const N = S.nseg, half = Math.PI / N;
+    for (let k = 0; k < N; k++) {
+      const b0 = seedAt(P, k * 2 * half); if (!b0) continue;
+      const f0 = field(b0.X, P, [b0.P1[0], b0.P1[1]]); if (!f0) continue;
+      const a0 = Math.atan2(b0.X[1] - c[1], b0.X[0] - c[0]);
+      const stop = X => { let d = Math.atan2(X[1] - c[1], X[0] - c[0]) - a0; d = Math.atan2(Math.sin(d), Math.cos(d)); return Math.abs(d) > half; };
+      const fwd = integ(P, b0.X, f0.p, 1, ds, 120, stop), bwd = integ(P, b0.X, f0.p, -1, ds, 120, stop);
+      const gr = finishGroove(pid, [...bwd.reverse(), { X: b0.X, n: f0.n, p: f0.p }, ...fwd], c, false);
+      if (gr) out.push(gr);
+    }
+  }
+  return out;
+}
+
+/* ==========================================================
+   OBJETOS DE ARAME — no espaço da IMAGEM, centrados em (0, 0, z₂ + h₀)
+   ========================================================== */
+function edges(V, E) { return E.map(([a, b]) => t => lerp(V[a], V[b], t)); }
+function curves() {
+  const TAU = 2 * Math.PI;
+  switch (S.obj) {
+    case "trevo": return [t => { const a = TAU * t; return [(Math.sin(a) + 2 * Math.sin(2 * a)) / 3, (Math.cos(a) - 2 * Math.cos(2 * a)) / 3, -Math.sin(3 * a)]; }];
+    case "borromeo": {
+      const a = 1, b = 0.5;
+      return [t => [a * Math.cos(TAU * t), b * Math.sin(TAU * t), 0],
+              t => [0, a * Math.cos(TAU * t), b * Math.sin(TAU * t)],
+              t => [b * Math.sin(TAU * t), 0, a * Math.cos(TAU * t)]];
+    }
+    case "cubo": {
+      const V = []; for (let i = 0; i < 8; i++) V.push([(i & 1 ? 1 : -1) * 0.6, (i & 2 ? 1 : -1) * 0.6, (i & 4 ? 1 : -1) * 0.6]);
+      const R = v => { const a = 30 * deg, b = 25 * deg;
+        const x = v[0] * Math.cos(a) - v[1] * Math.sin(a), y = v[0] * Math.sin(a) + v[1] * Math.cos(a);
+        return [x, y * Math.cos(b) - v[2] * Math.sin(b), y * Math.sin(b) + v[2] * Math.cos(b)]; };
+      const E = [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+      return edges(V.map(R), E);
+    }
+    case "helice": return [t => [0.8 * Math.cos(TAU * 2 * t), 0.8 * Math.sin(TAU * 2 * t), 2 * t - 1]];
+    case "ponto": return [];
+    default: {                                     // duas naves genéricas em cunha, frente a frente
+      const ship = (cx, cy, cz, yaw, s) => {
+        const B = [[0, 1, 0], [-0.55, -0.6, 0], [0.55, -0.6, 0], [0, -0.45, 0.5], [0, -0.6, -0.15]];
+        const V = B.map(v => { const r = rotz(v, yaw); return [cx + s * r[0], cy + s * r[1], cz + s * r[2]]; });
+        return edges(V, [[0,1],[0,2],[1,2],[0,3],[3,1],[3,2],[0,4],[4,1],[4,2]]);
+      };
+      return [...ship(0.5, 0.05, 0.6, -20 * deg, 0.48), ...ship(-0.5, -0.05, -0.6, 160 * deg, 0.48)];
+    }
+  }
+}
+function samplePoints() {
+  const C = [0, 0, g.z2 + S.h0];
+  if (S.obj === "ponto") return [C];
+  const cs = curves(), lens = cs.map(f => { let l = 0, p = f(0); for (let i = 1; i <= 200; i++) { const q = f(i / 200); l += Math.hypot(...sub(q, p)); p = q; } return l; });
+  const tot = lens.reduce((a, b) => a + b, 0), pts = [];
+  cs.forEach((f, k) => {
+    const n = Math.max(2, Math.round(S.npts * lens[k] / tot));
+    for (let i = 0; i < n; i++) {
+      const u = f((i + 0.5) / n);
+      pts.push([u[0] * S.size, u[1] * S.size, C[2] + u[2] * S.size * S.zk]);
+    }
+  });
+  return pts;
+}
+
+/* ==========================================================
+   CONSTRUÇÃO
+   ========================================================== */
+let CONT = [0, 0], PTS = [], GROOVES = [], SEGS = null, SKIP = 0, DESIGN_MS = 0, HITS = [], BUILD_ID = 0;
+const hue = i => (i / Math.max(1, PTS.length)) * 300;
+function hsl(h, s, l) {
+  s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [f(0) * 255, f(8) * 255, f(4) * 255];
+}
+function setOptics() {
+  g = design(); fitAperture(g, FIELD);
+  VC = viewCone(FIELD);
+  if (!isFinite(S.thD) || S.thD < VC.tmin || S.thD > VC.tmax) S.thD = VC.tmed;
+  if (!isFinite(S.eyeTh) || S.eyeTh < VC.tmin || S.eyeTh > VC.tmax) S.eyeTh = S.thD;
+  L = lampAt(0);
+}
+function build() {
+  const id = ++BUILD_ID;
+  setOptics();
+  PTS = samplePoints(); GROOVES = []; SKIP = 0;
+  // raio da placa: do lugar dos brilhos de projeto, antes de integrar (a placa tapa o miolo de M2)
+  g.plateR = 0;
+  let rmax = 0;
+  for (const P of PTS) for (let k = 0; k < 8; k++) { const s = seedAt(P, k * Math.PI / 4); if (s) rmax = Math.max(rmax, Math.hypot(s.X[0], s.X[1])); }
+  g.plateR = rmax + 0.6;
+  const t0 = performance.now(); let i = 0;
+  const busy = document.getElementById("busy");
+  const step = () => {
+    if (id !== BUILD_ID) return;
+    const tEnd = performance.now() + 40;
+    while (i < PTS.length && performance.now() < tEnd) {
+      const P = PTS[i], δ = P[2] - g.z2;
+      const grs = Math.abs(δ) < 0.25 ? [] : designPoint(P, i);
+      if (!grs.length) SKIP++;
+      GROOVES.push(...grs); i++;
+    }
+    busy.textContent = i < PTS.length ? "calculando sulcos… " + i + "/" + PTS.length : "";
+    if (i < PTS.length) { setTimeout(step, 0); return; }
+    DESIGN_MS = performance.now() - t0;
+    for (const gr of GROOVES) gr.copia = 0;
+    if (S.anel) GROOVES = copiasAnel(GROOVES);
+    setLamp(); buildHash(); renderAll(); expNote();
+  };
+  step();
+}
+
+/* anel: a placa é invariante por giro de 2π/N — cópia k = cópia 0 girada de β_k (sulcos, normais, tangentes, centros) */
+function copiasAnel(base) {
+  const out = [];
+  for (let k = 0; k < S.nLed; k++) {
+    const b = 2 * Math.PI * k / S.nLed;
+    for (const gr of base) out.push(k ? { ...gr, copia: k, X: gr.X.map(v => rotz(v, b)), n: gr.n.map(v => rotz(v, b)),
+      t: gr.t.map(v => rotz(v, b)), c: rotz([gr.c[0], gr.c[1], 0], b).slice(0, 2) } : gr);
+  }
+  return out;
+}
+
+/* --- grade espacial de segmentos de sulco, no referencial da placa --- */
+const CELL = 0.2;
+function buildHash() {
+  const segs = [], map = new Map();
+  for (const gr of GROOVES) {
+    const N = gr.X.length, M = gr.closed ? N : N - 1;
+    for (let i = 0; i < M; i++) {
+      const j = (i + 1) % N, A = gr.X[i], B = gr.X[j];
+      const s = { ax: A[0], ay: A[1], bx: B[0], by: B[1], tx: gr.t[i][0], ty: gr.t[i][1], ux: gr.t[j][0], uy: gr.t[j][1],
+                  side: gr.side[i], cx: gr.c[0], cy: gr.c[1], pid: gr.pid, copia: gr.copia,
+                  na: gr.n[i], nb: gr.n[j] };
+      const id = segs.push(s) - 1, pad = 0.35;
+      const x0 = Math.floor((Math.min(A[0], B[0]) - pad) / CELL), x1 = Math.floor((Math.max(A[0], B[0]) + pad) / CELL);
+      const y0 = Math.floor((Math.min(A[1], B[1]) - pad) / CELL), y1 = Math.floor((Math.max(A[1], B[1]) + pad) / CELL);
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+        const k = x * 65536 + y; let a = map.get(k); if (!a) map.set(k, a = []); a.push(id);
+      }
+    }
+  }
+  SEGS = { segs, map };
+}
+
+/* ==========================================================
+   CÂMERA DO OBSERVADOR — traçado pixel a pixel
+   ========================================================== */
+function eyePos(off) {
+  const C = [0, 0, g.z2 + S.h0], ph = S.eyePh * deg;
+  const E = add(C, mul(dirTP(S.eyeTh * deg, ph), S.eyeDist));
+  return add(E, mul([-Math.sin(ph), Math.cos(ph), 0], off));
+}
+function renderEye(E, N, img, ox, W, hitsOut) {
+  const C = [0, 0, g.z2 + S.h0], F = unit(sub(C, E));
+  const R = unit([F[1], -F[0], 0]), U = [R[1] * F[2] - R[2] * F[1], R[2] * F[0] - R[0] * F[2], R[0] * F[1] - R[1] * F[0]];
+  const th = (S.size * 1.5 + 2) / S.eyeDist;
+  const a = S.alpha * deg, cosA = Math.cos(-a), sinA = Math.sin(-a);
+  const tau = S.tau * deg, faceta = S.perfil === "faceta", fita = S.perfil === "fita";
+  const Lp = rotz(L, -a);                                            // lâmpada no referencial da placa
+  const { segs, map } = SEGS;
+  for (let j = 0; j < N; j++) {
+    let prevX = null;
+    for (let i = 0; i < N; i++) {
+      const u = (2 * (i + 0.5) / N - 1) * th, v = (1 - 2 * (j + 0.5) / N) * th;
+      const d = unit([F[0] + u * R[0] + v * U[0], F[1] + u * R[1] + v * U[1], F[2] + u * R[2] + v * U[2]]);
+      const px = ((j * W) + ox + i) * 4;
+      const r = backRay(E, d);
+      if (!r) { img[px] = img[px + 1] = img[px + 2] = 0; prevX = null; continue; }
+      const X = [cosA * r.X[0] - sinA * r.X[1], sinA * r.X[0] + cosA * r.X[1], 0];
+      const o = [cosA * r.o[0] - sinA * r.o[1], sinA * r.o[0] + cosA * r.o[1], r.o[2]];
+      const f = prevX ? Math.hypot(X[0] - prevX[0], X[1] - prevX[1]) : S.w;
+      prevX = X;
+      const rr = Math.hypot(X[0], X[1]);
+      let cr = 14, cg = 22, cb = 26;                                   // leito espelhado (escuro: reflete o vazio)
+      if (rr < g.plateR) { cr = 7; cg = 9; cb = 11; }                   // placa preta
+      if (r.direto) { cr += 10; cg += 6; }
+      if (rr < g.plateR && lampOK(r.X)) {
+        const Lin = unit(sub(X, Lp)), n = unit(sub(o, Lin));
+        if (fita || Math.acos(Math.min(1, n[2])) <= tau) {
+          const eps = Math.sin(0.5 * Math.atan(S.lampD / 2 / Math.hypot(...sub(Lp, X))));
+          const tol = (S.w + f) / 2, cand = map.get(Math.floor(X[0] / CELL) * 65536 + Math.floor(X[1] / CELL));
+          if (cand) for (const id of cand) {
+            const s = segs[id];
+            const ex = s.bx - s.ax, ey = s.by - s.ay, l2 = ex * ex + ey * ey || 1;
+            let q = ((X[0] - s.ax) * ex + (X[1] - s.ay) * ey) / l2; q = q < 0 ? 0 : q > 1 ? 1 : q;
+            const dx = X[0] - s.ax - q * ex, dy = X[1] - s.ay - q * ey;
+            if (dx * dx + dy * dy > tol * tol) continue;
+            // tangente interpolada ao longo do segmento: entre vértices ela gira ~1,5°, muito mais que a tolerância da lâmpada
+            const nx = X[0] - s.cx, ny = X[1] - s.cy, side = Math.sign(n[0] * nx + n[1] * ny) || 1;
+            if (fita) {                                                  // face plana: uma única normal por ponto
+              const ns = unit(lerp(s.na, s.nb, q));
+              if (Math.hypot(...sub(n, ns)) > eps) continue;
+            } else {
+              const tx = s.tx + q * (s.ux - s.tx), ty = s.ty + q * (s.uy - s.ty), tl = Math.hypot(tx, ty) || 1;
+              if (Math.abs(n[0] * tx + n[1] * ty) / tl > eps) continue;
+              if (faceta && side !== s.side) continue;
+            }
+            const k = Math.min(1, S.w / Math.max(f, 1e-3)) * 0.6 + 0.4;
+            const col = hsl(hue(s.pid), 85, 62);
+            cr = Math.min(255, cr + col[0] * k); cg = Math.min(255, cg + col[1] * k); cb = Math.min(255, cb + col[2] * k);
+            if (hitsOut) { CONT[s.copia === S.led || !S.anel ? 0 : 1]++; if (hitsOut.length < 600) hitsOut.push({ Xw: r.X, pid: s.pid, copia: s.copia, P1: r.P1, P2: r.P2, E, twin: side !== s.side }); }
+            break;
+          }
+        }
+      }
+      img[px] = cr; img[px + 1] = cg; img[px + 2] = cb; img[px + 3] = 255;
+    }
+  }
+  return { F, R, U, th };
+}
+function projTarget(ctx, E, cam, N, ox, scale) {
+  ctx.save(); ctx.fillStyle = "rgba(242,178,92,.55)";
+  const a = S.alpha * deg + (S.anel ? 2 * Math.PI * S.led / S.nLed : 0);   // alvo do quadro aceso
+  for (const P0 of PTS) {
+    const P = rotz(P0, a), w = sub(P, E), z = dot(w, cam.F);
+    const u = dot(w, cam.R) / z / cam.th, v = dot(w, cam.U) / z / cam.th;
+    const x = ox + (u + 1) / 2 * N, y = (1 - v) / 2 * N;
+    ctx.fillRect(x * scale - 1, y * scale - 1, 2, 2);
+  }
+  ctx.restore();
+}
+function renderCam(fast) {
+  const cv = document.getElementById("cam"), ctx = cv.getContext("2d");
+  const N = Math.round(S.res * (fast ? 0.6 : 1)), nE = S.stereo ? 2 : 1, W = N * nE;
+  const off = document.createElement("canvas"); off.width = W; off.height = N;
+  const octx = off.getContext("2d"), id = octx.createImageData(W, N);
+  HITS = []; CONT = [0, 0];
+  const eyes = S.stereo ? [eyePos(32), eyePos(-32)] : [eyePos(0)];   // vista cruzada: olho direito à esquerda
+  const cams = eyes.map((E, k) => renderEye(E, N, id.data, k * N, W, k === 0 ? HITS : null));
+  octx.putImageData(id, 0, 0);
+  const H = Math.round(cv.width * N / W); cv.height = H;
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, H);
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, cv.width, H);
+  ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.filter = "blur(3px)"; ctx.globalAlpha = 0.9;
+  ctx.drawImage(off, 0, 0, cv.width, H); ctx.restore();
+  if (S.alvo) eyes.forEach((E, k) => projTarget(ctx, E, cams[k], N, k * N, cv.width / W));
+  document.getElementById("camLbl").textContent = S.stereo ? "olho direito | olho esquerdo — cruze os olhos" : "";
+  document.getElementById("camInfo").textContent =
+    "θ " + S.eyeTh.toFixed(1) + "° · φ " + S.eyePh + "° · " + S.eyeDist + " mm · " + N + "² px" + (S.stereo ? " ×2" : "");
+}
+
+/* ==========================================================
+   PLACA (pullback) E CORTE
+   ========================================================== */
+function renderPlate() {
+  const cv = document.getElementById("plate"), ctx = cv.getContext("2d"), W = cv.width;
+  ctx.fillStyle = "#05090B"; ctx.fillRect(0, 0, W, W);
+  const ext = Math.max(1, g.plateR) * 1.08, sc = W / 2 / ext, X = x => W / 2 + x * sc, Y = y => W / 2 - y * sc;
+  ctx.strokeStyle = "#26424E"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(W / 2, W / 2, g.plateR * sc, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(-ext), Y(0)); ctx.lineTo(X(ext), Y(0)); ctx.moveTo(X(0), Y(-ext)); ctx.lineTo(X(0), Y(ext)); ctx.stroke();
+  const a = S.alpha * deg;
+  ctx.lineWidth = Math.max(1, S.w * sc);
+  for (const gr of GROOVES) {
+    const c = hsl(hue(gr.pid), 80, 58);
+    ctx.strokeStyle = "rgb(" + c.map(Math.round).join(",") + ")";
+    ctx.beginPath();
+    gr.X.forEach((p, i) => { const q = rotz(p, a); i ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1])); });
+    if (gr.closed) ctx.closePath();
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#fff";
+  for (const h of HITS) { ctx.beginPath(); ctx.arc(X(h.Xw[0]), Y(h.Xw[1]), 2.2, 0, 7); ctx.fill(); }
+  // escala
+  const bar = ext > 6 ? 5 : ext > 2.5 ? 2 : 1;
+  ctx.fillStyle = "#7C99A4"; ctx.font = "11px IBM Plex Mono, monospace";
+  ctx.fillRect(14, W - 18, bar * sc, 2); ctx.fillText(bar + " mm", 14, W - 24);
+  ctx.fillText("α = " + S.alpha.toFixed(0) + "°   placa ⌀ " + (2 * g.plateR).toFixed(1) + " mm", 14, 18);
+}
+function renderCut() {
+  const cv = document.getElementById("cut"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  ctx.fillStyle = "#05090B"; ctx.fillRect(0, 0, W, H);
+  const zmax = Math.max(L[2], g.z2 + 30) + 15, xr = Math.max(g.R1, g.R2) + 12;
+  const sc = Math.min(W / (2 * xr), (H - 20) / (zmax + 15));
+  const X = u => W / 2 + u * sc, Y = z => H - 12 - (z + 5) * sc;
+  const ph = S.eyePh * deg, U = p => p[0] * Math.cos(ph) + p[1] * Math.sin(ph);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#7FB6E8";
+  for (const s of [-1, 1]) {
+    ctx.beginPath(); for (let i = 0; i <= 60; i++) { const r = g.hole + (g.R1 - g.hole) * i / 60; i ? ctx.lineTo(X(s * r), Y(zTop(r, g))) : ctx.moveTo(X(s * r), Y(zTop(r, g))); } ctx.stroke();
+  }
+  ctx.beginPath(); for (let i = 0; i <= 120; i++) { const r = -g.R2 + 2 * g.R2 * i / 120; i ? ctx.lineTo(X(r), Y(zBot(Math.abs(r), g))) : ctx.moveTo(X(r), Y(zBot(Math.abs(r), g))); } ctx.stroke();
+  ctx.strokeStyle = "#DDE8EB"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(X(-g.plateR), Y(0)); ctx.lineTo(X(g.plateR), Y(0)); ctx.stroke();
+  // lâmpada, capuz e cone de iluminação
+  ctx.lineWidth = 1; ctx.strokeStyle = "rgba(242,178,92,.45)"; ctx.setLineDash([4, 3]);
+  const Lx = U(L);
+  ctx.beginPath(); ctx.moveTo(X(-g.plateR), Y(0)); ctx.lineTo(X(Lx), Y(L[2])); ctx.lineTo(X(g.plateR), Y(0)); ctx.stroke();
+  ctx.setLineDash([]);
+  if (S.anel && S.lampR > 0) { ctx.strokeStyle = "rgba(242,178,92,.5)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(-S.lampR), Y(L[2])); ctx.lineTo(X(S.lampR), Y(L[2])); ctx.stroke(); }
+  ctx.fillStyle = "#F2B25C"; ctx.beginPath(); ctx.arc(X(Lx), Y(L[2]), 4, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#7C99A4"; ctx.lineWidth = 2;
+  const hw = 6 + S.lampR;
+  ctx.beginPath(); ctx.moveTo(X(-hw), Y(L[2] - 5)); ctx.lineTo(X(-hw), Y(L[2] + 8)); ctx.lineTo(X(hw), Y(L[2] + 8)); ctx.lineTo(X(hw), Y(L[2] - 5)); ctx.stroke();
+  // alvo
+  const a = S.alpha * deg + (S.anel ? 2 * Math.PI * S.led / S.nLed : 0);
+  for (let i = 0; i < PTS.length; i++) { const P = rotz(PTS[i], a), c = hsl(hue(i), 80, 60);
+    ctx.fillStyle = "rgb(" + c.map(Math.round).join(",") + ")"; ctx.fillRect(X(U(P)) - 1.5, Y(P[2]) - 1.5, 3, 3); }
+  // raios dos brilhos vistos agora (projetados no plano do olho)
+  ctx.lineWidth = 0.8;
+  const shown = HITS.filter(h => h.P1).filter((_, i, A) => i % Math.max(1, Math.floor(A.length / 14)) === 0).slice(0, 14);
+  for (const h of shown) {
+    const c = hsl(hue(h.pid), 80, 62);
+    ctx.strokeStyle = "rgba(" + c.map(Math.round).join(",") + ",.75)";
+    const E = h.E, k = (g.z2 + 60 - h.P2[2]) / (E[2] - h.P2[2]);
+    const top = lerp(h.P2, E, Math.min(1, k));
+    ctx.beginPath(); ctx.moveTo(X(U(h.Xw)), Y(0)); ctx.lineTo(X(U(h.P1)), Y(h.P1[2])); ctx.lineTo(X(U(h.P2)), Y(h.P2[2])); ctx.lineTo(X(U(top)), Y(top[2])); ctx.stroke();
+  }
+  // seta para o olho
+  const E = eyePos(0), d = unit(sub(E, [0, 0, g.z2 + S.h0])), base = [0, 0, g.z2 + S.h0];
+  const tip = add(base, mul(d, (zmax - base[2]) / Math.max(0.2, d[2]) * 0.9));
+  ctx.strokeStyle = "#8FE3C8"; ctx.lineWidth = 1.2; ctx.setLineDash([2, 3]);
+  ctx.beginPath(); ctx.moveTo(X(U(base)), Y(base[2])); ctx.lineTo(X(U(tip)), Y(tip[2])); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "#7C99A4"; ctx.font = "11px IBM Plex Mono, monospace";
+  ctx.fillText(S.anel ? "anel de " + S.nLed + " LEDs · aceso k = " + S.led : "lâmpada encapuzada", X(hw + 2), Y(L[2]) + 4);
+  ctx.fillText("→ olho", X(U(tip)) + 4, Y(tip[2]) + 12);
+  ctx.fillText("placa", X(g.plateR) + 4, Y(0) - 4);
+}
+
+/* ==========================================================
+   HUD
+   ========================================================== */
+function hud() {
+  let len = 0, rmin = 1e9, rmax = 0, tmax = 0;
+  for (const gr of GROOVES) { len += gr.len; rmin = Math.min(rmin, gr.R); rmax = Math.max(rmax, gr.R); tmax = Math.max(tmax, gr.tmax); }
+  const kD = g.D / L[2], lit = (g.hole - S.lampR * kD) / (1 - kD);   // raio da placa que o pior LED ainda ilumina
+  const cell = (k, v, cls, sm) => '<div><span class="k">' + k + '</span><span class="v ' + (cls || "") + '">' + v + (sm ? "<small>" + sm + "</small>" : "") + '</span></div>';
+  const P = PRESETS[S.preset];
+  document.getElementById("hud").innerHTML =
+    cell("relé", "×" + P.m + " · " + P.dz / 10 + " cm", "", "") +
+    cell("lóbulo θ", VC.tmin.toFixed(1) + "–" + VC.tmax.toFixed(1), "", "°") +
+    cell("pontos / sulcos", PTS.length + " / " + GROOVES.length, SKIP ? "warn" : "", SKIP ? " " + SKIP + " sem sulco" : "") +
+    cell("sulco total", len.toFixed(0), "", "mm") +
+    cell("raio dos laços", GROOVES.length ? rmin.toFixed(2) + "–" + rmax.toFixed(2) : "—", "", "mm") +
+    cell("faceta máx.", tmax.toFixed(1), tmax > S.tau ? "bad" : "good", "°") +
+    cell("placa ⌀", (2 * g.plateR).toFixed(1), lit >= g.plateR ? "good" : "bad", "mm") +
+    (S.anel ? cell("brilhos certos / fantasmas", CONT[0] + " / " + CONT[1], CONT[1] > 0.1 * CONT[0] ? "warn" : "good", "")
+            : cell("brilhos no quadro", CONT[0], CONT[0] ? "good" : "warn", "")) +
+    cell("projeto", DESIGN_MS.toFixed(0), "", "ms");
+  document.getElementById("optNote").textContent =
+    "D = 278 mm, imagem a " + P.dz + " mm acima da abertura. Lâmpada ilumina a placa pelo furo até r = " + lit.toFixed(1) + " mm.";
+  const rhoMax = (g.hole - g.plateR * (1 - kD)) / kD;
+  document.getElementById("lampNote").textContent = "ρ máximo para o anel ainda iluminar a placa inteira pelo furo: " + Math.max(0, rhoMax).toFixed(1) +
+    " mm." + (S.anel ? " Cada LED acende a sua cópia; as outras cópias recebem a mesma luz fora de projeto — os fantasmas são traçados, não desenhados." : "");
+}
+function renderAll(fast) {
+  if (!SEGS) return;
+  renderCam(fast); renderPlate(); renderCut(); hud();
+}
+
+/* ==========================================================
+   VERIFICAÇÃO — traçado direto, sem usar o alvo
+   ========================================================== */
+function glintsFor(gr, E, a) {
+  const res = [], N = gr.X.length, idx = [];
+  for (let i = 0; i < N; i++) idx.push(i); if (gr.closed) idx.push(0);
+  let prev = null, seed = null;
+  const cc = rotz([gr.c[0], gr.c[1], 0], a);
+  for (const i of idx) {
+    const X = rotz(gr.X[i], a), t = rotz(gr.t[i], a);
+    const s = exitThrough(X, E, seed); if (!s) { prev = null; seed = null; continue; } seed = s.p;
+    if (!lampOK(X)) { prev = null; continue; }
+    const n = unit(sub(s.o, unit(sub(X, L)))), c = dot(n, t);
+    if (prev && Math.sign(c) !== Math.sign(prev.c)) {
+      const w = prev.c / (prev.c - c);
+      const side = Math.sign(dot(n, unit([X[0] - cc[0], X[1] - cc[1], 0]))) || 1;
+      res.push({ P2: lerp(prev.s.t.P2, s.t.P2, w), d: unit(lerp(prev.s.t.d, s.t.d, w)),
+                 twin: side !== gr.side[i], tilt: Math.acos(Math.min(1, n[2])) / deg });
+    }
+    prev = { c, s };
+  }
+  return res;
+}
+function apparent(grs, th, ph, a, twin) {
+  const C = [0, 0, g.z2 + S.h0], c0 = add(C, mul(dirTP(th * deg, ph), S.eyeDist)), side = [-Math.sin(ph), Math.cos(ph), 0];
+  const rays = [];
+  for (let e = 0; e < 5; e++) {
+    const E = add(c0, mul(side, (e - 2) * 16));
+    for (const gr of grs) {
+      const hit = glintsFor(gr, E, a).find(h => h.twin === twin && h.tilt <= S.tau);
+      if (hit) { rays.push(hit); break; }
+    }
+  }
+  return rays.length >= 2 ? converge(rays) : null;
+}
+function runVerify() {
+  const box = document.getElementById("ver"), busy = document.getElementById("busy");
+  busy.textContent = "verificando…";
+  setTimeout(() => {
+    const rows = [];
+    const row = (lb, m, cls, e) => rows.push('<div class="r"><span class="lb">' + lb + '</span><span class="m ' + cls + '">' + m + '</span><span class="e">' + (e || "") + '</span></div>');
+    // 1. lugar axial é círculo
+    const Q = [0, 0, g.z2 + 3], rs = [];
+    for (let j = 0; j < 36; j++) { const b = backRay(Q, mul(dirTP(S.thD * deg, j * 10 * deg), -1)); if (b && !b.direto) rs.push(Math.hypot(b.X[0], b.X[1])); }
+    const m = rs.reduce((a, b) => a + b, 0) / rs.length, sd = Math.sqrt(rs.reduce((a, b) => a + (b - m) ** 2, 0) / rs.length);
+    row("ponto no eixo δ = 3 → lugar dos brilhos circular (desvio de raio)", sd.toExponential(1) + " mm", sd < 1e-9 ? "ok" : "off", "alvo < 1e-12");
+    // 2. raio do sulco axial
+    const saveM = S.modo; S.modo = "laco";
+    const ax = designPoint(Q, -1); S.modo = saveM;
+    if (ax.length) {
+      const gr = ax[0];
+      const exp = S.preset === 0 && Math.abs(S.thD - VC.tmed) < 0.05 ? 0.858 : null;
+      row("sulco axial δ = 3: raio · " + (gr.closed ? "fechado" : "ABERTO"), gr.R.toFixed(3) + " mm",
+          exp ? (Math.abs(gr.R - exp) < 0.004 ? "ok" : "off") : "info", exp ? "spec 0,858" : "");
+      row("inclinação de faceta exigida", gr.tmax.toFixed(1) + "°", gr.tmax <= S.tau ? "ok" : "off", "τ = " + S.tau + "°");
+      const pm = apparent(ax, S.thD, S.eyePh * deg, 0, false), pt = apparent(ax, S.thD, S.eyePh * deg, 0, true);
+      if (pm) row("ponto aparente na elevação de projeto (erro)", Math.hypot(...sub(pm.P, Q)).toFixed(3) + " mm", Math.hypot(...sub(pm.P, Q)) < 0.25 ? "ok" : "off", "spec < 0,2");
+      if (pt) row("gêmeo pela calha simétrica: Δz do alvo", (pt.P[2] - Q[2]).toFixed(2) + " mm", Math.abs(pt.P[2] - Q[2] + 6) < 1.5 ? "ok" : "info", "≈ −2δ do alvo");
+      else row("gêmeo pela calha simétrica", "não encontrado", "info", "");
+    }
+    // 3. objeto: erro do ponto aparente em amostra de pontos, na elevação de projeto e ±6°
+    const byPid = new Map(); for (const gr of GROOVES) { if (gr.copia) continue; if (!byPid.has(gr.pid)) byPid.set(gr.pid, []); byPid.get(gr.pid).push(gr); }
+    const pids = [...byPid.keys()], pick = [];
+    for (let k = 0; k < Math.min(6, pids.length); k++) pick.push(pids[Math.floor(k * pids.length / Math.min(6, pids.length))]);
+    const a = S.alpha * deg;
+    for (const dth of [0, -6, 6]) {
+      const th = S.thD + dth; if (th < VC.tmin || th > VC.tmax) continue;
+      const errs = [];
+      for (const pid of pick) { const ap = apparent(byPid.get(pid), th, S.eyePh * deg, a, false); if (ap) errs.push(Math.hypot(...sub(ap.P, rotz(PTS[pid], a)))); }
+      if (!errs.length) { row("objeto, θ = " + th.toFixed(1) + "°: nenhum ponto aparente", "—", "off", ""); continue; }
+      const mean = errs.reduce((x, y) => x + y, 0) / errs.length, mx = Math.max(...errs);
+      row("objeto (" + S.modo + "), θ " + (dth ? (dth > 0 ? "+" : "") + dth + "°" : "de projeto") + ": erro médio / máx",
+          mean.toFixed(2) + " / " + mx.toFixed(2) + " mm", dth ? "info" : (mx < 0.5 ? "ok" : "off"), errs.length + "/" + pick.length + " pts");
+    }
+    // 4. disco girante: girar a placa de α gira a imagem de α
+    if (pick.length) {
+      const grs = byPid.get(pick[pick.length - 1]), al = 30 * deg, ph = S.eyePh * deg;
+      const p1 = apparent(grs, S.thD, ph, al, false), p0 = apparent(grs, S.thD, ph - al, 0, false);
+      if (p1 && p0) {
+        const e = Math.hypot(...sub(p1.P, rotz(p0.P, al)));
+        if (S.lampR === 0) row("disco girado 30°: imagem gira 30° (resíduo)", e.toExponential(1) + " mm", e < 1e-6 ? "ok" : "off", "simetria");
+        else row("luz fora do eixo, placa girada 30° com a luz fixa: desvio da rotação rígida", e.toFixed(3) + " mm", "info", "esperado ≠ 0");
+      }
+    }
+    // 5. anel: LED k + cópia k, placa parada  ≡  LED 0 + cópia 0 com a placa girada de β_k
+    if (S.anel && pick.length) {
+      const k = Math.max(1, Math.round(S.nLed / 4)), b = 2 * Math.PI * k / S.nLed, pid = pick[pick.length - 1], ph = S.eyePh * deg;
+      const Lsave = L;
+      L = lampAt(k); const pk = apparent(GROOVES.filter(gr => gr.pid === pid && gr.copia === k), S.thD, ph, 0, false);
+      L = lampAt(0); const p0 = apparent(byPid.get(pid), S.thD, ph - b, 0, false);
+      L = Lsave;
+      if (pk && p0) {
+        const e = Math.hypot(...sub(pk.P, rotz(p0.P, b)));
+        row("anel: LED " + k + " (β = " + (b / deg).toFixed(0) + "°) acende a imagem girada de β (resíduo)", e.toExponential(1) + " mm", e < 1e-6 ? "ok" : "off", "simetria");
+        row("anel: erro do ponto aceso vs alvo girado", Math.hypot(...sub(pk.P, rotz(PTS[pid], b))).toFixed(3) + " mm", "info", "igual ao do disco");
+      }
+      // fantasmas: fração dos brilhos do quadro atual que vêm de cópias de outro LED (traçado pixel a pixel)
+      const fr = CONT[0] + CONT[1] ? CONT[1] / (CONT[0] + CONT[1]) : 0;
+      row("anel, perfil " + S.perfil + ": brilhos de cópias erradas no quadro", CONT[1] + " de " + (CONT[0] + CONT[1]) + " (" + (100 * fr).toFixed(0) + "%)",
+          fr < 0.1 ? "ok" : "off", "quadro atual");
+    }
+    box.innerHTML = rows.join("");
+    busy.textContent = "";
+  }, 20);
+}
+
+/* ==========================================================
+   INTERFACE
+   ========================================================== */
+const fmt = {
+  npts: v => v, size: v => "±" + (+v).toFixed(2) + " mm", h0: v => (v >= 0 ? "+" : "") + (+v).toFixed(1) + " mm",
+  zk: v => (+v).toFixed(2), nseg: v => v, thD: v => (+v).toFixed(1) + "°", w: v => (+v).toFixed(2) + " mm",
+  tau: v => (+v).toFixed(1) + "°", lampH: v => v + " mm", lampD: v => (+v).toFixed(1) + " mm",
+  rate: v => v + " °/s", alpha: v => (+v).toFixed(0) + "°", eyeTh: v => (+v).toFixed(1) + "°", eyePh: v => v + "°",
+  eyeDist: v => v + " mm", res: v => v + " px",
+  esc: v => "×" + (+v).toFixed(1), lw: v => (+v).toFixed(2) + " mm", lh: v => (+v).toFixed(2) + " mm",
+  vel: v => v + " mm/s", tBico: v => v + " °C", tMesa: v => v + " °C", cMesa: v => v + " mm",
+  baseE: v => (+v) ? (+v).toFixed(1) + " mm" : "sem base",
+  lampR: v => (+v).toFixed(1) + " mm", nLed: v => v, led: v => v + " · β = " + (S.anel ? (360 * v / S.nLed).toFixed(1) : 0) + "°"
+};
+const REDESIGN = new Set(["npts", "size", "h0", "zk", "nseg", "thD", "lampH", "lampR", "nLed"]);
+const EXPORT = new Set(["esc", "lw", "lh", "vel", "tBico", "tMesa", "cMesa", "baseE"]);
+let tDesign = null, tRender = null;
+function schedule(redesign) {
+  if (redesign) { clearTimeout(tDesign); tDesign = setTimeout(build, 250); }
+  else { renderAll(true); clearTimeout(tRender); tRender = setTimeout(() => renderAll(false), 170); }
+}
+function syncRanges() {
+  for (const k of Object.keys(fmt)) {
+    const el = document.getElementById(k); if (!el) continue;
+    if (k === "thD" || k === "eyeTh") { el.min = VC.tmin.toFixed(1); el.max = VC.tmax.toFixed(1); }
+    if (k === "led") el.max = S.anel ? S.nLed - 1 : 0;
+    el.value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]);
+  }
+}
+for (const k of Object.keys(fmt)) {
+  const el = document.getElementById(k); if (!el) continue;
+  el.addEventListener("input", () => {
+    S[k] = +el.value; document.getElementById(k + "v").textContent = fmt[k](S[k]);
+    if (k === "led") { setLamp(); S.ledAng = 360 * S.led / S.nLed; el.value = S.led; document.getElementById("ledv").textContent = fmt.led(S.led); }
+    if (EXPORT.has(k)) { expNote(); return; }
+    schedule(REDESIGN.has(k));
+  });
+}
+function segGroup(id, key, redesign) {
+  const box = document.getElementById(id), bs = [...box.querySelectorAll("button")];
+  const paint = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S[key]));
+  bs.forEach(b => b.addEventListener("click", () => { S[key] = b.dataset.v; paint(); schedule(redesign); }));
+  paint();
+}
+segGroup("objSeg", "obj", true); segGroup("modoSeg", "modo", true); segGroup("perfSeg", "perfil", false);
+(function buildPresets() {
+  const box = document.getElementById("presets");
+  box.innerHTML = PRESETS.map((P, i) => '<button id="pr' + i + '"><b>×' + P.m + '</b>' + P.dz / 10 + ' cm</button>').join("");
+  const paint = () => PRESETS.forEach((_, i) => document.getElementById("pr" + i).setAttribute("aria-pressed", i === S.preset));
+  PRESETS.forEach((_, i) => document.getElementById("pr" + i).addEventListener("click", () => {
+    S.preset = i; S.thD = NaN; S.eyeTh = NaN; setOptics(); syncRanges(); paint(); build();
+  }));
+  paint();
+})();
+document.getElementById("anel").addEventListener("change", e => { S.anel = e.target.checked; S.led = 0; S.ledAng = 0; syncRanges(); build(); });
+for (const k of ["stereo", "alvo"]) document.getElementById(k).addEventListener("change", e => { S[k] = e.target.checked; schedule(false); });
+document.getElementById("spin").addEventListener("change", e => { S.spin = e.target.checked; if (S.spin) { last = performance.now(); requestAnimationFrame(tick); } else renderAll(false); });
+document.getElementById("bVer").addEventListener("click", runVerify);
+
+/* ==========================================================
+   EXPORTAÇÃO — os sulcos calculados, no referencial da placa (α = 0), escalados por s.
+   Óptica geométrica não tem escala própria: o desenho × s vale para espelhos, lâmpada
+   e distâncias também × s. A peça vai no leito com a face impressa para cima (virada,
+   a quiralidade inverte).
+   ========================================================== */
+function expOrdem() {                              // vizinho mais próximo; laço começa no vértice mais perto
+  const rest = GROOVES.slice(), out = []; let cur = [0, 0];
+  while (rest.length) {
+    let bi = 0, bj = 0, bd = Infinity;
+    rest.forEach((gr, i) => {
+      const cand = gr.closed ? gr.X.map((_, j) => j) : [0, gr.X.length - 1];
+      for (const j of cand) { const d = Math.hypot(gr.X[j][0] - cur[0], gr.X[j][1] - cur[1]); if (d < bd) { bd = d; bi = i; bj = j; } }
+    });
+    const gr = rest.splice(bi, 1)[0], N = gr.X.length;
+    let P = gr.closed ? [...gr.X.slice(bj), ...gr.X.slice(0, bj), gr.X[bj]] : (bj ? gr.X.slice().reverse() : gr.X.slice());
+    out.push({ gr, P }); cur = P[P.length - 1];
+  }
+  return out;
+}
+function expNote() {
+  const el = document.getElementById("expNote"); if (!el || !g) return;
+  const s = S.esc; let len = 0, apert = 0;
+  for (const gr of GROOVES) { len += gr.len * s; if (gr.R * s < 1.5 * S.lw) apert++; }
+  el.innerHTML = "Disco ⌀ " + (2 * g.plateR * s).toFixed(0) + " mm · " + GROOVES.length + " sulcos · " + (len / 1000).toFixed(2) +
+    " m de linha · ~" + Math.ceil(len / S.vel / 60) + " min.<br>Vale para espelhos com D = " + (g.D * s / 10).toFixed(0) +
+    " cm e lâmpada a " + ((g.z2 + S.lampH) * s / 10).toFixed(0) + " cm do leito (tudo × s)." +
+    (apert ? "<br><b style='color:var(--amber)'>" + apert + " laços com raio < 1,5 × largura da linha: aumente s.</b>" : "");
+}
+function baixar(nome, dados, tipo) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([dados], { type: tipo }));
+  a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function exportarGcode() {
+  if (!GROOVES.length) return;
+  const s = S.esc, W = S.lw, H = S.lh, c0 = S.cMesa, f = n => n.toFixed(3);
+  const eMm = W * H / (Math.PI * 0.875 * 0.875), RET = 0.8, Fp = S.vel * 60, Fv = 6000;
+  const X = p => c0 + s * p[0], Y = p => c0 + s * p[1], R = g.plateR * s;
+  const G = [
+    "; Holosion — gravura especular em filete, camada única contínua (gerado por traçado reverso)",
+    "; preset ×" + PRESETS[S.preset].m + " · " + PRESETS[S.preset].dz / 10 + " cm · objeto " + S.obj + " · " + GROOVES.length + " sulcos · modo " + S.modo,
+    "; escala ×" + s + ": espelhos D = " + (g.D * s).toFixed(0) + " mm, lâmpada no eixo a " + ((g.z2 + S.lampH) * s).toFixed(0) + " mm do leito",
+    "; elevação de projeto " + S.thD.toFixed(1) + "° · linha " + W + " × " + H + " mm · filamento 1,75 mm · E relativo",
+    "; o filete redondo brilha dos dois lados: espere o ponto gêmeo (pré-visualize com 'calha simétrica')",
+    "M140 S" + S.tMesa, "M104 S" + S.tBico, "G28", "M190 S" + S.tMesa, "M109 S" + S.tBico,
+    "G21", "G90", "M83", "G92 E0", "M107",
+    "G1 Z" + f(H) + " F600",
+    "; purga fora do disco",
+    "G0 X" + f(c0 - R - 6) + " Y" + f(c0 - R) + " F" + Fv,
+    "G1 Y" + f(c0 + R) + " E" + f(2 * R * eMm * 1.2) + " F" + Fp,
+    "G1 E-" + RET + " F2400"
+  ];
+  for (const { gr, P } of expOrdem()) {
+    G.push("; ponto " + gr.pid + (gr.closed ? " laço" : " segmento"), "G0 X" + f(X(P[0])) + " Y" + f(Y(P[0])) + " F" + Fv, "G1 E" + RET + " F2400");
+    for (let i = 1; i < P.length; i++) {
+      const d = s * Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); if (d < 1e-4) continue;
+      G.push("G1 X" + f(X(P[i])) + " Y" + f(Y(P[i])) + " E" + (d * eMm).toFixed(5) + " F" + Fp);
+    }
+    G.push("G1 E-" + RET + " F2400");
+  }
+  G.push("G1 Z" + f(H + 10) + " F600", "M104 S0", "M140 S0", "M84", "; fim");
+  baixar("gravura-" + S.obj + "-x" + s + ".gcode", G.join("\n") + "\n", "text/plain");
+}
+// fita: a face de cima tem exatamente a normal de projeto n (n ⟂ t, então cabe na seção transversal)
+function exportarStl() {
+  if (!GROOVES.length) return;
+  const s = S.esc, W = S.lw, B = S.baseE, tris = [];
+  const face = (a, b, c, ref) => {               // orienta a normal para fora (ref = direção externa aproximada)
+    const n = cross(sub(b, a), sub(c, a)); if (dot(n, ref) < 0) tris.push([a, c, b]); else tris.push([a, b, c]);
+  };
+  const quad = (a, b, c, d, ref) => { face(a, b, c, ref); face(a, c, d, ref); };
+  const MIN = 0.12;
+  for (const gr of GROOVES) {
+    const N = gr.X.length, sec = [];
+    let hb = 0;
+    const sl = gr.n.map((n, i) => { const u = [-gr.t[i][1], gr.t[i][0], 0]; return -dot(n, u) / Math.max(0.2, n[2]); });
+    for (const k of sl) hb = Math.max(hb, Math.abs(k) * W / 2);
+    hb += MIN;
+    for (let i = 0; i < N; i++) {
+      const C = [s * gr.X[i][0], s * gr.X[i][1], B], u = [-gr.t[i][1], gr.t[i][0], 0];
+      const Lb = add(C, mul(u, W / 2)), Rb = add(C, mul(u, -W / 2));
+      sec.push({ C: add(C, [0, 0, hb / 2]), BL: Lb, BR: Rb,
+                 TL: add(Lb, [0, 0, hb + sl[i] * W / 2]), TR: add(Rb, [0, 0, hb - sl[i] * W / 2]) });
+    }
+    const M = gr.closed ? N : N - 1;
+    for (let i = 0; i < M; i++) {
+      const a = sec[i], b = sec[(i + 1) % N], mid = mul(add(a.C, b.C), 0.5);
+      const q = (p1, p2, p3, p4) => quad(p1, p2, p3, p4, sub(mul(add(add(p1, p2), add(p3, p4)), 0.25), mid));
+      q(a.TL, a.TR, b.TR, b.TL); q(a.BL, b.BL, b.BR, a.BR); q(a.BL, a.TL, b.TL, b.BL); q(a.BR, b.BR, b.TR, a.TR);
+    }
+    if (!gr.closed) for (const [e, dir] of [[sec[0], -1], [sec[N - 1], 1]]) {
+      const tt = mul(gr.t[dir < 0 ? 0 : N - 1], dir); quad(e.BL, e.BR, e.TR, e.TL, tt);
+    }
+  }
+  if (B > 0) {                                      // base: disco de espessura B sob as fitas
+    const R = g.plateR * s + 1, K = 120;
+    for (let k = 0; k < K; k++) {
+      const a0 = 2 * Math.PI * k / K, a1 = 2 * Math.PI * (k + 1) / K;
+      const p0 = [R * Math.cos(a0), R * Math.sin(a0)], p1 = [R * Math.cos(a1), R * Math.sin(a1)];
+      face([0, 0, B], [...p0, B], [...p1, B], [0, 0, 1]); face([0, 0, 0], [...p0, 0], [...p1, 0], [0, 0, -1]);
+      quad([...p0, 0], [...p1, 0], [...p1, B], [...p0, B], [p0[0] + p1[0], p0[1] + p1[1], 0]);
+    }
+  }
+  const buf = new ArrayBuffer(84 + 50 * tris.length), dv = new DataView(buf);
+  const head = "Holosion gravura especular - fitas com faceta exata, mm, escala x" + s;
+  for (let i = 0; i < 80; i++) dv.setUint8(i, i < head.length ? head.charCodeAt(i) & 127 : 32);
+  dv.setUint32(80, tris.length, true);
+  let o = 84;
+  for (const [a, b, c] of tris) {
+    const n = unit(cross(sub(b, a), sub(c, a)));
+    for (const v of [n, a, b, c]) for (let j = 0; j < 3; j++) { dv.setFloat32(o, v[j] || 0, true); o += 4; }
+    o += 2;
+  }
+  baixar("gravura-" + S.obj + "-x" + s + ".stl", buf, "model/stl");
+}
+document.getElementById("bGcode").addEventListener("click", exportarGcode);
+document.getElementById("bStl").addEventListener("click", exportarStl);
+
+let last = 0;
+function tick(now) {
+  if (!S.spin) return;
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (S.anel) {                                    // a luz dá a volta; a placa fica parada
+    S.ledAng = (S.ledAng + S.rate * dt) % 360;
+    const k = Math.floor(S.ledAng * S.nLed / 360) % S.nLed;
+    if (k !== S.led) { S.led = k; setLamp(); document.getElementById("led").value = k; document.getElementById("ledv").textContent = fmt.led(k); if (SEGS) renderAll(true); }
+  } else {
+    S.alpha = (S.alpha + S.rate * dt) % 360;
+    document.getElementById("alpha").value = S.alpha; document.getElementById("alphav").textContent = fmt.alpha(S.alpha);
+    if (SEGS) renderAll(true);
+  }
+  requestAnimationFrame(tick);
+}
+
+setOptics(); syncRanges(); build();
+</script>
+</body>
+</html>

@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recorte côncavo + tela widescreen — imagem aérea comprida traçada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B1317;--panel:#111E25;--line:#26424E;--line-soft:#1A2E37;--mint:#8FE3C8;--amber:#F2B25C;--rose:#F2668B;--sky:#7FB6E8;--paper:#DDE8EB;--mute:#7C99A4;--warn:#E2694A}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);height:100%}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--paper);display:grid;grid-template-columns:290px 1fr;height:100vh;overflow:hidden}
+#ui{height:100vh;overflow-y:auto;background:var(--panel);border-right:1px solid var(--line-soft);padding:16px 14px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--mute);margin:0 0 5px}
+h1{font-family:"Archivo Narrow","Arial Narrow",sans-serif;font-weight:700;font-size:24px;line-height:1.05;margin:0;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--mint)}
+.lead{font-size:11.5px;color:var(--mute);margin:8px 0 0;line-height:1.45}
+.grp{border-top:1px solid var(--line-soft);padding-top:12px;margin-top:13px}
+.grp h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mint);margin:0 0 10px;font-weight:500}
+.row{margin-bottom:10px}
+.row label{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nm{font-size:11.5px}.vl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--line);outline:none;margin:7px 0 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--amber);cursor:pointer}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.seg button,.btn{font-family:"IBM Plex Mono",monospace;font-size:10.5px;background:transparent;color:var(--paper);border:1px solid var(--line);padding:5px 7px;cursor:pointer;border-radius:2px}
+.seg button[aria-pressed=true]{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+.btn{display:block;width:100%;text-align:left;margin-bottom:6px}
+.chk{display:flex;gap:7px;align-items:center;font-size:11.5px;margin-bottom:7px;cursor:pointer}
+.note{font-size:10.8px;color:var(--mute);line-height:1.45;margin:6px 0 0}
+#cena{position:relative;overflow:hidden}
+#c3{width:100%;height:100%;display:block}
+#hud{position:absolute;left:12px;top:10px;font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.55;background:rgba(11,19,23,.82);border:1px solid var(--line-soft);padding:8px 10px;max-width:min(380px,32%,calc(100% - var(--olhoW,44vw) - 48px));max-height:calc(52% - 20px);overflow-y:auto;font-size:10.5px}
+#hud b{color:var(--amber);font-weight:500} #hud .ok{color:var(--mint)} #hud .mau{color:var(--warn)}
+#olhoBox{position:absolute;right:12px;top:10px;background:rgba(11,19,23,.9);border:1px solid var(--line-soft);padding:6px}
+#telaBox{position:absolute;right:12px;bottom:12px;background:rgba(11,19,23,.92);border:1px solid var(--line-soft);padding:6px}
+#telaBox .t{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin:0 0 4px}
+#cTela{display:block;width:min(26vw,380px,calc((100vh - 46vh - 150px) * 2));image-rendering:pixelated}
+#paineis{position:absolute;left:12px;bottom:30px;display:flex;gap:4px}
+#paineis button{font-family:"IBM Plex Mono",monospace;font-size:10px;background:rgba(11,19,23,.85);color:var(--paper);border:1px solid var(--line);padding:4px 7px;cursor:pointer;border-radius:2px}
+#paineis button[aria-pressed=true]{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+.escondido{display:none!important}
+#olhoBox .t{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--mint);letter-spacing:.12em;text-transform:uppercase;margin:0 0 4px}
+#cOlho{display:block;width:min(40vw,560px);image-rendering:auto}
+#dica{position:absolute;left:12px;bottom:12px;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--mute)}
+#erro{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--ink);color:var(--warn);font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<aside id="ui">
+  <p class="eyebrow">Holosion · imagem aérea · espelho único</p>
+  <h1>Recorte côncavo + <em>tela widescreen</em></h1>
+  <p class="lead">Um recorte retangular de espelho esférico (não a concavidade inteira) e uma tela larga abaixo do eixo, virada para o espelho.
+  A imagem real se forma acima do eixo, flutuando entre o espelho e quem olha. Cada ponto da imagem é o cruzamento de raios traçados; a vista do olho é traçada pixel a pixel. Nada é desenhado.</p>
+
+  <div class="grp"><h3>Espelho (recorte de esfera)</h3>
+    <div class="row"><label><span class="nm">raio de curvatura R (foco = R/2)</span><span class="vl" id="Rv"></span></label><input type="range" id="R" min="80" max="1600" step="10"></div>
+    <div class="seg" id="formaSeg"><button data-v="ret">recorte retangular (esfera)</button><button data-v="lua">meia-lua do Mirage (parabolóide)</button><button data-v="faixa">faixa de parabolóide (Model.3mf)</button></div>
+    <div class="row"><label><span class="nm">largura do recorte (meia-lua: diâmetro)</span><span class="vl" id="Wmv"></span></label><input type="range" id="Wm" min="120" max="900" step="10"></div>
+    <div class="row"><label><span class="nm">altura do recorte</span><span class="vl" id="Hmv"></span></label><input type="range" id="Hm" min="60" max="600" step="10"></div>
+    <div class="row"><label><span class="nm">centro do recorte acima do eixo</span><span class="vl" id="oyv"></span></label><input type="range" id="oy" min="-200" max="300" step="5"></div>
+  </div>
+
+  <div class="grp"><h3>Tela widescreen</h3>
+    <div class="seg" id="telaSeg"><button data-v="ip15p">iPhone 15 Pro</button><button data-v="ip15pm">iPhone 15 Pro Max</button><button data-v="cel">celular 6,7″ 20:9</button><button data-v="tab">tablet 10,1″ 16:10</button><button data-v="barra">barra 8,8″ 4:1</button><button data-v="mon">monitor 15,6″ 16:9</button></div>
+    <div class="row"><label><span class="nm">distância da tela ao espelho (u)</span><span class="vl" id="uv"></span></label><input type="range" id="u" min="40" max="1600" step="1"></div>
+    <div class="row"><label><span class="nm">altura da tela (abaixo do eixo)</span><span class="vl" id="dyv"></span></label><input type="range" id="dy" min="-500" max="0" step="5"></div>
+    <div class="row"><label><span class="nm">área útil da tela (o resto fica preto)</span><span class="vl" id="usov"></span></label><input type="range" id="uso" min="0.2" max="1" step="0.01"></div>
+    <div class="row"><label><span class="nm">posição da área útil (ao longo da altura da tela)</span><span class="vl" id="usoBv"></span></label><input type="range" id="usoB" min="-40" max="40" step="1"></div>
+    <div class="row"><label><span class="nm">inclinação da tela</span><span class="vl" id="tauv"></span></label><input type="range" id="tau" min="-60" max="60" step="1"></div>
+    <div class="seg" id="contSeg"><button data-v="grade">grade de teste</button><button data-v="texto">texto</button><button data-v="cena">cena</button><button data-v="jogo">jogo</button><button data-v="msg">mensagem projetada</button><button data-v="cubo">cubo 3D (paralaxe)</button></div>
+    <button class="btn" id="bJogar">▶ jogar: proteja a Terra (o mesmo jogo do Mirage)</button>
+    <button class="btn" id="bParar">■ parar o jogo</button>
+    <p class="note">Teclas: ← → ↑ ↓ e W/S movem a nave em órbita · T trava o meteoro do lado das setas · H hipervelocidade até ficar de frente · espaço dispara · P pausa · M som.</p>
+    <button class="btn" id="b11">▶ 1:1 — tela no centro de curvatura (u = R)</button>
+    <button class="btn" id="b2x">▶ ampliar 2× e flutuar mais longe (u = 3f/2)</button>
+    <button class="btn" id="bIncl">▶ inclinar a tela para a imagem ficar de pé (traçado)</button>
+  </div>
+
+  <div class="grp"><h3>Pré-compensação da curvatura</h3>
+    <label class="chk"><input type="checkbox" id="comp"> pré-compensar para a posição atual do olho</label>
+    <label class="chk"><input type="checkbox" id="cheio"> pixel a pixel, como na aba 3 do Mirage: usa toda a parte da tela que o olho vê (sem retângulo inscrito)</label>
+    <button class="btn" id="bDivisor">▶ nítido: iPhone de pé + vidro a 45° (como um HUD), o celular fica no foco sobre o eixo</button>
+    <button class="btn" id="bCatavento">▶ estéreo como o cata-vento da aba 3: abertura no eixo, projeção em cima dela, mais paralaxe</button>
+    <button class="btn" id="bEstereo">▶ estéreo nítido: iPhone deitado (paralelo ao espelho) cobrindo o foco, abertura ao lado, olhar ao longo do eixo</button>
+    <label class="chk"><input type="checkbox" id="estereo"> estéreo no foco (tela no plano focal, abertura menor que a distância entre os olhos)</label>
+    <label class="chk"><input type="checkbox" id="bino"> dois olhos (64 mm): medir e aprender com o erro de cada olho</label>
+    <button class="btn" id="bTreino">▶ aprender: otimizar espelho e celular com o traçado como custo</button>
+    <button class="btn" id="bAprendido">▶ resultado do aprendizado: fatia do espelho do Mirage, projeção maior que a tela</button>
+    <button class="btn" id="bComp">↻ recalcular para onde o olho está agora</button>
+    <p class="note">O traçado mede onde o olho vê cada ponto da tela; o desenho é deformado ao contrário para chegar reto (e já desvirado). Vale para essa posição do olho; longe dela a curvatura volta aos poucos.</p>
+  </div>
+  <div class="grp"><h3>Esconder o espelho (gabinete)</h3>
+    <label class="chk"><input type="checkbox" id="caixa"> gabinete preto de cantos arredondados, com abertura e vidro fumê</label>
+    <div class="row"><label><span class="nm">frente do gabinete (fração da distância da imagem)</span><span class="vl" id="zpFv"></span></label><input type="range" id="zpF" min="0.2" max="0.95" step="0.01"></div>
+    <div class="row"><label><span class="nm">luz da sala</span><span class="vl" id="ambv"></span></label><input type="range" id="amb" min="0" max="1" step="0.05"></div>
+    <div class="row"><label><span class="nm">vidro fumê (transmissão)</span><span class="vl" id="fumev"></span></label><input type="range" id="fume" min="0.2" max="1" step="0.05"></div>
+    <div class="row"><label><span class="nm">folga das paredes</span><span class="vl" id="folgav"></span></label><input type="range" id="folga" min="6" max="60" step="1"></div>
+    <button class="btn" id="bInicio">↺ recomeçar (apaga o estado guardado)</button>
+    <button class="btn" id="bAjustado">▶ estéreo ajustado: fatia do Mirage inclinada 16° (olhar a 72,5°, nítido, ±75 mm)</button>
+    <button class="btn" id="bMelhorEst">▶ melhor dos mundos com duas imagens: o mesmo espelho, celular no foco, uma imagem por olho (volume)</button>
+    <button class="btn" id="bMelhor">▶ melhor dos mundos: o espelho do Mirage também sob a abertura, a tela inteira vista pelos dois olhos</button>
+    <button class="btn" id="bLuaQuinas">▶ a mesma meia-lua aumentada até as quinas da caixa (cortada pelas paredes)</button>
+    <button class="btn" id="bConsoleR700">▶ console em L dos vídeos: meia-lua impressa R 700 ⌀ 460 + iPhone a 700 mm, imagem 1:1 334 mm fora da janela (≈ 148 L)</button>
+    <button class="btn" id="bConsoleMaq">▶ console em L com espelho de maquiagem (⌀ 20 cm, f 100, esférico), sem Fresnel: tela inteira 112 × 54 mm, 16,6 L (busca pelo traçado)</button>
+    <button class="btn" id="bConsoleMirage">▶ console em L com o espelho de baixo do Mirage inteiro (⌀ 229, f 80,6): imagem 155 × 77 mm à frente da janela, 19,1 L (busca pelo traçado)</button>
+    <button class="btn" id="bPortatil">▶ acessório portátil: meia-lua do Mirage embaixo do iPhone deitado, abertura do outro lado (busca pelo traçado)</button>
+    <button class="btn" id="bModelo">▶ proposta do Model.3mf ajustada: caixa comprida, iPhone deitado em 2/3 do tampo, abertura quadrada no resto</button>
+    <button class="btn" id="bOpB">▶ opção B: a tela inteira do iPhone (fatia maior do espelho do Mirage), cubo com paralaxe e olho rastreado</button>
+    <label class="chk"><input type="checkbox" id="dentro"> caixa semitransparente: ver o espelho, o celular e os feixes por dentro (vista 3D)</label>
+  </div>
+  <div class="grp"><h3>Olho</h3>
+    <div class="row"><label><span class="nm">distância além da imagem</span><span class="vl" id="edv"></span></label><input type="range" id="ed" min="150" max="2000" step="10"></div>
+    <div class="row"><label><span class="nm">altura do olho</span><span class="vl" id="ehv"></span></label><input type="range" id="eh" min="-300" max="1200" step="5"></div>
+    <div class="row"><label><span class="nm">olho para o lado</span><span class="vl" id="exv"></span></label><input type="range" id="ex" min="-600" max="600" step="5"></div>
+    <label class="chk"><input type="checkbox" id="rastreio"> rastrear o olho (o celular refaz a pré-compensação para onde o olho está)</label>
+    <label class="chk"><input type="checkbox" id="passeio"> passeio: o olho anda sozinho dentro da janela (paralaxe)</label>
+    <label class="chk"><input type="checkbox" id="paralaxe"> cubo e jogo vistos do olho (paralaxe), não de uma câmera fixa</label>
+    <label class="chk"><input type="checkbox" id="girar"> conteúdo pré-girado 180° (para ler certo no ar)</label>
+    <label class="chk"><input type="checkbox" id="congelar"> congelar o relógio das animações (mesma imagem a cada medida)</label>
+    <label class="chk"><input type="checkbox" id="pupila"> pupila real ⌀ 4 mm (borrão)</label>
+    <label class="chk"><input type="checkbox" id="focoConteudo"> olho focado no conteúdo (no estéreo a luz vem focada no infinito: mostra o borrão do conflito de foco)</label>
+    <label class="chk"><input type="checkbox" id="raios" checked> raios traçados na vista 3D</label>
+    <p class="note">No quadro do olho: arraste para mover a cabeça. Na vista 3D: arraste para girar, roda para aproximar.</p>
+  </div>
+</aside>
+<main id="cena">
+  <canvas id="c3"></canvas>
+  <div id="hud"></div>
+  <div id="olhoBox"><p class="t">o que o olho vê (traçado pixel a pixel)</p><canvas id="cOlho" width="560" height="315"></canvas></div>
+  <div id="dica">3D: arraste = girar · roda = zoom</div>
+  <div id="paineis"><button data-p="hud" aria-pressed="true">medidas</button><button data-p="olhoBox" aria-pressed="true">olho</button><button data-p="telaBox" aria-pressed="true">tela</button></div>
+  <div id="telaBox"><p class="t" id="telaTit">tela do celular: o que o celular mostra</p><canvas id="cTela" width="460" height="230"></canvas></div>
+  <div id="erro">Three.js não carregou (precisa de internet para o CDN).</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ================= núcleo numérico (mm). Eixo óptico = z; o espelho tem o vértice na origem e olha para +z (para quem olha).
+   Esfera de raio R com centro em (0, 0, R): a superfície útil é a calota da frente (z < R), recortada num retângulo. ================= */
+const TAU = 2 * Math.PI, deg = Math.PI / 180;
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const len = a => Math.hypot(a[0], a[1], a[2]), nrm = a => mul(a, 1 / len(a));
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const refl = (d, n) => sub(d, mul(n, 2 * dot(d, n)));
+/* repetibilidade: todo sorteio sai de um gerador com semente (mulberry32) e as animações usam o relógio do simulador;
+   a mesma semente e o mesmo instante dão sempre o mesmo resultado */
+const APAR = { h: "ip15p", v: "ip15pV" };          // aparelho dos botões de configuração (em paisagem e em retrato)
+const ALEA = { semente: 20261108, s: 20261108 };
+function aleat() { let t = (ALEA.s = (ALEA.s + 0x6D2B79F5) | 0); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+function semear(n = ALEA.semente) { ALEA.s = n | 0; }
+const TEMPO = { t: 0, congelado: false };
+const relogio = () => TEMPO.t;
+
+const TELAS = {   // área ativa (mm) e pixels — valores típicos de cada classe
+  ip15p: { W: 140.7, H: 64.9, px: [2556, 1179], nome: "iPhone 15 Pro 6,1″ OLED", corpo: [146.6, 70.6, 8.25] },
+  ip15pV: { W: 64.9, H: 140.7, px: [1179, 2556], nome: "iPhone 15 Pro em retrato", corpo: [70.6, 146.6, 8.25] },
+  ip15pm: { W: 154.5, H: 71.3, px: [2796, 1290], nome: "iPhone 15 Pro Max 6,7″ OLED", corpo: [159.9, 76.7, 8.25] },
+  ip15pmV: { W: 71.3, H: 154.5, px: [1290, 2796], nome: "iPhone 15 Pro Max em retrato", corpo: [76.7, 159.9, 8.25] },
+  cel: { W: 155, H: 70, px: [2400, 1080], nome: "celular 6,7″ 20:9", corpo: [163, 76, 8.5] },
+  tab: { W: 217, H: 136, px: [1920, 1200], nome: "tablet 10,1″ 16:10", corpo: [242, 160, 8] },
+  barra: { W: 218, H: 55, px: [1920, 480], nome: "barra 8,8″ 4:1", corpo: [228, 66, 10] },
+  mon: { W: 344, H: 194, px: [1920, 1080], nome: "monitor 15,6″ 16:9", corpo: [356, 222, 12] }
+};
+const S = { R: 700, Wm: 520, Hm: 300, oy: 60, tela: "tab", u: 700, dy: -150, tau: 0, cont: "grade", ed: 600, eh: 260, ex: 0, pupila: false, raios: true, girar: true, comp: true, caixa: true, tampa: false, forma: "ret", lado: 1, corte: null, incl: 0, prof: 0, uso: 1, usoB: 0, paralaxe: true, rastreio: false, passeio: false, cheio: false, dio: 64, bino: true, estereo: false, abA: 56, abB: 56, lay: "lado", divisor: false, quadrada: false, folga: 40, zpF: 0.55, amb: 0.6, fume: 0.6, dentro: false };   // girar: conteúdo pré-girado 180° (o espelho gira a imagem)
+const ref = 0.92;                                  // espelho de primeira superfície (alumínio protegido)
+
+function geo() {
+  const T0 = TELAS[S.tela], tau = S.tau * deg, k = S.uso;
+  const T = k >= 1 ? T0 : { ...T0, W: Math.round(T0.W * k * 10) / 10, H: Math.round(T0.H * k * 10) / 10, px: T0.px.map(p => Math.round(p * k)), nome: T0.nome + ` (área útil ${Math.round(k * 100)} %)` };   // só uma parte da tela leva o conteúdo
+  const nd = [0, Math.sin(tau), -Math.cos(tau)], ex = [1, 0, 0], ey = [0, Math.cos(tau), Math.sin(tau)];   // normal da tela, para o espelho
+  const Pc = [0, S.dy, S.u], ob = clamp(S.usoB, -(T0.H - T.H) / 2, (T0.H - T.H) / 2);
+  const Fr = S.fresnel;
+  if (Fr && Fr.F > Fr.d && Fr.d > 0) {             // lente Fresnel ideal a d da tela (lado do espelho), foco F > d: o espelho vê uma tela virtual k× maior, mais longe
+    const k = Fr.F / (Fr.F - Fr.d), Lc = add(Pc, mul(nd, Fr.d)), Pv = add(Pc, mul(nd, Fr.d * (1 - k)));
+    const Tv = { ...T, W: T.W * k, H: T.H * k };
+    return { T: Tv, T0, Tfis: T, Cs: [0, 0, S.R], Pc: Pv, Pd: add(Pv, mul(ey, ob * k)), Pfis: Pc, Pdfis: add(Pc, mul(ey, ob)), nd, ex, ey, f: S.R / 2,
+      lente: { C: Lc, W: Fr.W || 297, H: Fr.H || 210, k } };
+  }
+  return { T, T0, Cs: [0, 0, S.R], Pc, Pd: add(Pc, mul(ey, ob)), nd, ex, ey, f: S.R / 2 };   // Pc: centro do aparelho, Pd: centro da área útil
+}
+let G = geo();
+const meiaLua = () => S.forma === "lua", parab = () => S.forma !== "ret" && !S.esfera;   // S.esfera: o mesmo recorte, mas esférico (espelho de maquiagem)   // faixa: recorte retangular do mesmo parabolóide
+const zEsp = (x, y) => parab() ? (x * x + y * y) / (2 * S.R) : S.R - Math.sqrt(Math.max(0, S.R * S.R - x * x - y * y));   // parabolóide z = r²/2R (raio no vértice R, foco R/2)
+const dentroCorte = (x, y) => !S.corte || (x >= S.corte.x0 && x <= S.corte.x1 && y >= S.corte.y0 && y <= S.corte.y1 && (S.corte.z1 == null || (x * x + y * y) / (2 * S.R) <= S.corte.z1));   // a caixa corta o espelho (paredes e, se dado, a tampa)
+const noRecorte = (x, y) => meiaLua() ? x * x + y * y <= (S.Wm / 2) ** 2 && S.lado * (y - S.oy) >= 0 && dentroCorte(x, y) : Math.abs(x) <= S.Wm / 2 && Math.abs(y - S.oy) <= S.Hm / 2;   // meia-lua: o lado do disco além da corda y = oy (lado +1: y ≥ oy, −1: y ≤ oy)
+function limEsp() {
+  if (meiaLua()) { const r = S.Wm / 2, c = clamp(S.oy, -r, r), k = S.corte || { x0: -1e9, x1: 1e9, y0: -1e9, y1: 1e9 };
+    const x0 = Math.max(-r, k.x0), x1 = Math.min(r, k.x1), y0 = Math.max(S.lado > 0 ? c : -r, k.y0), y1 = Math.min(S.lado > 0 ? r : c, k.y1);
+    const r2 = Math.min(r * r, Math.max(x0 * x0, x1 * x1) + Math.max(y0 * y0, y1 * y1)), sag = parab() ? r2 / (2 * S.R) : S.R - Math.sqrt(Math.max(0, S.R * S.R - r2));
+    return { x0, x1, y0, y1, sag }; }
+  if (parab()) { const ym = Math.abs(S.oy) + S.Hm / 2; return { x0: -S.Wm / 2, x1: S.Wm / 2, y0: S.oy - S.Hm / 2, y1: S.oy + S.Hm / 2, sag: ((S.Wm / 2) ** 2 + ym * ym) / (2 * S.R) }; }
+  return { x0: -S.Wm / 2, x1: S.Wm / 2, y0: S.oy - S.Hm / 2, y1: S.oy + S.Hm / 2, sag: S.R - Math.sqrt(Math.max(0, S.R * S.R - (S.Wm / 2) ** 2 - (Math.abs(S.oy) + S.Hm / 2) ** 2)) };
+}
+const centroEsp = () => { if (!meiaLua()) return [0, S.oy]; const l = limEsp(); return [0, (l.y0 + l.y1) / 2]; };
+/* inclinação (S.incl, graus, gira o espelho em torno do eixo x pelo vértice) e profundidade (S.prof, mm, desce o vértice):
+   o traçado leva cada raio para o referencial do espelho, cruza lá e volta — sem inclinação nem profundidade, é a identidade */
+const espA = () => (S.incl || 0) * deg, espDz = () => -(S.prof || 0);
+const paraLocal = P => { const a = espA(), c = Math.cos(a), s = Math.sin(a), y = P[1], z = P[2] - espDz(); return [P[0], c * y + s * z, -s * y + c * z]; };
+const dirLocal = d => { const a = espA(), c = Math.cos(a), s = Math.sin(a); return [d[0], c * d[1] + s * d[2], -s * d[1] + c * d[2]]; };
+const paraMundo = p => { const a = espA(), c = Math.cos(a), s = Math.sin(a); return [p[0], c * p[1] - s * p[2], s * p[1] + c * p[2] + espDz()]; };
+const dirMundo = d => { const a = espA(), c = Math.cos(a), s = Math.sin(a); return [d[0], c * d[1] - s * d[2], s * d[1] + c * d[2]]; };
+const supEsp = (x, y) => paraMundo([x, y, zEsp(x, y)]);   // ponto do espelho (coordenadas do recorte) no mundo
+function limMundo() {                                // extensão do espelho no mundo (com inclinação/profundidade); sem elas é a do recorte
+  const l = limEsp(); if (!(S.incl || S.prof) || !parab()) return { x0: l.x0, x1: l.x1, y0: l.y0, y1: l.y1 };
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const n = 48;
+  for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) { const x = l.x0 + (l.x1 - l.x0) * i / n, y = l.y0 + (l.y1 - l.y0) * j / n; if (!noRecorte(x, y)) continue; const P = supEsp(x, y); x0 = Math.min(x0, P[0]); x1 = Math.max(x1, P[0]); y0 = Math.min(y0, P[1]); y1 = Math.max(y1, P[1]); }
+  return { x0, x1, y0, y1 };
+}
+function pontosEsp() {                               // grade de partida dos raios sobre o espelho
+  const l = limEsp(), nx = meiaLua() ? 15 : 13, ny = 9, P = [];
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const x = l.x0 + (i + 0.5) / nx * (l.x1 - l.x0), y = l.y0 + (j + 0.5) / ny * (l.y1 - l.y0); if (noRecorte(x, y)) P.push(supEsp(x, y)); }
+  return P;
+}
+function hitEspelho(O, d) {
+  if (parab()) {                                   // (O + t d)xy² = 2R (O + t d)z, no referencial do espelho
+    const Ol = paraLocal(O), dl = dirLocal(d);
+    const a = dl[0] * dl[0] + dl[1] * dl[1], b = 2 * (Ol[0] * dl[0] + Ol[1] * dl[1]) - 2 * S.R * dl[2], c = Ol[0] * Ol[0] + Ol[1] * Ol[1] - 2 * S.R * Ol[2];
+    let ts; if (a < 1e-12) ts = [-c / b]; else { const D = b * b - 4 * a * c; if (D < 0) return null; const q = Math.sqrt(D); ts = [(-b - q) / (2 * a), (-b + q) / (2 * a)].sort((x, y) => x - y); }
+    for (const t of ts) { if (!(t > 1e-6)) continue; const Pl = add(Ol, mul(dl, t)); if (noRecorte(Pl[0], Pl[1])) return { t, P: paraMundo(Pl) }; }
+    return null;
+  }
+  const oc = sub(O, G.Cs), b = dot(oc, d), c = dot(oc, oc) - S.R * S.R, D = b * b - c; if (D < 0) return null;
+  const q = Math.sqrt(D);
+  for (const t of [-b - q, -b + q]) {
+    if (t <= 1e-6) continue;
+    const P = add(O, mul(d, t)); if (P[2] >= S.R) continue;                       // só a calota da frente
+    if (meiaLua() ? !noRecorte(P[0], P[1]) : (Math.abs(P[0]) > S.Wm / 2 || Math.abs(P[1] - S.oy) > S.Hm / 2)) continue;  // recorte (disco/meia-lua ou retângulo)
+    return { t, P };
+  }
+  return null;
+}
+const nEsp0 = P => { if (!parab()) return nrm(sub(G.Cs, P)); const Pl = paraLocal(P); return dirMundo(nrm([-Pl[0], -Pl[1], S.R])); };
+/* erro de superfície de um espelho feito à mão / impresso (S.erroSup = {sig: mrad rms, lam: mm}): ondulação fixa no espelho
+   (não é ruído por raio), inclinação rms sig com período lam em x e y; sem ele a normal é a exata */
+const nEsp = P => {
+  const n = nEsp0(P), e = S.erroSup; if (!e || !e.sig) return n;
+  const s = e.sig / 1000, k = 2 * Math.PI / e.lam, Pl = paraLocal(P);
+  const tx = 2 * s * Math.sin(k * Pl[0] + 1.3) * Math.cos(0.83 * k * Pl[1] + 0.4), ty = 2 * s * Math.cos(0.91 * k * Pl[0] + 2.1) * Math.sin(k * Pl[1] + 0.7);
+  return nrm(add(n, dirMundo([tx, ty, 0])));
+};
+function hitTela(O, d) {
+  const den = dot(d, G.nd); if (Math.abs(den) < 1e-9) return null;
+  const t = dot(sub(G.Pd, O), G.nd) / den; if (t <= 1e-6) return null;
+  const P = add(O, mul(d, t)), v = sub(P, G.Pd), a = dot(v, G.ex), b = dot(v, G.ey);
+  if (Math.abs(a) > G.T.W / 2 || Math.abs(b) > G.T.H / 2) return null;
+  return { t, P, a, b, frente: den < 0 };
+}
+function hitCelular(O, d) {                         // caixa orientada do corpo do aparelho (atrás da tela)
+  if (!S.tampa) return -1;
+  const [bw, bh, be] = G.T0.corpo; let C, ax, h, t0 = -1e9, t1 = 1e9;
+  if (S.divisor) { C = [0, G.f - EST.zs + be / 2, EST.zs]; ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; h = [bw / 2, be / 2, bh / 2]; }   // o aparelho real, de pé ao lado do vidro
+  else { C = add(G.Pc, mul(G.nd, -be / 2 - 0.01)); ax = [G.ex, G.ey, G.nd]; h = [bw / 2, bh / 2, be / 2]; }
+  const o = sub(O, C);
+  for (let k = 0; k < 3; k++) {
+    const p = dot(o, ax[k]), q = dot(d, ax[k]);
+    if (Math.abs(q) < 1e-12) { if (Math.abs(p) > h[k]) return -1; continue; }
+    let a = (-h[k] - p) / q, b = (h[k] - p) / q; if (a > b) [a, b] = [b, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, b);
+  }
+  return t1 >= t0 && t0 > 1e-6 ? t0 : -1;
+}
+const tapaCelular = (A, B) => { const v = sub(B, A), L = len(v), t = hitCelular(A, mul(v, 1 / L)); return t > 0 && t < L; };
+const pontoTela = (a, b) => add(G.Pd, add(mul(G.ex, a), mul(G.ey, b)));
+function solve3(A, b) {
+  const det = m => m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]);
+  const D = det(A); if (Math.abs(D) < 1e-14) return null; const r = [];
+  for (let k = 0; k < 3; k++) { const M = A.slice(); for (let i = 0; i < 3; i++) M[3 * i + k] = b[i]; r.push(det(M) / D); }
+  return r;
+}
+function converge(L) {
+  const A = [0, 0, 0, 0, 0, 0, 0, 0, 0], b = [0, 0, 0];
+  for (const { X, d } of L) for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const m = (i === j ? 1 : 0) - d[i] * d[j]; A[3 * i + j] += m; b[i] += m * X[j]; }
+  return solve3(A, b);
+}
+/* imagem de um ponto da tela: raios para uma grade sobre o recorte, refletidos; cruzamento por mínimos quadrados */
+function imagemDe(Q) {
+  const L = [];
+  for (const M of pontosEsp()) {
+    const d = nrm(sub(M, Q)); if (dot(d, G.nd) <= 0) continue;   // a tela só emite pela frente
+    const h = hitEspelho(Q, d); if (!h) continue;
+    if (!telaPassa(Q, h.P) || !lentePassa(Q, h.P)) continue;                // tampa do gabinete / fora da lente Fresnel                                        // a luz da tela bate na tampa do gabinete
+    const r = refl(d, nEsp(h.P)); if (r[2] <= 0) continue;
+    const bloq = hitTela(h.P, r); if (bloq && bloq.t > 1e-3) continue;   // a própria tela no caminho
+    if (hitCelular(h.P, r) > 0) continue;                                   // ou o corpo do celular
+    if (tapaLente(h.P, add(h.P, mul(r, 3000)))) continue;                   // ou a própria Fresnel no caminho da imagem
+    if (!cruzaAbertura(h.P, r)) continue;                                    // a frente do gabinete
+    if (CX && CX.gav && usarCaixa && r[2] > 0 && tapaGaveta(h.P, add(h.P, mul(r, (Math.max(S.u * 1.05, CX.gav.z1 + 1) - h.P[2]) / r[2])))) continue;   // nem passar pelo degrau (até o topo dele)
+    L.push({ X: h.P, d: r });
+  }
+  if (L.length < 6) return null;
+  const I = converge(L); if (!I) return null;
+  let s = 0; for (const { X, d } of L) { const v = sub(I, X), p = sub(v, mul(d, dot(v, d))); s += dot(p, p); }
+  return { I, rms: Math.sqrt(s / L.length), L };
+}
+/* onde UM olho vê o ponto Q: acha o ponto do espelho cujo reflexo vai de Q até o olho (Newton) e converge um feixe do tamanho da pupila */
+function aparente(Q, E, M0) {
+  const sup = (x, y) => supEsp(x, y);
+  const res = (x, y) => { const P = sup(x, y), r = refl(nrm(sub(P, Q)), nEsp(P)), w = nrm(sub(E, P)); return [r[0] - w[0], r[1] - w[1]]; };
+  let [x, y] = M0;
+  for (let it = 0; it < 12; it++) {
+    const e = res(x, y); if (Math.hypot(e[0], e[1]) < 1e-9) break;
+    const h = 1e-3, ex = res(x + h, y), ey = res(x, y + h);
+    const J = [[(ex[0] - e[0]) / h, (ey[0] - e[0]) / h], [(ex[1] - e[1]) / h, (ey[1] - e[1]) / h]], det = J[0][0] * J[1][1] - J[0][1] * J[1][0];
+    if (Math.abs(det) < 1e-14) return null;
+    x -= (J[1][1] * e[0] - J[0][1] * e[1]) / det; y -= (-J[1][0] * e[0] + J[0][0] * e[1]) / det;
+  }
+  if (!noRecorte(x, y)) return null;      // o reflexo cai fora do recorte: o olho não vê esse ponto
+  { const P0 = sup(x, y); if (!cruzaAbertura(P0, nrm(sub(E, P0))) || !telaPassa(Q, P0) || !lentePassa(Q, P0) || tapaLente(P0, E) || tapaGaveta(P0, E) || tapaCelular(P0, E)) return null; }  // ou bate na frente do gabinete / na gaveta
+  const L = [];
+  for (const [ox, oy] of [[0, 0], [2, 0], [-2, 0], [0, 2], [0, -2]]) { const P = sup(x + ox, y + oy); L.push({ X: P, d: refl(nrm(sub(P, Q)), nEsp(P)) }); }
+  const A = converge(L); if (!A) return null;
+  let s = 0; for (const { X, d } of L) { const v = sub(A, X), p = sub(v, mul(d, dot(v, d))); s += dot(p, p); }
+  return { A, M: [x, y], rms: Math.sqrt(s / L.length) };   // rms: borrão do feixe de ⌀4 mm que entra no olho
+}
+/* ---------- conteúdo da tela ---------- */
+/* cubo 3D: um cubo sólido girando devagar no lugar da imagem aérea, desenhado do ponto de vista do olho (paralaxe pelo traçado) */
+function desenharCubo(x, W, H) {
+  const cam = camOlho(W, H, COMP && COMP.cheio ? 1 / 3 : 1 / 2), { Ec, f, r, u, foc, cx, cy } = cam, t = relogio(), a = 0.55 * t;
+  const P = p => { const v = sub(p, Ec), z = dot(v, f); return [cx + dot(v, r) / z * foc, cy - dot(v, u) / z * foc, z]; };
+  const rot = p => { const c = Math.cos(a), s = Math.sin(a), q = [p[0] * c - p[1] * s, p[0] * s + p[1] * c, p[2]], c2 = Math.cos(0.4), s2 = Math.sin(0.4); return [q[0], q[1] * c2 - q[2] * s2, q[1] * s2 + q[2] * c2]; };
+  const V = []; for (const i of [-1, 1]) for (const j of [-1, 1]) for (const k of [-1, 1]) V.push(rot([i * 0.5, j * 0.5, k * 0.5]));
+  const faces = [[0, 1, 3, 2, "#f2668b"], [4, 6, 7, 5, "#8fe3c8"], [0, 4, 5, 1, "#f2b25c"], [2, 3, 7, 6, "#7fb6e8"], [0, 2, 6, 4, "#c9a6ff"], [1, 5, 7, 3, "#e8e6df"]];
+  // chão: grade um pouco abaixo do cubo
+  x.strokeStyle = "rgba(90,140,170,.35)"; x.lineWidth = 1;
+  for (let i = -3; i <= 3; i++) { const g = 0.25 * i, a0 = P([g, -0.75, -0.62]), a1 = P([g, 0.75, -0.62]), b0 = P([-0.75, g, -0.62]), b1 = P([0.75, g, -0.62]); x.beginPath(); x.moveTo(a0[0], a0[1]); x.lineTo(a1[0], a1[1]); x.moveTo(b0[0], b0[1]); x.lineTo(b1[0], b1[1]); x.stroke(); }
+  const L = nrm([0.4, -0.5, 0.8]), vis = [];
+  for (const [i, j, k, l, cor] of faces) {
+    const c = mul(add(add(V[i], V[j]), add(V[k], V[l])), 0.25), n = nrm(cross(sub(V[j], V[i]), sub(V[l], V[i])));
+    const nn = dot(n, c) < 0 ? mul(n, -1) : n; if (dot(nn, sub(Ec, c)) <= 0) continue;   // só as faces voltadas para o olho
+    vis.push({ q: [i, j, k, l], cor, luz: 0.35 + 0.65 * Math.max(0, dot(nn, L)), z: P(c)[2] });
+  }
+  vis.sort((p, q) => q.z - p.z);
+  for (const v of vis) {
+    const pts = v.q.map(i => P(V[i])); x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath();
+    x.fillStyle = v.cor; x.globalAlpha = 0.25 + 0.6 * v.luz; x.fill(); x.globalAlpha = 1; x.strokeStyle = "#fff"; x.lineWidth = 3; x.stroke();
+  }
+  x.fillStyle = "#8fe3c8"; x.font = `${Math.round(H * 0.045)}px IBM Plex Mono, monospace`; x.textAlign = "left"; x.textBaseline = "top";
+  x.font = `${Math.round(Math.min(H * 0.045, W * 0.06))}px IBM Plex Mono, monospace`; x.fillText(cam.k ? "visto do olho" : "câmera fixa", W * 0.03, H * 0.02);
+}
+/* mensagem projetada: um mensageiro genérico (desenho próprio) em linhas de varredura azuladas que tremulam, sobre um disco emissor */
+function desenharMensagem(x, W, H) {
+  const t = relogio(), cx = W / 2, alt = H * 0.86, pe = H * 0.93, esc = alt / 100;
+  const treme = 0.82 + 0.18 * Math.sin(t * 23) * Math.sin(t * 7.3) + (aleat() < 0.04 ? -0.35 : 0);
+  // contorno do mensageiro (meia-largura em função da altura, 0 = pés, 100 = topo do capuz)
+  const perfil = h => h > 96 ? 7 * Math.sqrt(Math.max(0, (100 - h) / 4)) : h > 84 ? 9.5 : h > 80 ? 6 : h > 74 ? 15 : h > 46 ? 15 + (74 - h) * 0.12 : 18 + (46 - h) * 0.22;
+  const desvio = h => (Math.sin(h * 0.9 + t * 9) * 0.6 + (Math.abs(((t * 0.6) % 1.4) - h / 100) < 0.03 ? 6 : 0)) * esc;   // ondulação + falha que sobe
+  const passo = Math.max(2, Math.round(H / 80));
+  for (let y = pe - alt; y < pe; y += passo) {
+    const h = (pe - y) / esc, w = perfil(h) * esc; if (w <= 0) continue;
+    const a = treme * (0.55 + 0.45 * Math.sin(y * 0.7 + t * 30) ** 2), dx = desvio(h);
+    const g = x.createLinearGradient(cx - w, 0, cx + w, 0); g.addColorStop(0, `rgba(90,170,255,${0.25 * a})`); g.addColorStop(0.5, `rgba(170,225,255,${a})`); g.addColorStop(1, `rgba(90,170,255,${0.25 * a})`);
+    x.fillStyle = g; x.fillRect(cx - w + dx, y, 2 * w, passo * 0.55);
+  }
+  // braços: um estendido segurando um cristal que pulsa
+  x.strokeStyle = `rgba(150,210,255,${0.7 * treme})`; x.lineWidth = 4 * esc; x.lineCap = "round";
+  x.beginPath(); x.moveTo(cx + 14 * esc, pe - 70 * esc); x.lineTo(cx + 27 * esc, pe - 58 * esc); x.lineTo(cx + 34 * esc, pe - 64 * esc); x.stroke();
+  const pul = 0.6 + 0.4 * Math.sin(t * 5), rc = 4.5 * esc * (1 + 0.15 * pul), gc = x.createRadialGradient(cx + 36 * esc, pe - 67 * esc, 0, cx + 36 * esc, pe - 67 * esc, rc * 2.4);
+  gc.addColorStop(0, `rgba(230,250,255,${treme})`); gc.addColorStop(0.4, `rgba(120,200,255,${0.6 * treme * pul})`); gc.addColorStop(1, "rgba(60,120,255,0)");
+  x.fillStyle = gc; x.beginPath(); x.arc(cx + 36 * esc, pe - 67 * esc, rc * 2.4, 0, TAU); x.fill();
+  // disco emissor e cone de luz
+  x.fillStyle = `rgba(80,160,255,${0.10 * treme})`; x.beginPath(); x.moveTo(cx - 8 * esc, pe); x.lineTo(cx - 26 * esc, pe - alt); x.lineTo(cx + 26 * esc, pe - alt); x.lineTo(cx + 8 * esc, pe); x.fill();
+  x.strokeStyle = `rgba(140,210,255,${0.8 * treme})`; x.lineWidth = 2.5 * esc; x.beginPath(); x.ellipse(cx, pe, 24 * esc, 4 * esc, 0, 0, TAU); x.stroke();
+  // legenda lateral
+  x.fillStyle = `rgba(150,210,255,${0.75 * treme})`; x.font = `${Math.round(H * 0.09)}px IBM Plex Mono, monospace`; x.textAlign = "left"; x.textBaseline = "top";
+  x.fillText("MENSAGEM", W * 0.04, H * 0.06); x.fillText("CANAL 7", W * 0.04, H * 0.18); if ((t * 2) % 2 < 1.3) x.fillText("● REC", W * 0.04, H * 0.30);
+  x.textAlign = "right"; x.fillText(new Date().toTimeString().slice(0, 8), W * 0.96, H * 0.06);
+}
+function desenharConteudo() {
+  const T = G.T, W = S.estereo ? EST.n : 960, H = S.estereo ? EST.n : COMP && COMP.cheio ? cvC.height : Math.round(960 * T.H / T.W); if (cvC.width !== W || cvC.height !== H) { cvC.width = W; cvC.height = H; }
+  const x = cvC.getContext("2d", { willReadFrequently: true });
+  x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+  if (S.cont === "jogo") { desenharJogo(x, W, H); return; }
+  if (S.cont === "msg") { desenharMensagem(x, W, H); return; }
+  if (S.cont === "cubo") { desenharCubo(x, W, H); return; }
+  if (S.cont === "grade") {
+    x.strokeStyle = "#2f6f86"; x.lineWidth = 2;
+    for (let i = 0; i <= W; i += 40) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, H); x.stroke(); }
+    for (let j = 0; j <= H; j += 40) { x.beginPath(); x.moveTo(0, j); x.lineTo(W, j); x.stroke(); }
+    x.strokeStyle = "#fff"; x.lineWidth = 3; x.strokeRect(4, 4, W - 8, H - 8);
+    [["#f2668b", 0.15], ["#f2b25c", 0.5], ["#8fe3c8", 0.85]].forEach(([c, u]) => { x.strokeStyle = c; x.lineWidth = 6; x.beginPath(); x.arc(W * u, H / 2, Math.min(W, H) * 0.22, 0, TAU); x.stroke(); });
+    x.fillStyle = "#fff"; x.font = `bold ${Math.round(H * 0.12)}px IBM Plex Mono, monospace`; x.textAlign = "left"; x.fillText("↑ CIMA", 14, Math.round(H * 0.16));
+  } else if (S.cont === "texto") {
+    const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, "#f2668b"); g.addColorStop(0.5, "#f2b25c"); g.addColorStop(1, "#8fe3c8");
+    x.fillStyle = g; x.font = `bold ${Math.round(H * 0.42)}px Archivo Narrow, Arial Narrow, sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("IMAGEM AÉREA", W / 2, H * 0.42);
+    x.fillStyle = "#7fb6e8"; x.font = `${Math.round(H * 0.13)}px IBM Plex Mono, monospace`; x.fillText("recorte côncavo + tela larga", W / 2, H * 0.8);
+  } else {
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#0a1630"); g.addColorStop(1, "#000"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (const [a, b, c] of ESTRELAS) { x.fillStyle = `rgba(255,255,255,${c})`; x.fillRect(a * W, b * H * 0.7, 2, 2); }   // as mesmas estrelas sempre
+    const r = H * 0.33; const gp = x.createRadialGradient(W * 0.3 - r * 0.3, H * 0.5 - r * 0.3, r * 0.1, W * 0.3, H * 0.5, r);
+    gp.addColorStop(0, "#9fd8ff"); gp.addColorStop(0.6, "#2b6fd6"); gp.addColorStop(1, "#0b234d"); x.fillStyle = gp; x.beginPath(); x.arc(W * 0.3, H * 0.5, r, 0, TAU); x.fill();
+    x.fillStyle = "#f2b25c"; x.beginPath(); x.moveTo(W * 0.72, H * 0.42); x.lineTo(W * 0.86, H * 0.5); x.lineTo(W * 0.72, H * 0.58); x.lineTo(W * 0.75, H * 0.5); x.fill();
+    x.fillStyle = "#ff7a2a"; x.beginPath(); x.moveTo(W * 0.72, H * 0.47); x.lineTo(W * 0.64, H * 0.5); x.lineTo(W * 0.72, H * 0.53); x.fill();
+  }
+}
+function amostra(a, b, g) {
+  const i = Math.floor((a / G.T.W + 0.5) * pix.W), j = Math.floor((0.5 - b / G.T.H) * pix.H);
+  if (i < 0 || j < 0 || i >= pix.W || j >= pix.H) return [0, 0, 0];
+  const k = 4 * (j * pix.W + i); return [pix.d[k] / 255 * g, pix.d[k + 1] / 255 * g, pix.d[k + 2] / 255 * g];
+}
+
+/* ---------- jogo "Proteja a Terra" (mesma lógica do simulador do Mirage; trazido de mirage-rotor-3d.html) ---------- */
+const base2 = d => { const t = Math.abs(d[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], u = nrm(cross(d, t)); return [u, cross(d, u)]; };
+let olhoAz = -90, olhoTh = 62;                     // de onde a câmera do jogo olha o mundo do jogo (controles e retículo relativos a ela)
+const JOGO = { ativo: false, meia: 7.5, nave: [0, 0, -3.5], met: [], tiros: [], fx: [], rastro: [], hiper: null, segue: false, pontos: 0, vidas: 3, fim: false, pausa: false,
+  tSpawn: 0, tTiro: 0, tPasso: 0, piscar: 0, teclas: {}, nivel: 1, combo: 0, tCombo: 0, flash: 0, msg: "", tMsg: 0, tempo: 0, crat: [], alvo: null, tTrava: 0 };
+
+const NAVE_SEG = (() => {                          // nave: corpo vertical, 4 aletas e um anel na base (mm, espaço da imagem)
+  const s = [[[0, 0, -0.7], [0, 0, 1.3]]];
+  for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; s.push([[0, 0, -0.2], [1.3 * Math.cos(a), 1.3 * Math.sin(a), -0.8]]); }
+  return s;
+})();
+
+function navePecas(t) {
+  const P = [], E = 1.15, seg = (a, b, cor) => P.push([mul(a, E), mul(b, E), cor]);   // E: escala da nave
+  const anel = (z, r, n, cor) => { const q = []; for (let i = 0; i < n; i++) { const a = TAU * i / n + Math.PI / n; q.push([r * Math.cos(a), r * Math.sin(a), z]); } for (let i = 0; i < n; i++) seg(q[i], q[(i + 1) % n], cor); return q; };
+  const CASCO = [0.75, 0.95, 1], ASA = [0.3, 0.62, 1], NARIZ = [1, 1, 1], CABINE = [0.45, 1, 0.8], MOTOR = [0.55, 0.58, 0.72];
+  const aneis = [[-1.0, 0.3], [-0.55, 0.42], [0.15, 0.4], [0.7, 0.27]].map(([z, r]) => anel(z, r, 8, CASCO));
+  for (let i = 0; i < 8; i++) { for (let k = 0; k < 3; k++) seg(aneis[k][i], aneis[k + 1][i], CASCO); seg(aneis[3][i], [0, 0, 1.35], NARIZ); }
+  anel(0.88, 0.19, 12, CABINE);
+  for (let w = 0; w < 3; w++) {
+    const a = w * TAU / 3 + Math.PI / 6, c = Math.cos(a), sn = Math.sin(a), R = (r, z) => [r * c, r * sn, z];
+    seg(R(0.4, 0.1), R(1.25, -0.72), ASA); seg(R(1.25, -0.72), R(1.38, -1.08), ASA); seg(R(1.38, -1.08), R(0.42, -0.78), ASA); seg(R(0.42, -0.3), R(1.05, -0.86), ASA);
+  }
+  const boca = anel(-1.17, 0.22, 8, MOTOR); for (let i = 0; i < 8; i++) seg(aneis[0][i], boca[i], MOTOR);
+  const L = 0.55 + 0.35 * Math.abs(Math.sin(t * 23)) + 0.12 * Math.sin(t * 41);
+  for (let i = 0; i < 6; i++) { const a = TAU * i / 6 + t * 3; seg([0.15 * Math.cos(a), 0.15 * Math.sin(a), -1.2], [0.04 * Math.cos(a), 0.04 * Math.sin(a), -1.2 - L * (0.8 + 0.2 * Math.sin(t * 30 + i))], [1, 0.5 + 0.3 * Math.sin(t * 17 + i), 0.12]); }
+  seg([0, 0, -1.2], [0, 0, -1.28 - L], [1, 0.95, 0.6]);
+  return P;
+}
+
+const ICO = (() => {
+  const g = (1 + Math.sqrt(5)) / 2, v = [];
+  for (const a of [-1, 1]) for (const b of [-1, 1]) v.push([0, a, b * g], [a, b * g, 0], [b * g, 0, a]);
+  const e = []; for (let i = 0; i < 12; i++) for (let j = i + 1; j < 12; j++) if (Math.abs(len(sub(v[i], v[j])) - 2) < 1e-6) e.push([i, j]);
+  return { v: v.map(p => mul(p, 1 / len(p))), e };
+})();
+
+const ICO2 = (() => {
+  const tem = (i, j) => ICO.e.some(([a, b]) => (a === i && b === j) || (a === j && b === i)), faces = [];
+  for (let i = 0; i < 12; i++) for (let j = i + 1; j < 12; j++) for (let k = j + 1; k < 12; k++) if (tem(i, j) && tem(j, k) && tem(i, k)) faces.push([i, j, k]);
+  const V = ICO.v.slice(), meio = new Map(), E = new Set();
+  const m = (a, b) => { const ch = a < b ? a + "_" + b : b + "_" + a; if (!meio.has(ch)) { V.push(nrm(add(V[a], V[b]))); meio.set(ch, V.length - 1); } return meio.get(ch); };
+  const ar = (a, b) => E.add(a < b ? a + "_" + b : b + "_" + a);
+  for (const [a, b, c] of faces) { const ab = m(a, b), bc = m(b, c), ca = m(c, a); for (const [p, q, r] of [[a, ab, ca], [ab, b, bc], [ca, bc, c], [ab, bc, ca]]) { ar(p, q); ar(q, r); ar(r, p); } }
+  return { v: V, e: [...E].map(x => x.split("_").map(Number)) };
+})();
+
+function novoMeteoro() {
+  const m = JOGO.meia, r = 1.2 + aleat() * 0.8, forma = [];
+  for (let i = 0; i < 12; i++) {                   // pontos numa esfera irregular (espiral áurea com ruído fixo)
+    const u = (i + 0.5) / 12, z = 1 - 2 * u, rr = Math.sqrt(1 - z * z), a = i * 2.399963, k = r * (0.8 + 0.4 * aleat());
+    forma.push([k * rr * Math.cos(a), k * rr * Math.sin(a), k * z]);
+  }
+  // rocha: relevo suave (soma de ondas aleatórias) e duas crateras afundadas
+  const ond = [0, 1, 2].map(() => [nrm([aleat() - 0.5, aleat() - 0.5, aleat() - 0.5]), 2 + 3 * aleat(), TAU * aleat()]);
+  const crat = [0, 1].map(() => nrm([aleat() - 0.5, aleat() - 0.5, aleat() - 0.5]));
+  const vert0 = null;
+  const vert = ICO2.v.map(q => { let k = 0.85; for (const [d, fr, fa] of ond) k += 0.07 * Math.sin(fr * dot(q, d) + fa);
+    for (const c of crat) { const g = dot(q, c); if (g > 0.86) k -= 0.22 * (g - 0.86) / 0.14; }
+    return mul(q, r * k); });
+  const dir = nrm([aleat() - 0.5, aleat() - 0.5, aleat() - 0.5]), p = mul(dir, (m - 0.4) / Math.max(...dir.map(Math.abs)));   // nasce na borda do volume
+  const alvo = mul(nrm([aleat() - 0.5, aleat() - 0.5, aleat() - 0.5]), aleat() * TERRA.R);                   // mira em algum ponto do planeta
+  const vel = mul(nrm(sub(alvo, p)), 1.4 + aleat() * 1.0 + 0.25 * JOGO.nivel);
+  return { p, vel, r, forma, vert, ond, crat, giro: aleat() * TAU };
+}
+
+function eixosDoOlhar() {
+  const a = (S.modo !== "rotor" || S.vista === "olho" ? olhoAz : ORB.az) * deg;
+  return { dir: [-Math.sin(a), Math.cos(a)], longe: [-Math.cos(a), -Math.sin(a)] };
+}
+
+function passoJogo(dt) {
+  if (JOGO.fim || JOGO.pausa) return;
+  JOGO.tempo += dt;
+  const k = JOGO.teclas, m = JOGO.meia, v = 6 * dt, { dir, longe } = eixosDoOlhar(), n = JOGO.nave;
+  const lx = (k.ArrowRight || k.KeyD ? 1 : 0) - (k.ArrowLeft || k.KeyA ? 1 : 0);
+  const ly = (k.ArrowUp ? 1 : 0) - (k.ArrowDown ? 1 : 0);
+  const lz = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0);
+  const RMIN = TERRA.R + 2.3, RMAX = TERRA.R + 2.9, poe = p => { n[0] = p[0]; n[1] = p[1]; n[2] = p[2]; };
+  for (const q of JOGO.rastro) q.t += dt; JOGO.rastro = JOGO.rastro.filter(q => q.t < 0.45);
+  if (JOGO.alvo && JOGO.alvo.morto) JOGO.alvo = null;
+  if (JOGO.hiper) {                                // hipervelocidade: arco em volta da Terra até ficar sob o meteoro, de frente
+    const h = JOGO.hiper, al = JOGO.alvo; h.t += dt;
+    if (!al) JOGO.hiper = null;
+    else {
+      const a = Math.min(1, h.t / h.dur), e = a < 0.5 ? 2 * a * a : 1 - 2 * (1 - a) * (1 - a);
+      const r1 = clamp(len(al.p) - al.r - 1.8, RMIN, RMAX);
+      poe(mul(slerp(h.u0, nrm(al.p), e), h.r0 + (r1 - h.r0) * e));
+      JOGO.rastro.push({ p: n.slice(), t: 0 });
+      if (a >= 1) { JOGO.hiper = null; JOGO.segue = true; JOGO.escudo = 0.6;   // meio segundo de escudo para mirar e atirar
+        JOGO.msg = "FRENTE A FRENTE — ESPAÇO!"; JOGO.tMsg = 1.2; sfx.chegada(); }
+    }
+  } else {
+    if (lx || ly || lz) JOGO.segue = false;        // mexeu nas setas: volta ao controle manual
+    poe([n[0] + v * (lx * dir[0] + ly * longe[0]), n[1] + v * (lx * dir[1] + ly * longe[1]), n[2] + v * lz]);
+    if (JOGO.segue && JOGO.alvo) poe(mul(slerp(nrm(n), nrm(JOGO.alvo.p), Math.min(1, dt * 5)), len(n)));   // continua de frente para o alvo
+    const rr = len(n); poe(mul(rr > 1e-6 ? nrm(n) : [0, -1, 0], clamp(rr, RMIN, RMAX)));                  // órbita: camada em volta do planeta
+  }
+  if (S.modo === "rotor") {                       // o eixo do rotor não tem arame (e tapa o feixe): a nave fica fora dele
+    const rr = Math.hypot(n[0], n[1]), rmin = 2.4;
+    if (rr < rmin) { const a = rr > 1e-6 ? Math.atan2(n[1], n[0]) : 0; n[0] = rmin * Math.cos(a); n[1] = rmin * Math.sin(a); }
+  }                // nave 1,5× (bico a +2 mm, chama a −2 mm)
+  JOGO.tTiro -= dt;
+  if (JOGO.alvo && (JOGO.alvo.morto || !JOGO.met.includes(JOGO.alvo))) JOGO.alvo = null;   // o alvo sumiu: destrava
+  if (k.Space && JOGO.tTiro <= 0 && JOGO.tiros.length < 6) {
+    const u = eixoNave().u, o = add(n, mul(JOGO.alvo ? nrm(sub(JOGO.alvo.p, n)) : u, 1.8)), d = JOGO.alvo ? interceptar(o, 13, JOGO.alvo) : u;
+    JOGO.tiros.push({ p: o, v: mul(d, 13), guiado: !!JOGO.alvo, alvo: JOGO.alvo }); JOGO.tTiro = 0.28; (JOGO.alvo ? sfx.tiroGuiado : sfx.tiro)(); }
+  JOGO.tCombo -= dt; if (JOGO.tCombo <= 0) JOGO.combo = 0; JOGO.tMsg -= dt;
+  if (JOGO.alvo && !JOGO.alvo.morto) { const urg = clamp(1 - (len(JOGO.alvo.p) - TERRA.R) / 6, 0, 1); JOGO.tPing -= dt; if (JOGO.tPing <= 0) { sfx.ping(urg); JOGO.tPing = 0.55 - 0.42 * urg; } }
+  JOGO.tAlarme = (JOGO.tAlarme || 0) - dt;
+  if (JOGO.tAlarme <= 0 && JOGO.met.some(me => !me.morto && len(me.p) < TERRA.R + 2.2)) { sfx.alarme(); JOGO.tAlarme = 1.2; JOGO.msg = "PERIGO: METEORO PERTO DA TERRA"; JOGO.tMsg = 0.9; }
+  for (const t of JOGO.tiros) t.p = add(t.p, mul(t.v, dt));
+  JOGO.tiros = JOGO.tiros.filter(t => !t.morto && Math.max(...t.p.map(Math.abs)) < m);
+  JOGO.tSpawn -= dt;
+  if (JOGO.tSpawn <= 0 && JOGO.met.length < 6) { JOGO.met.push(novoMeteoro()); JOGO.tSpawn = Math.max(0.6, 1.8 - 0.15 * JOGO.nivel); }
+  for (const me of JOGO.met) { me.p = add(me.p, mul(me.vel, dt)); me.giro += dt * 1.5; }
+  // tiro × meteoro
+  for (const me of JOGO.met) for (const t of JOGO.tiros) if (!me.morto && !t.morto && len(sub(t.p, me.p)) < me.r + 0.4) {
+    me.morto = true; t.morto = true; JOGO.combo = JOGO.tCombo > 0 ? JOGO.combo + 1 : 1; JOGO.tCombo = 1.8;
+    const travado = me === JOGO.alvo, ganho = 10 * JOGO.combo * (travado ? 2 : 1);
+    JOGO.pontos += ganho; explodir(me.p, [1, 0.6, 0.2]); sfx.explosao();
+    if (travado) { sfx.abatido(JOGO.combo); JOGO.alvo = null; JOGO.abatidos = (JOGO.abatidos || 0) + 1; JOGO.msg = "ALVO ABATIDO!  +" + ganho + (JOGO.combo > 1 ? "  COMBO ×" + JOGO.combo : ""); JOGO.tMsg = 1.4; }
+    else { sfx.acerto(JOGO.combo); if (JOGO.combo > 1) { JOGO.msg = "COMBO ×" + JOGO.combo + "  +" + ganho; JOGO.tMsg = 1.2; } }
+    if (JOGO.pontos >= JOGO.nivel * 150) { JOGO.nivel++; JOGO.msg = "NÍVEL " + JOGO.nivel + "!"; JOGO.tMsg = 1.8; sfx.nivel(); }
+  }
+  // meteoro × nave
+  JOGO.escudo = (JOGO.escudo || 0) - dt;
+  if (JOGO.piscar <= 0 && !JOGO.hiper && JOGO.escudo <= 0) for (const me of JOGO.met) if (!me.morto && len(sub(me.p, n)) < me.r + 1.0) {
+    me.morto = true; JOGO.vidas--; JOGO.piscar = 1.5; JOGO.combo = 0; explodir(n, [0.4, 0.9, 1]); sfx.dano();
+    if (JOGO.vidas <= 0) { JOGO.fim = true; sfx.fim(); }
+  }
+  JOGO.piscar -= dt;
+  for (const me of JOGO.met) if (!me.morto && len(me.p) <= TERRA.R + me.r * 0.6) {
+    const d = nrm(me.p); me.morto = true; JOGO.vidas--; JOGO.combo = 0; explodir(mul(d, TERRA.R + 0.3), [1, 0.45, 0.1]);
+    JOGO.crat.push({ d, t: 0 }); sfx.impacto(); JOGO.msg = "IMPACTO NA TERRA!"; JOGO.tMsg = 1.4;
+    if (JOGO.vidas <= 0) { JOGO.fim = true; sfx.fim(); }
+  }
+  for (const k of JOGO.crat) k.t += dt; JOGO.crat = JOGO.crat.filter(k => k.t < 4);
+  JOGO.met = JOGO.met.filter(me => !me.morto && Math.max(...me.p.map(Math.abs)) < m + 1);
+  JOGO.tiros = JOGO.tiros.filter(t => !t.morto && Math.max(...t.p.map(Math.abs)) < m);
+  for (const f of JOGO.fx) { f.t += dt; for (const q of f.q) { q.p = add(q.p, mul(q.v, dt)); } }
+  JOGO.fx = JOGO.fx.filter(f => f.t < 0.5);
+}
+
+function explodir(p, cor) {
+  const q = []; for (let i = 0; i < 8; i++) { const u = (i + 0.5) / 8, z = 1 - 2 * u, r = Math.sqrt(1 - z * z), a = i * 2.399963; q.push({ p: p.slice(), v: mul([r * Math.cos(a), r * Math.sin(a), z], 5) }); }
+  JOGO.fx.push({ t: 0, q, cor });
+}
+
+const LUZ_JOGO = nrm([0.45, -0.35, 0.82]);
+
+function sombra(cor, n) { const l = 0.22 + 0.78 * Math.max(0, dot(n, LUZ_JOGO)); return cor.map(c => c * l); }
+
+const TERRA = { R: 2.6 };                          // raio do planeta (mm do jogo), centro na origem do jogo
+
+const ONDAS_T = [[0.8, 2.1, 0.3], [-0.5, 0.7, 1.2], [0.2, -0.9, 0.4], [0.9, 0.3, -0.6], [-0.3, -0.4, 0.9], [0.6, -0.7, -0.2]].map(v => nrm(v));
+
+function corTerra(n, t) {
+  const a = t * 0.12, c = Math.cos(a), s = Math.sin(a), d = [n[0] * c - n[1] * s, n[0] * s + n[1] * c, n[2]];   // gira em torno do eixo z
+  let h = 0; ONDAS_T.forEach((o, i) => { h += Math.sin(dot(d, o) * (2.2 + 1.1 * i) + i * 1.7) / (1 + 0.45 * i); });
+  let nv = 0; ONDAS_T.forEach((o, i) => { nv += Math.sin(dot(d, [o[1], o[2], o[0]]) * (4 + 1.5 * i) + t * 0.2 + i); });
+  let cor = h > 0.3 ? (Math.sin(dot(d, ONDAS_T[2]) * 6) > 0.45 ? [0.62, 0.52, 0.3] : [0.18, 0.52, 0.2]) : [0.05, 0.24 + 0.06 * h, 0.6];
+  if (Math.abs(d[2]) > 0.86) cor = [0.92, 0.95, 1];  // calotas de gelo
+  if (nv > 1.7) cor = cor.map(v => 0.35 * v + 0.6); // nuvens
+  return cor;
+}
+
+function eixoNave() {
+  const u = len(JOGO.nave) > 1e-6 ? nrm(JOGO.nave) : [0, 0, 1], t = Math.abs(u[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  const x = nrm(cross(t, u)), y = cross(u, x);
+  return { u, M: q => add(add(mul(x, q[0]), mul(y, q[1])), mul(u, q[2])) };
+}
+
+function ladoEscolhido() {                         // direção (mundo do jogo) das teclas seguradas, relativa a quem olha
+  const k = JOGO.teclas, { dir, longe } = eixosDoOlhar();
+  const lx = (k.ArrowRight || k.KeyD ? 1 : 0) - (k.ArrowLeft || k.KeyA ? 1 : 0), ly = (k.ArrowUp ? 1 : 0) - (k.ArrowDown ? 1 : 0), lz = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0);
+  const d = [lx * dir[0] + ly * longe[0], lx * dir[1] + ly * longe[1], lz];
+  return len(d) > 0 ? nrm(d) : null;
+}
+
+function travar() {
+  if (!JOGO.ativo || JOGO.fim) return;
+  const n = JOGO.nave, d = ladoEscolhido(), vivos = JOGO.met.filter(me => !me.morto);
+  let cand;
+  if (d) cand = vivos.map(me => { const v = sub(me.p, n), c = dot(nrm(v), d); return { me, c, nota: c - 0.04 * len(v) }; }).filter(o => o.c > 0.35);   // meteoros daquele lado
+  else cand = vivos.map(me => ({ me, nota: -len(me.p) }));                     // sem lado: o que está mais perto de atingir a Terra
+  cand.sort((a, b) => b.nota - a.nota);
+  if (!cand.length) { JOGO.alvo = null; JOGO.msg = "nenhum meteoro desse lado"; JOGO.tMsg = 1; sfx.nega(); return; }
+  // T de novo com o mesmo lado: passa para o próximo candidato
+  const i = cand.findIndex(o => o.me === JOGO.alvo), prox = cand[(i + 1) % cand.length].me;
+  const troca = !!JOGO.alvo && JOGO.alvo !== prox;
+  JOGO.alvo = prox; JOGO.tTrava = 0; JOGO.tPing = 0; JOGO.msg = troca ? "NOVO ALVO" : "ALVO TRAVADO"; JOGO.tMsg = 0.8; (troca ? sfx.troca : sfx.trava)();
+}
+
+function slerp(a, b, t) {                          // arco de círculo máximo entre duas direções
+  const c = clamp(dot(a, b), -1, 1), th = Math.acos(c);
+  if (th < 1e-4) return nrm(add(a, mul(sub(b, a), t)));
+  if (th > Math.PI - 1e-3) { const p = nrm(cross(a, Math.abs(a[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0])); return t < 0.5 ? slerp(a, p, 2 * t) : slerp(p, b, 2 * t - 1); }
+  const s = Math.sin(th); return add(mul(a, Math.sin((1 - t) * th) / s), mul(b, Math.sin(t * th) / s));
+}
+
+function hiper() {
+  if (!JOGO.ativo || JOGO.fim || JOGO.pausa || JOGO.hiper) return;
+  if (!JOGO.alvo || JOGO.alvo.morto) { JOGO.msg = "trave um alvo (T) antes"; JOGO.tMsg = 1; sfx.nega(); return; }
+  const u0 = nrm(JOGO.nave), ang = Math.acos(clamp(dot(u0, nrm(JOGO.alvo.p)), -1, 1));
+  JOGO.hiper = { t: 0, dur: 0.25 + 0.35 * ang / Math.PI, u0, r0: len(JOGO.nave) };    // mais longe na volta, um pouco mais de tempo
+  JOGO.msg = "HIPERVELOCIDADE"; JOGO.tMsg = 0.6; sfx.hiper();
+}
+
+function interceptar(o, vT, me) {
+  const r = sub(me.p, o), v = me.vel, a = dot(v, v) - vT * vT, b = 2 * dot(r, v), c = dot(r, r);
+  let t = -1;
+  if (Math.abs(a) < 1e-9) t = -c / b; else { const D = b * b - 4 * a * c; if (D >= 0) { const t1 = (-b - Math.sqrt(D)) / (2 * a), t2 = (-b + Math.sqrt(D)) / (2 * a); t = Math.min(...[t1, t2].filter(x => x > 0)); } }
+  return nrm(t > 0 && isFinite(t) ? add(r, mul(v, t)) : r);
+}
+
+function pontosMira() {
+  const me = JOGO.alvo; if (!me || me.morto) return [];
+  const out = [], cor = [1, 0.25, 0.45], n = JOGO.nave, ax = eixoNave(), ini = add(n, mul(nrm(sub(me.p, n)), 1.6));
+  const L = len(sub(me.p, ini)) - me.r * 1.6, u = nrm(sub(me.p, ini)), fase = (JOGO.tempo * 2) % 0.85;
+  for (let s = fase; s < L; s += 0.85) for (let k = 0; k <= 3; k++) { const t = s + k * 0.12; if (t < L) out.push({ p: add(ini, mul(u, t)), cor }); }   // traços de 0,36 mm
+  const th = (olhoTh == null ? 45 : olhoTh) * deg, az = olhoAz * deg, vista = [Math.sin(th) * Math.cos(az), Math.sin(th) * Math.sin(az), Math.cos(th)];
+  const [e1, e2] = base2(vista), R = me.r * 1.6, giro = JOGO.tempo * 2.5, pulso = 1 + 0.08 * Math.sin(JOGO.tempo * 12);
+  for (let q = 0; q < 4; q++) for (let i = -4; i <= 4; i++) {     // quatro colchetes do retículo
+    const a = giro + q * Math.PI / 2 + i * 0.07;
+    out.push({ p: add(me.p, add(mul(e1, R * pulso * Math.cos(a)), mul(e2, R * pulso * Math.sin(a)))), cor: [1, 0.35, 0.5] });
+  }
+  return out;
+}
+
+const SOM = { ctx: null, mestre: null, mudo: false, prox: 0, passo: 0, ruido: null };
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+function somLigar() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  if (!SOM.ctx) {
+    SOM.ctx = new AC(); SOM.mestre = SOM.ctx.createGain(); SOM.mestre.gain.value = 0.32; SOM.mestre.connect(SOM.ctx.destination);
+    const b = SOM.ctx.createBuffer(1, SOM.ctx.sampleRate, SOM.ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = aleat() * 2 - 1;
+    SOM.ruido = b;
+  }
+  SOM.ctx.resume(); SOM.prox = SOM.ctx.currentTime + 0.05;
+}
+function nota(f, t0, dur, tipo, vol, f2) {
+  if (!SOM.ctx || SOM.mudo) return;
+  const c = SOM.ctx, o = c.createOscillator(), g = c.createGain();
+  o.type = tipo; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(SOM.mestre); o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function chiado(t0, dur, vol, freq, passaBaixa) {
+  if (!SOM.ctx || SOM.mudo) return;
+  const c = SOM.ctx, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = SOM.ruido; fl.type = passaBaixa ? "lowpass" : "bandpass"; fl.frequency.setValueAtTime(freq, t0);
+  if (passaBaixa) fl.frequency.exponentialRampToValueAtTime(120, t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  s.connect(fl); fl.connect(g); g.connect(SOM.mestre); s.start(t0); s.stop(t0 + dur + 0.02);
+}
+const agora = () => SOM.ctx ? SOM.ctx.currentTime + 0.005 : 0;
+const sfx = {
+  tiro: () => nota(1300, agora(), 0.1, "square", 0.06, 320),
+  explosao: () => { const t = agora(); chiado(t, 0.5, 0.4, 2500, true); nota(120, t, 0.35, "sine", 0.35, 38); },
+  acerto: combo => { const t = agora(), m = 76 + 2 * Math.min(combo, 8); nota(hz(m), t, 0.07, "square", 0.09); nota(hz(m + 7), t + 0.06, 0.07, "square", 0.09); nota(hz(m + 12), t + 0.12, 0.16, "square", 0.08); },
+  nivel: () => { const t = agora(); [72, 76, 79, 84, 88].forEach((m, i) => nota(hz(m), t + i * 0.07, 0.18, "square", 0.08)); nota(hz(96), t + 0.36, 0.4, "triangle", 0.12); },
+  dano: () => { const t = agora(); nota(260, t, 0.45, "sawtooth", 0.14, 50); chiado(t, 0.3, 0.2, 600, true); },
+  // travar: varredura de radar subindo + dois bipes de confirmação
+  trava: () => { const t = agora(); nota(500, t, 0.22, "sine", 0.12, 1500); nota(hz(88), t + 0.2, 0.07, "square", 0.09); nota(hz(95), t + 0.29, 0.14, "square", 0.09); },
+  troca: () => { const t = agora(); nota(hz(91), t, 0.05, "square", 0.07); },
+  nega: () => { const t = agora(); nota(150, t, 0.12, "sawtooth", 0.09, 120); nota(120, t + 0.13, 0.16, "sawtooth", 0.09, 90); },
+  hiper: () => { const t = agora(); nota(140, t, 0.55, "sawtooth", 0.1, 2400); nota(70, t, 0.6, "square", 0.05, 900); chiado(t, 0.5, 0.18, 3500); },
+  chegada: () => { const t = agora(); nota(hz(93), t, 0.08, "triangle", 0.1); nota(hz(100), t + 0.07, 0.18, "triangle", 0.1); chiado(t, 0.15, 0.06, 9000); },
+  ping: urg => { const t = agora(); nota(1250 + 500 * urg, t, 0.07, "sine", 0.06 + 0.05 * urg); },   // radar do alvo travado
+  tiroGuiado: () => { const t = agora(); nota(1900, t, 0.16, "sawtooth", 0.06, 260); nota(hz(100), t, 0.05, "square", 0.04); chiado(t, 0.08, 0.05, 5000); },
+  abatido: combo => { const t = agora(), b = 72 + 2 * Math.min(combo, 6);
+    [0, 4, 7, 12, 16].forEach((d, i) => nota(hz(b + d), t + 0.05 + i * 0.055, 0.16, "square", 0.08));
+    nota(hz(b + 24), t + 0.33, 0.45, "triangle", 0.11); for (let i = 0; i < 6; i++) nota(hz(b + 28 + (i % 3) * 3), t + 0.34 + i * 0.04, 0.05, "sine", 0.05); },
+  alarme: () => { const t = agora(); for (let i = 0; i < 2; i++) { nota(880, t + i * 0.24, 0.11, "square", 0.06); nota(660, t + i * 0.24 + 0.12, 0.11, "square", 0.06); } },
+  impacto: () => { const t = agora(); nota(70, t, 0.9, "sine", 0.5, 28); chiado(t, 0.8, 0.45, 1500, true); nota(520, t + 0.15, 0.9, "sawtooth", 0.06, 260); },
+  fim: () => { const t = agora(); [69, 65, 62, 57].forEach((m, i) => nota(hz(m), t + i * 0.22, 0.3, "triangle", 0.18)); }
+};
+/* trilha: Lá menor, Am – F – C – G, 8 colcheias por compasso; fica mais rápida e ganha uma segunda voz a cada nível */
+const ACORDES = [[45, [0, 3, 7, 12]], [41, [0, 4, 7, 12]], [48, [0, 4, 7, 12]], [43, [0, 4, 7, 12]]];
+function tocarPasso(p, t, dur) {
+  const [raiz, iv] = ACORDES[Math.floor(p / 8) % 4], s = p % 8, nv = JOGO.nivel;
+  if (s === 0 || s === 4) nota(150, t, 0.16, "sine", 0.45, 42);                     // bumbo
+  if (s % 2 === 1) chiado(t, 0.035, 0.05, 8000);                                     // chimbal
+  if (s === 2 || s === 6) chiado(t, 0.12, 0.09, 1800);                               // caixa
+  if ([0, 3, 4, 6].includes(s)) nota(hz(raiz + (s === 6 ? 12 : 0)), t, dur * 1.6, "triangle", 0.16);   // baixo
+  nota(hz(raiz + 24 + iv[s % 4]), t, dur * 0.9, "square", 0.025);                   // arpejo
+  if (nv >= 3 && s % 2 === 0) nota(hz(raiz + 36 + iv[(s / 2 + 1) % 4]), t, dur * 1.8, "triangle", 0.03);
+}
+
+function somAgendar() {
+  if (!SOM.ctx || SOM.mudo || !JOGO.ativo || JOGO.pausa || JOGO.fim) { if (SOM.ctx) SOM.prox = SOM.ctx.currentTime + 0.05; return; }
+  const dur = 60 / (126 + 6 * (JOGO.nivel - 1)) / 2;
+  while (SOM.prox < SOM.ctx.currentTime + 0.15) { tocarPasso(SOM.passo, SOM.prox, dur); SOM.prox += dur; SOM.passo = (SOM.passo + 1) % 32; }
+}
+
+/* ---------- conteúdo: desenhado como o olho deve vê-lo (cvC); a tela recebe a versão girada ou pré-compensada (cvT) ---------- */
+const cvC = document.createElement("canvas"), cvT = document.createElement("canvas"); let pix = null;
+function desenharTela() { desenharConteudo(); montarTela(); }
+function montarTela() {
+  if (S.estereo) { acenderEstereo(); return; }
+  const T = G.T, k = 4, W = Math.round(T.W * k), H = Math.round(T.H * k);
+  if (cvT.width !== W || cvT.height !== H) { cvT.width = W; cvT.height = H; }
+  const xt = cvT.getContext("2d", { willReadFrequently: true });
+  if (S.comp && COMP && COMP.W === W && COMP.H === H) {          // pré-compensado: cada pixel da tela mostra o ponto do desenho que o olho deve ver ali
+    const src = cvC.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, cvC.width, cvC.height).data, out = xt.createImageData(W, H), o = out.data, idx = COMP.idx;
+    for (let p = 0; p < W * H; p++) { const a = 4 * p, q = 4 * idx[p]; o[a + 3] = 255; if (idx[p] >= 0) { o[a] = src[q]; o[a + 1] = src[q + 1]; o[a + 2] = src[q + 2]; } }
+    xt.putImageData(out, 0, 0);
+  } else {
+    xt.setTransform(1, 0, 0, 1, 0, 0); xt.fillStyle = "#000"; xt.fillRect(0, 0, W, H);
+    if (S.girar) xt.setTransform(-1, 0, 0, -1, W, H);            // sem compensação: só desfaz o giro de 180° do espelho
+    xt.drawImage(cvC, 0, 0, W, H); xt.setTransform(1, 0, 0, 1, 0, 0);
+  }
+  pix = { d: xt.getImageData(0, 0, W, H).data, W, H }; if (typeof desenharTelaBox === "function") desenharTelaBox();
+  if (texTela) texTela.needsUpdate = true;
+}
+/* pré-compensação: para o olho de projeto, traça onde ele vê cada ponto de uma grade da tela (ângulos na vista dele);
+   escolhe o maior retângulo que cabe nessa figura e, para cada pixel da tela, guarda qual pixel do desenho ele deve mostrar */
+let COMP = null;
+function prepararComp() {
+  COMP = null; if (!M.centro) return;
+  const T = G.T, E = olho(), f = nrm(sub(M.centro, E)), r = nrm(cross(f, [0, 1, 0])), u = cross(r, f);
+  const na = 41, nb = Math.max(13, Math.round(41 * T.H / T.W)), U = new Float64Array(na * nb).fill(NaN), V = new Float64Array(na * nb).fill(NaN);
+  let Mg = centroEsp(), Mlin = null;
+  for (let j = 0; j < nb; j++) for (let i = 0; i < na; i++) {
+    if (i === 0) Mg = Mlin || centroEsp();                     // cada linha parte do começo da anterior
+    const a = (i / (na - 1) - 0.5) * T.W, b = (j / (nb - 1) - 0.5) * T.H, Q = pontoTela(a, b);
+    let ap = aparente(Q, E, Mg); if (!ap) ap = aparente(Q, E, centroEsp());   // o Newton se perdeu: recomeça do centro do espelho
+    if (!ap) continue; Mg = ap.M; if (i === 0) Mlin = ap.M; const v = sub(ap.A, E), z = dot(v, f); U[j * na + i] = dot(v, r) / z; V[j * na + i] = dot(v, u) / z;
+  }
+  const col = i => [...Array(nb).keys()].map(j => U[j * na + i]).filter(isFinite), lin = j => [...Array(na).keys()].map(i => V[j * na + i]).filter(isFinite);
+  const media = a => a.reduce((s, x) => s + x, 0) / a.length, c0 = col(0), c1 = col(na - 1), l0 = lin(0), l1 = lin(nb - 1);
+  const nVis = [...U].filter(isFinite).length;
+  if (S.cheio ? nVis < na * nb * 0.15 : (c0.length < nb * 0.8 || c1.length < nb * 0.8 || l0.length < na * 0.8 || l1.length < na * 0.8)) return;   // o olho não vê a tela inteira (no modo pixel a pixel basta ver uma parte)
+  // maior retângulo (na proporção do desenho) dentro da figura que a tela forma na vista do olho: máscara rasterizada + somas acumuladas
+  const NM = 160; let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9;
+  for (let k = 0; k < na * nb; k++) if (isFinite(U[k]) && isFinite(V[k])) { u0 = Math.min(u0, U[k]); u1 = Math.max(u1, U[k]); v0 = Math.min(v0, V[k]); v1 = Math.max(v1, V[k]); }
+  const su = (u1 - u0) / (NM - 1), sv = (v1 - v0) / (NM - 1), mask = new Uint8Array(NM * NM);
+  const tri = (A, B, C) => {
+    const x0 = Math.max(0, Math.floor(Math.min(A[0], B[0], C[0]))), x1 = Math.min(NM - 1, Math.ceil(Math.max(A[0], B[0], C[0]))), y0 = Math.max(0, Math.floor(Math.min(A[1], B[1], C[1]))), y1 = Math.min(NM - 1, Math.ceil(Math.max(A[1], B[1], C[1])));
+    const d = (B[1] - C[1]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[1] - C[1]); if (Math.abs(d) < 1e-12) return;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const l1 = ((B[1] - C[1]) * (x - C[0]) + (C[0] - B[0]) * (y - C[1])) / d, l2 = ((C[1] - A[1]) * (x - C[0]) + (A[0] - C[0]) * (y - C[1])) / d; if (l1 >= -1e-9 && l2 >= -1e-9 && l1 + l2 <= 1 + 1e-9) mask[y * NM + x] = 1; }
+  };
+  const pt = k => [(U[k] - u0) / su, (V[k] - v0) / sv];
+  for (let j = 0; j < nb - 1; j++) for (let i = 0; i < na - 1; i++) {
+    const a = j * na + i, b = a + 1, c = a + na, d = c + 1; if (![a, b, c, d].every(k => isFinite(U[k]))) continue;
+    tri(pt(a), pt(b), pt(d)); tri(pt(a), pt(d), pt(c));
+  }
+  const Sm = new Int32Array((NM + 1) * (NM + 1));
+  for (let y = 0; y < NM; y++) for (let x = 0; x < NM; x++) Sm[(y + 1) * (NM + 1) + x + 1] = mask[y * NM + x] + Sm[y * (NM + 1) + x + 1] + Sm[(y + 1) * (NM + 1) + x] - Sm[y * (NM + 1) + x];
+  const cheia = (x, y, w, h) => Sm[(y + h) * (NM + 1) + x + w] - Sm[y * (NM + 1) + x + w] - Sm[(y + h) * (NM + 1) + x] + Sm[y * (NM + 1) + x] === w * h;
+  const asp = cvC.width / cvC.height, ar = asp * sv / su;            // largura/altura em pixels da máscara
+  const acha = h => { const w = Math.round(h * ar); if (w < 1 || w > NM || h > NM) return null; let best = null, bd = 1e9;
+    for (let y = 0; y + h <= NM; y++) for (let x = 0; x + w <= NM; x++) if (cheia(x, y, w, h)) { const dd = (x + w / 2 - NM / 2) ** 2 + (y + h / 2 - NM / 2) ** 2; if (dd < bd) { bd = dd; best = [x, y, w, h]; } }
+    return best; };
+  let lo = 1, hi = NM, R = null; while (lo <= hi) { const m = (lo + hi) >> 1, r = acha(m); if (r) { R = r; lo = m + 1; } else hi = m - 1; }
+  const d2 = dot(sub(M.centro, E), sub(M.centro, E)), areaFig = Sm[NM * (NM + 1) + NM] * su * sv * d2, areaRet = R ? R[2] * R[3] * su * sv * d2 : 0;   // mm² na distância da imagem
+  let uL, uR, vB, vT;
+  if (S.cheio) {                                     // o desenho cobre a figura inteira que a tela forma na vista do olho
+    [uL, uR, vB, vT] = [u0, u1, v0, v1]; const Hc = Math.round(960 * (v1 - v0) / (u1 - u0));
+    if (cvC.width !== 960 || cvC.height !== Hc) { cvC.width = 960; cvC.height = Hc; }
+  } else { if (!R) return; [uL, uR, vB, vT] = [u0 + R[0] * su, u0 + (R[0] + R[2] - 1) * su, v0 + R[1] * sv, v0 + (R[1] + R[3] - 1) * sv]; }
+  const k = 4, W = Math.round(T.W * k), H = Math.round(T.H * k), idx = new Int32Array(W * H).fill(-1), Wc = cvC.width, Hc = cvC.height;
+  for (let pj = 0; pj < H; pj++) for (let pi = 0; pi < W; pi++) {
+    const gi = (pi + 0.5) / W * (na - 1), gj = (1 - (pj + 0.5) / H) * (nb - 1), i0 = Math.min(na - 2, Math.floor(gi)), j0 = Math.min(nb - 2, Math.floor(gj)), fi = gi - i0, fj = gj - j0;
+    const q = (A, i, j) => A[j * na + i], bil = A => (1 - fi) * (1 - fj) * q(A, i0, j0) + fi * (1 - fj) * q(A, i0 + 1, j0) + (1 - fi) * fj * q(A, i0, j0 + 1) + fi * fj * q(A, i0 + 1, j0 + 1);
+    const uu = bil(U), vv = bil(V); if (!isFinite(uu) || !isFinite(vv)) continue;
+    const s = (uu - uL) / (uR - uL), t = (vT - vv) / (vT - vB); if (s < 0 || s >= 1 || t < 0 || t >= 1) continue;
+    idx[pj * W + pi] = Math.floor(t * Hc) * Wc + Math.floor(s * Wc);
+  }
+  COMP = { idx, W, H, E: E.slice(), U, V, na, nb, uL, uR, vB, vT, f, r, up: u, C: M.centro.slice(), cheio: S.cheio, areaFig, areaRet, Hc: Hc };
+  if (S.cheio) desenharConteudo();
+}
+/* coordenadas do desenho (s, t) que um ponto (a, b) da tela mostra, com a compensação atual */
+function stDe(a, b) {
+  if (!COMP) return null; const { U, V, na, nb } = COMP, gi = (a / G.T.W + 0.5) * (na - 1), gj = (b / G.T.H + 0.5) * (nb - 1);
+  const i0 = Math.min(na - 2, Math.max(0, Math.floor(gi))), j0 = Math.min(nb - 2, Math.max(0, Math.floor(gj))), fi = gi - i0, fj = gj - j0;
+  const q = (A, i, j) => A[j * na + i], bil = A => (1 - fi) * (1 - fj) * q(A, i0, j0) + fi * (1 - fj) * q(A, i0 + 1, j0) + (1 - fi) * fj * q(A, i0, j0 + 1) + fi * fj * q(A, i0 + 1, j0 + 1);
+  return [(bil(U) - COMP.uL) / (COMP.uR - COMP.uL), (COMP.vT - bil(V)) / (COMP.vT - COMP.vB)];
+}
+
+/* ---------- gabinete de cantos arredondados (quase um console) que esconde o espelho ----------
+   Frente em z = CX.zp com uma abertura de cantos arredondados (vidro fumê): a imagem flutua para fora dela.
+   Por dentro tudo preto: o espelho só reflete escuro. */
+let CX = null, usarCaixa = false;
+function noAbertura(P) {
+  const hw = (CX.ax1 - CX.ax0) / 2, hh = (CX.ay1 - CX.ay0) / 2, cx = (CX.ax0 + CX.ax1) / 2, cy = (CX.ay0 + CX.ay1) / 2, r = Math.min(CX.ra, hw, hh);
+  const dx = Math.max(Math.abs(P[0] - cx) - (hw - r), 0), dy = Math.max(Math.abs(P[1] - cy) - (hh - r), 0);
+  if (dx * dx + dy * dy <= r * r) return true;
+  return !!CX.gav && P[0] > CX.ax0 && P[0] < CX.ax1 && P[1] > CX.gav.y0 + 7 && P[1] <= cy;   // passagem do degrau até a janela (a luz da tela desce por ela)
+}
+function telaPassa(Q, P) {                           // o trecho tela → espelho atravessa a tampa pela passagem?
+  if (!CX || !usarCaixa || !CX.gav || Q[2] <= CX.zp || P[2] >= CX.zp) return true;
+  const t = (CX.zp - Q[2]) / (P[2] - Q[2]); return noAbertura(add(Q, mul(sub(P, Q), t)));
+}
+function hitGaveta(O, d) {
+  if (!usarCaixa || !CX || !CX.gav) return -1;
+  const g = CX.gav, c = g.ch, k = (c.y1 - c.yl) / (c.z1 - c.zl);   // sólido acima do lábio: x0 ≤ x ≤ x1, y ≥ y0, zl ≤ z ≤ z1, y ≤ yChanfro(z)
+  const planos = [[[-1, 0, 0], -CX.x0], [[1, 0, 0], CX.x1], [[0, -1, 0], -g.y0], [[0, 0, -1], -c.zl], [[0, 0, 1], c.z1], [[0, 1, -k], c.yl - k * c.zl]];   // n·P ≤ h
+  let t0 = -1e9, t1 = 1e9;
+  for (const [n, h] of planos) {
+    const a = dot(n, d), b = h - dot(n, O);
+    if (Math.abs(a) < 1e-12) { if (b < 0) return -1; continue; }
+    const t = b / a; if (a > 0) t1 = Math.min(t1, t); else t0 = Math.max(t0, t);
+  }
+  return t1 >= Math.max(t0, 1e-6) && t0 > 1e-6 ? t0 : -1;
+}
+/* Fresnel: o raio tela → espelho só existe se passar pela área da lente; e a lente tapa os raios que a cruzam (espelho → imagem, olho → espelho) */
+function cruzaLente(A, B) {                         // ponto onde o segmento A→B cruza o plano da lente (ou null)
+  const L = G.lente; if (!L) return null; const v = sub(B, A), den = dot(v, G.nd); if (Math.abs(den) < 1e-12) return null;
+  const t = dot(sub(L.C, A), G.nd) / den; if (t <= 0 || t >= 1) return null; return add(A, mul(v, t));
+}
+const naLente = X => { const L = G.lente, w = sub(X, L.C); return Math.abs(dot(w, G.ex)) <= L.W / 2 && Math.abs(dot(w, G.ey)) <= L.H / 2; };
+const lentePassa = (Q, P) => { if (!G.lente) return true; const X = cruzaLente(Q, P); return !!X && naLente(X); };
+const tapaLente = (A, B) => { if (!G.lente) return false; const X = cruzaLente(A, B); return !!X && naLente(X); };
+const tapaGaveta = (A, B) => { const v = sub(B, A), L = len(v), t = hitGaveta(A, mul(v, 1 / L)); return t > 0 && t < L; };   // a gaveta fica entre A e B?
+function cruzaAbertura(A, d) {                       // a reta A + t·d passa pela abertura da frente?
+  if (!CX || !usarCaixa) return true; if (Math.abs(d[2]) < 1e-9) return false;
+  const t = (CX.zp - A[2]) / d[2]; return noAbertura(add(A, mul(d, t)));
+}
+let CX_FIXO = null;                                 // caixa e abertura congeladas (o celular pode andar por baixo da tampa, até tapar a abertura)
+function calcularCaixa() {
+  if (S.caixaFixa && CX_FIXO) { CX = { ...CX_FIXO }; return; }
+  CX = null; if (!S.caixa || !M.centro) return;
+  let zp = M.flut * S.zpF; const pts = [];
+  if (S.tampa) { const [bw, bh, be] = G.T.corpo, zs = []; for (const sa of [-1, 1]) for (const sb of [-1, 1]) for (const se of [0, 1]) zs.push(add(add(add(G.Pc, mul(G.ex, sa * bw / 2)), mul(G.ey, sb * bh / 2)), mul(G.nd, -se * be))[2]); zp = Math.max(...zs) + 2; }   // tampo no plano do celular (ele entra de tela para baixo)
+  if (S.tampa) {                                    // acessório: a abertura só precisa passar os raios que vão da imagem para a zona dos olhos (±40 mm em volta do olho)
+    const E = olho(), f = nrm(sub(M.centro, E)), r = nrm(cross(f, [0, 0, 1])), up = cross(r, f);
+    for (const g of M.grade) if (g.im) for (const a of [-40, 0, 40]) for (const b of [-40, 0, 40]) {
+      const Ev = add(E, add(mul(r, a), mul(up, b))), d = nrm(sub(g.im.I, Ev)); if (d[2] >= -1e-6) continue;
+      const t = (zp - Ev[2]) / d[2]; if (t > 0) pts.push(add(Ev, mul(d, t)));
+    }
+  } else
+  for (const g of M.grade) if (g.im) for (const l of g.im.L) { if (Math.abs(l.d[2]) < 1e-9) continue; const t = (zp - l.X[2]) / l.d[2]; if (t > 0) pts.push(add(l.X, mul(l.d, t))); }
+  if (!pts.length) return;
+  const mg = 14; let ax0 = Math.min(...pts.map(p => p[0])) - mg, ax1 = Math.max(...pts.map(p => p[0])) + mg, ay0 = Math.min(...pts.map(p => p[1])) - mg, ay1 = Math.max(...pts.map(p => p[1])) + mg;
+  if (S.quadrada) { const l = Math.max(ax1 - ax0, ay1 - ay0) / 2, cx = (ax0 + ax1) / 2, cy = (ay0 + ay1) / 2; [ax0, ax1, ay0, ay1] = [cx - l, cx + l, cy - l, cy + l]; }   // abertura quadrada no tampo
+  const T = G.T, mgc = S.folga, [bw, bh, be] = T.corpo, cant = [];
+  for (const sa of [-1, 1]) for (const sb of [-1, 1]) for (const se of [0, 1]) cant.push(add(add(add(G.Pfis || G.Pc, mul(G.ex, sa * bw / 2)), mul(G.ey, sb * bh / 2)), mul(G.nd, -se * be)));   // corpo do aparelho (o real, com Fresnel)
+  if (G.lente) for (const sa of [-1, 1]) for (const sb of [-1, 1]) cant.push(add(add(G.lente.C, mul(G.ex, sa * G.lente.W / 2)), mul(G.ey, sb * G.lente.H / 2)));   // e a lente
+  const yAp0 = Math.min(...cant.map(p => p[1])), yAp1 = Math.max(...cant.map(p => p[1])), zAp1 = Math.max(...cant.map(p => p[2]));
+  if (S.tampa && S.quadrada && ay0 < yAp1 + 3 && ay1 > yAp1) { const d = yAp1 + 3 - ay0; ay0 += d; ay1 += d; }   // a abertura começa ao pé do celular, não por cima dele
+  const le = limMundo(), base = Math.min(yAp0, le.y0, ay0) - mgc, topo = Math.max(le.y1, yAp1, ay1) + mgc, lado = Math.max(le.x1, -le.x0, bw / 2 + 6, Math.abs(ax0), Math.abs(ax1)) + mgc;   // folga: parede e estrutura
+  const sag = limEsp().sag;
+  CX = { zp, ax0, ax1, ay0, ay1, ra: Math.min(10, (ax1 - ax0) / 4), x0: -lado, x1: lado, y0: base, y1: topo, z0: S.tampa ? Math.min(...pontosEsp().map(p => p[2])) - 4 : -sag - Math.min(30, S.folga), rc: 8 };   // deitado: o fundo fica logo abaixo do ponto mais baixo do espelho
+  if (!S.tampa && zAp1 + 6 > zp) CX.gav = degrau(zp, zAp1 + 6, base, yAp1);   // o aparelho fica à frente da janela: degrau (o "L" do console)
+}
+/* Degrau do console: oco, com teto, fundo e laterais; a frente é um chanfro que passa ENTRE os dois feixes,
+   o da tela até o espelho (yA, por baixo do chanfro) e o do espelho até a imagem (yB, por cima). Abaixo do lábio
+   a frente fica aberta e a tampa tem uma passagem do degrau até a abertura (sem ela a luz da tela batia na tampa).
+   yA(z) é o máximo de retas (convexo) e yB(z) o mínimo de retas (côncavo): uma reta entre os dois extremos vale no meio. */
+function degrau(zp, z1, base, yAp1) {
+  const A = [], B = [], T = G.T, m = 6;
+  for (let i = 0; i <= 4; i++) for (let j = 0; j <= 2; j++) {
+    const Q = add(add(G.Pd, mul(G.ex, (i / 4 - 0.5) * T.W)), mul(G.ey, (j / 2 - 0.5) * T.H));
+    for (const Mp of pontosEsp()) {
+      const d = nrm(sub(Mp, Q)); if (dot(d, G.nd) <= 0) continue; const h = hitEspelho(Q, d); if (!h) continue;
+      const r = refl(d, nEsp(h.P)); if (r[2] <= 0 || !noAbertura(add(h.P, mul(r, (zp - h.P[2]) / r[2])))) continue; A.push([Q, h.P]); B.push([h.P, r]);   // só os raios que saem pela janela formam a imagem
+    }
+  }
+  const yA = z => Math.max(...A.filter(([Q]) => Q[2] >= z).map(([Q, P]) => Q[1] + (z - Q[2]) / (P[2] - Q[2]) * (P[1] - Q[1])), yAp1);
+  const yB = z => Math.min(...B.map(([P, r]) => P[1] + (z - P[2]) / r[2] * r[1]));
+  let ch = null;
+  for (const mm of [m, 4, 2, 0]) {                                              // folga de 6 mm; se não couber, 4, 2 e 0 (encostado no feixe)
+    let zl = zp; while (zl < z1 - 20 && yB(zl) - yA(zl) < 2 * mm) zl += 5;      // lábio: onde os dois feixes já se separam
+    ch = { zl, yl: yA(zl) + mm, z1, y1: Math.max(yA(z1) + mm, yAp1 + 4), folga: mm };
+    if (!(ch.yl > yB(zl) - mm || ch.y1 > yB(z1) - mm)) break;
+    ch.falha = true;                                                            // nem encostado passa entre os feixes
+  }
+  return { y0: base, y1: Math.max(ch.yl, ch.y1), z0: zp, z1, ch };
+}
+const yChanfro = (g, z) => g.ch.yl + (z - g.ch.zl) / (g.ch.z1 - g.ch.zl) * (g.ch.y1 - g.ch.yl);
+const corSala = d => { const l = S.amb * (0.22 + 0.12 * Math.max(0, d[1])); return [l, l * 1.03, l * 1.08]; };   // a sala, quando nada a esconde
+function raioOlho(E, d) {
+  let g = 1, extra = 0;
+  if (usarCaixa && CX && CX.gav) { const tg = hitGaveta(E, d); if (tg > 0) { const he0 = hitEspelho(E, d), tf = d[2] < 0 ? (CX.zp - E[2]) / d[2] : 1e9;
+    if ((!he0 || tg < he0.t) && tg < tf + 1e-6) return [0.03, 0.033, 0.037].map(v => v * (0.5 + S.amb)); } }   // tampa da gaveta
+  if (usarCaixa && CX && d[2] < 0 && E[2] > CX.zp) {
+    const t = (CX.zp - E[2]) / d[2], P = add(E, mul(d, t));
+    if (!noAbertura(P)) {                          // frente do gabinete (fosca, escura) ou a sala em volta dele
+      const dentro = P[0] > CX.x0 && P[0] < CX.x1 && P[1] > CX.y0 && P[1] < CX.y1;
+      return dentro ? [0.03, 0.033, 0.037].map(v => v * (0.5 + S.amb)) : corSala(d);
+    }
+    g = S.fume; extra = 0.04 * S.amb * 0.3;      // vidro fumê: escurece a imagem uma vez e reflete um pouco da sala
+  }
+  const fundo = usarCaixa && CX ? [0.004, 0.004, 0.005] : null;
+  const ht = S.divisor ? null : hitTela(E, d), he = hitEspelho(E, d);   // com o divisor, a tela no foco é só a imagem dela no vidro
+  { const tc = hitCelular(E, d); if (tc > 0 && (!he || tc < he.t) && (!ht || tc < ht.t - 0.05)) return [0.02, 0.022, 0.025].map(v => v * (0.5 + S.amb) * g + extra); }   // traseira/borda do celular
+  let c;
+  if (ht && (!he || ht.t < he.t)) c = ht.frente ? amostra(ht.a, ht.b, 1) : [0.05, 0.055, 0.06].map(v => v * (fundo ? 0.2 : 1 + S.amb));
+  else if (!he) c = fundo || corSala(d);
+  else {
+    const r = refl(d, nEsp(he.P)), h2 = hitTela(he.P, r);
+    c = h2 && h2.frente && telaPassa(add(he.P, mul(r, h2.t)), he.P) && lentePassa(add(he.P, mul(r, h2.t)), he.P) ? amostra(h2.a, h2.b, ref * (S.divisor ? 0.25 : 1)) : (fundo || corSala(r).map(v => v * ref));   // sem gabinete, o espelho mostra a sala
+  }
+  return c.map(v => v * g + extra);
+}
+
+/* ---------- o jogo (o mesmo da outra simulação) desenhado em perspectiva no desenho que vai para a tela ---------- */
+const ESTRELAS = [...Array(140)].map(() => [aleat(), aleat(), aleat()]);
+const cvTerraJ = document.createElement("canvas");
+/* câmera do olho: com paralaxe, o mundo do conteúdo fica parado no lugar da imagem aérea e é visto do olho atual
+   (a pré-compensação traçada dá o ângulo de cada pixel do desenho na vista desse olho); sem ela, câmera fixa */
+function camOlho(W, H, escala) {
+  if (CAMX) return CAMX;
+  if (S.paralaxe && S.comp && COMP && COMP.C) {
+    const k = escala * Math.min(COMP.uR - COMP.uL, COMP.vT - COMP.vB) * len(sub(COMP.C, COMP.E)), foc = W / (COMP.uR - COMP.uL);   // k: mm do mundo por unidade do conteúdo
+    return { Ec: mul(sub(COMP.E, COMP.C), 1 / k), f: COMP.f, r: COMP.r, u: COMP.up, foc, cx: -COMP.uL * foc, cy: COMP.vT * foc, k };
+  }
+  const th = olhoTh * deg, az = olhoAz * deg, Ec = mul([Math.sin(th) * Math.cos(az), Math.sin(th) * Math.sin(az), Math.cos(th)], 34), f = nrm(mul(Ec, -1)), r = nrm(cross(f, [0, 0, 1]));
+  return { Ec, f, r, u: cross(r, f), foc: (W / 2) / Math.tan(19 * deg), cx: W / 2, cy: H / 2, k: null };
+}
+function desenharJogo(x, W, H) {
+  const cam = camOlho(W, H, 1 / 16), { Ec, f, r, u, foc, cx, cy } = cam;
+  if (cam.k) { olhoAz = Math.atan2(Ec[1], Ec[0]) / deg; olhoTh = Math.acos(clamp(Ec[2] / len(Ec), -1, 1)) / deg; }   // controles relativos a quem olha
+  const P = p => { const v = sub(p, Ec), z = dot(v, f); return [cx + dot(v, r) / z * foc, cy - dot(v, u) / z * foc, z]; };
+  for (const [a, b, c] of ESTRELAS) { x.fillStyle = `rgba(255,255,255,${0.25 + 0.6 * c})`; x.fillRect(a * W, b * H, 2, 2); }
+  const itens = [];
+  // Terra: cada pixel do disco é um raio da câmera do jogo até a esfera (relevo, gelo, nuvens, sombra, crateras)
+  itens.push({ z: dot(mul(Ec, -1), f), d: () => {
+    const c = P([0, 0, 0]), Rs = TERRA.R / c[2] * foc * 1.12, n0 = Math.ceil(2 * Rs);
+    cvTerraJ.width = cvTerraJ.height = n0; const xt = cvTerraJ.getContext("2d"), img = xt.createImageData(n0, n0), o = img.data;
+    for (let j = 0; j < n0; j++) for (let i = 0; i < n0; i++) {
+      const px = c[0] - Rs + i + 0.5, py = c[1] - Rs + j + 0.5, dir = nrm(add(f, add(mul(r, (px - cx) / foc), mul(u, -(py - cy) / foc))));
+      const b = dot(Ec, dir), cc = dot(Ec, Ec) - TERRA.R * TERRA.R, disc = b * b - cc, k = 4 * (j * n0 + i);
+      if (disc < 0) { const dmin = Math.sqrt(Math.max(0, dot(Ec, Ec) - b * b)) - TERRA.R; if (dmin < 0.35) { const a = 1 - dmin / 0.35; o[k] = 60; o[k + 1] = 130; o[k + 2] = 255; o[k + 3] = 200 * a * a; } continue; }
+      const n = nrm(add(Ec, mul(dir, -b - Math.sqrt(disc)))); let col = sombra(corTerra(n, JOGO.tempo), n);
+      for (const kc of JOGO.crat) if (dot(n, kc.d) > 0.985) { const e = Math.max(0, 1 - kc.t / 4); col = [col[0] + e, col[1] + 0.4 * e, col[2]]; }
+      o[k] = 255 * Math.min(1, col[0]); o[k + 1] = 255 * Math.min(1, col[1]); o[k + 2] = 255 * Math.min(1, col[2]); o[k + 3] = 255;
+    }
+    xt.putImageData(img, 0, 0); x.drawImage(cvTerraJ, c[0] - Rs, c[1] - Rs);
+  } });
+  for (const me of JOGO.met) itens.push({ z: P(me.p)[2], d: () => {
+    const c = P(me.p), rp = me.r / c[2] * foc, vh = nrm(me.vel), [e1, e2] = base2(vh), tr = mul(vh, -1);
+    x.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 7; i++) {                  // cauda de fogo, atrás da rota
+      const a = TAU * i / 7 + me.giro * 0.3, b0 = add(me.p, add(add(mul(e1, me.r * 0.6 * Math.cos(a)), mul(e2, me.r * 0.6 * Math.sin(a))), mul(tr, me.r * 0.3)));
+      const L = me.r * (1.6 + 0.9 * Math.abs(Math.sin(JOGO.tempo * 9 + i))), p0 = P(b0), p1 = P(add(b0, mul(tr, L)));
+      const gr = x.createLinearGradient(p0[0], p0[1], p1[0], p1[1]); gr.addColorStop(0, "rgba(255,200,80,.9)"); gr.addColorStop(1, "rgba(160,20,0,0)");
+      x.strokeStyle = gr; x.lineWidth = Math.max(1.5, rp * 0.35); x.beginPath(); x.moveTo(p0[0], p0[1]); x.lineTo(p1[0], p1[1]); x.stroke();
+    }
+    x.globalCompositeOperation = "source-over";
+    const lp = P(add(me.p, mul(LUZ_JOGO, me.r * 0.5))), g = x.createRadialGradient(lp[0], lp[1], rp * 0.1, c[0], c[1], rp);
+    g.addColorStop(0, "#9b8670"); g.addColorStop(0.7, "#4f4134"); g.addColorStop(1, "#1d1712"); x.fillStyle = g; x.beginPath(); x.arc(c[0], c[1], rp, 0, TAU); x.fill();
+    const cs = Math.cos(me.giro), sn = Math.sin(me.giro), rot = q => [q[0] * cs - q[1] * sn, q[0] * sn + q[1] * cs, q[2]];
+    x.lineWidth = 1;
+    for (const [i, j] of ICO2.e) {               // relevo da rocha e brasa na face da frente
+      const a = rot(me.vert[i]), b = rot(me.vert[j]), mid = mul(add(a, b), 0.5); if (dot(nrm(mid), mul(f, -1)) < 0) continue;
+      const h = clamp(dot(mid, vh) / me.r * 1.1 - 0.2, 0, 1), pa = P(add(me.p, a)), pb = P(add(me.p, b));
+      x.strokeStyle = `rgba(${Math.round(110 + 145 * h)},${Math.round(90 + 40 * h)},${Math.round(70 - 50 * h)},.8)`; x.beginPath(); x.moveTo(pa[0], pa[1]); x.lineTo(pb[0], pb[1]); x.stroke();
+    }
+  } });
+  itens.push({ z: P(JOGO.nave)[2], d: () => {
+    if (JOGO.piscar > 0 && Math.floor(JOGO.piscar * 8) % 2) return;
+    const ax = eixoNave(); x.lineCap = "round"; x.shadowColor = "#7fd8ff"; x.shadowBlur = 8;
+    for (const [a, b, cor] of navePecas(JOGO.tempo)) { const pa = P(add(JOGO.nave, ax.M(a))), pb = P(add(JOGO.nave, ax.M(b)));
+      x.strokeStyle = `rgb(${cor.map(v => Math.round(255 * v)).join(",")})`; x.lineWidth = 2.2; x.beginPath(); x.moveTo(pa[0], pa[1]); x.lineTo(pb[0], pb[1]); x.stroke(); }
+    x.shadowBlur = 0;
+  } });
+  for (const t of JOGO.tiros) itens.push({ z: P(t.p)[2], d: () => { const a = P(t.p), b = P(sub(t.p, nrm(t.v))); x.strokeStyle = "#fff6a0"; x.lineWidth = 3; x.shadowColor = "#ffe060"; x.shadowBlur = 10; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); x.shadowBlur = 0; } });
+  itens.sort((a, b) => b.z - a.z).forEach(it => it.d());
+  x.globalCompositeOperation = "lighter";
+  for (const fx of JOGO.fx) for (const q of fx.q) { const p = P(q.p), e = Math.max(0, 1 - fx.t * 1.6); x.fillStyle = `rgba(${fx.cor.map(v => Math.round(255 * v)).join(",")},${e})`; x.beginPath(); x.arc(p[0], p[1], 3.5, 0, TAU); x.fill(); }
+  for (const q of JOGO.rastro) { const p = P(q.p), e = 1 - q.t / 0.45; x.fillStyle = `rgba(100,230,255,${e})`; x.beginPath(); x.arc(p[0], p[1], 3, 0, TAU); x.fill(); }
+  for (const q of pontosMira()) { const p = P(q.p); x.fillStyle = "rgba(255,70,120,.95)"; x.fillRect(p[0] - 1.5, p[1] - 1.5, 3, 3); }
+  x.globalCompositeOperation = "source-over";
+  // placar dentro da própria imagem aérea: cabeçalho (pontos, nível, Terra) e rodapé (mensagens), em faixas escuras fora do meio do jogo
+  const fp = Math.round(W * 0.042), fx = Math.round(fp * 1.7);
+  x.fillStyle = "rgba(0,0,0,0.72)"; x.fillRect(0, 0, W, fx); x.fillRect(0, H - fx * 1.6, W, fx * 1.6);
+  x.font = `bold ${fp}px IBM Plex Mono, monospace`; x.textBaseline = "middle"; x.textAlign = "left";
+  const partes = [[`PONTOS ${JOGO.pontos}`, "#f2b25c"], [`  NÍVEL ${JOGO.nivel}`, "#8fe3c8"], ["  TERRA " + "◆".repeat(Math.max(0, JOGO.vidas)), "#7fb6e8"]];
+  let px = (W - partes.reduce((t, p) => t + x.measureText(p[0]).width, 0)) / 2;
+  for (const [t, c] of partes) { x.fillStyle = c; x.fillText(t, px, fx / 2); px += x.measureText(t).width; }
+  x.textAlign = "center";
+  if (JOGO.tMsg > 0 || JOGO.fim) { x.fillStyle = JOGO.fim ? "#e2694a" : "#8fe3c8"; x.font = `bold ${fp}px Archivo Narrow, Arial Narrow, sans-serif`; x.fillText(JOGO.fim ? "A TERRA FOI ATINGIDA — ENTER" : JOGO.msg, W / 2, H - fx * 1.08); }
+  if (JOGO.alvo && !JOGO.alvo.morto) { x.fillStyle = "#ff6b8a"; x.font = `${Math.round(fp * 0.7)}px IBM Plex Mono, monospace`; x.fillText("◎ ALVO TRAVADO — H aproxima, ESPAÇO dispara", W / 2, H - fx * 0.42); }
+  x.textBaseline = "top";
+}
+function iniciarJogo() {
+  Object.assign(JOGO, { ativo: true, nave: [0, -(TERRA.R + 2.6), 0.5], met: [], tiros: [], fx: [], rastro: [], hiper: null, segue: false, pontos: 0, vidas: 3, fim: false, pausa: false, tSpawn: 0.5, tTiro: 0, tPasso: 0, piscar: 0, nivel: 1, combo: 0, tCombo: 0, msg: "", tMsg: 0, crat: [], alvo: null });
+  somLigar(); SOM.passo = 0; S.cont = "jogo"; semear(); TEMPO.t = 0; tudo();
+}
+function pararJogo() { JOGO.ativo = false; tudo(); }
+window.addEventListener("keydown", e => {
+  if (!JOGO.ativo || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"].includes(e.code)) e.preventDefault();
+  JOGO.teclas[e.code] = true;
+  if (e.code === "KeyP") JOGO.pausa = !JOGO.pausa;
+  if (e.code === "Enter" && JOGO.fim) iniciarJogo();
+  if (e.code === "KeyM") SOM.mudo = !SOM.mudo;
+  if (e.code === "KeyT" && !e.repeat) travar();
+  if (e.code === "KeyH" && !e.repeat) hiper();
+});
+window.addEventListener("keyup", e => { JOGO.teclas[e.code] = false; });
+
+/* ---------- medidas ---------- */
+let M = {};
+function olho() {
+  // o olho fica além da imagem, olhando para o centro dela
+  const c = M.centro || [0, -S.dy, S.u];
+  return [S.ex, S.eh, c[2] + S.ed];
+}
+function medir() {
+  G = geo();
+  const T = G.T, grade = [];
+  for (let j = 0; j <= 4; j++) for (let i = 0; i <= 6; i++) { const a = (i / 6 - 0.5) * T.W * 0.96, b = (j / 4 - 0.5) * T.H * 0.96; const im = imagemDe(pontoTela(a, b)); grade.push({ a, b, im }); }
+  const ok = grade.filter(g => g.im);
+  const ctr = grade[17].im;                          // centro da grade 7×5
+  M = { grade, ok: ok.length, total: grade.length };
+  if (!ctr) { M.falha = true; return; }
+  M.centro = ctr.I;
+  const ga = (i, j) => grade[j * 7 + i].im;
+  const esq = ga(0, 2), dir = ga(6, 2), cim = ga(3, 4), bai = ga(3, 0);
+  M.larg = esq && dir ? len(sub(dir.I, esq.I)) / 0.96 : NaN; M.alt = cim && bai ? len(sub(cim.I, bai.I)) / 0.96 : NaN;
+  M.m = M.larg / T.W; M.inv = cim && bai ? (cim.I[1] < bai.I[1]) : null;
+  M.rmsC = ctr.rms; M.rmsMax = Math.max(...ok.map(g => g.im.rms));
+  M.flut = ctr.I[2];                                 // distância do vértice do espelho
+  const sagBorda = limEsp().sag;
+  M.flutBorda = ctr.I[2] - sagBorda;
+  M.inclImg = cim && bai ? Math.atan2(Math.abs(cim.I[2] - bai.I[2]), Math.abs(cim.I[1] - bai.I[1])) / deg : NaN;   // 0° = de pé (vale invertida ou não)
+  M.parax = { v: S.u * G.f / (S.u - G.f), m: G.f / (S.u - G.f) };
+  // distorção que o olho vê: onde ele vê cada ponto da grade × melhor ajuste de escala+posição
+  const E = olho(), vistos = [];
+  for (const g of grade) { const ap = aparente(pontoTela(g.a, g.b), E, centroEsp()); if (ap) vistos.push({ g, A: ap.A, rms: ap.rms }); }
+  M.visto = vistos.length; M.vistos = vistos; M.rmsOlho = vistos.length ? Math.max(...vistos.map(v => v.rms)) : NaN;
+  if (vistos.length >= 4) {
+    const f = nrm(sub(M.centro, E)), [ux, uy] = [nrm(cross(f, [0, 1, 0])), null]; const vy = cross(ux, f);
+    const pr = A => { const v = sub(A, E), z = dot(v, f); return [dot(v, ux) / z, dot(v, vy) / z]; };
+    // ajuste linear a·(a,b) + c no plano angular do olho (mede curvatura e trapézio, não a escala)
+    const P = vistos.map(v => [v.g.a, v.g.b, ...pr(v.A)]);
+    const fit = k => { let Saa = 0, Sab = 0, Sbb = 0, Sa = 0, Sb = 0, n = P.length, Sa_ = 0, Sb_ = 0, S1 = 0;
+      for (const p of P) { Saa += p[0] * p[0]; Sab += p[0] * p[1]; Sbb += p[1] * p[1]; Sa += p[0]; Sb += p[1]; Sa_ += p[0] * p[k]; Sb_ += p[1] * p[k]; S1 += p[k]; }
+      const A = [Saa, Sab, Sa, Sab, Sbb, Sb, Sa, Sb, n]; return solve3(A, [Sa_, Sb_, S1]); };
+    const fx = fit(2), fy = fit(3); let mx = 0; const dist = len(sub(M.centro, E));
+    if (!fx || !fy) { M.distor = NaN; } else
+    for (const p of P) { const ex = fx[0] * p[0] + fx[1] * p[1] + fx[2] - p[2], ey = fy[0] * p[0] + fy[1] * p[1] + fy[2] - p[3]; mx = Math.max(mx, Math.hypot(ex, ey) * dist); }
+    M.distor = !fx || !fy ? NaN : mx;
+  }
+  // janela de visão: posições do olho (num plano à mesma distância) de onde se vê a imagem inteira
+  const zE = E[2], cantos = [ga(0, 0), ga(6, 0), ga(0, 4), ga(6, 4), ctr].filter(Boolean).map(g => g.I);
+  let xmin = 1e9, xmax = -1e9, ymin = 1e9, ymax = -1e9, n = 0;
+  for (let y = -600; y <= 1200; y += 20) for (let x = -900; x <= 900; x += 20) {
+    const Ev = [x, y, zE]; if (cantos.every(I => { const h = hitEspelho(Ev, nrm(sub(I, Ev))); return !!h && cruzaAbertura(Ev, nrm(sub(I, Ev))) && !tapaGaveta(Ev, h.P) && !tapaCelular(Ev, h.P); })) { n++; xmin = Math.min(xmin, x); xmax = Math.max(xmax, x); ymin = Math.min(ymin, y); ymax = Math.max(ymax, y); }
+  }
+  M.janela = n ? { xmin, xmax, ymin, ymax } : null;
+}
+
+function volCaixa() {
+  if (!CX) return NaN; const w = CX.x1 - CX.x0, v = w * (CX.y1 - CX.y0) * (CX.zp - CX.z0 + 8);
+  let ad = 0; if (CX.gav) { const g = CX.gav, c = g.ch, p = [[g.y0, g.z0], [c.yl, g.z0], [c.yl, c.zl], [c.y1, c.z1], [g.y0, c.z1]];   // área do perfil do degrau chanfrado
+    for (let i = 0; i < p.length; i++) { const [y1, z1] = p[i], [y2, z2] = p[(i + 1) % p.length]; ad += (y1 * z2 - y2 * z1) / 2; } }
+  return (v + w * Math.abs(ad)) / 1e6;
+}
+/* ---------- estéreo no foco (a lição das pétalas da aba 3 do Mirage) ----------
+   A tela fica no plano focal da fatia (u = f): cada pixel sai como um feixe paralelo, isto é, vira uma DIREÇÃO.
+   Com a abertura do tampo menor que a distância entre os olhos, o feixe de um pixel só chega a um olho:
+   cada olho tem os seus pixels, acesos pelo traçado olho → abertura → espelho → tela. O volume é refeito pelos dois olhos. */
+const EST = { zs: 48, h: 30, obj: 30, n: 440, D: 420, el: 88.5, cvE: [document.createElement("canvas"), document.createElement("canvas")], mapa: [null, null], cam: [null, null] };
+let CAMX = null;                                   // câmera do conteúdo imposta (um olho de cada vez no modo estéreo)
+function pixelDoOlho(E, d) {                       // o raio do olho passa pela abertura, reflete na fatia e cai na tela: (a, b)
+  if (d[2] >= 0) return null; const t = (CX.zp - E[2]) / d[2]; if (!noAbertura(add(E, mul(d, t)))) return null;
+  const h = hitEspelho(E, d); if (!h) return null; const tc = hitCelular(E, d); if (tc > 0 && tc < h.t) return null;
+  const r = refl(d, nEsp(h.P)), ht = hitTela(h.P, r); if (!ht || !ht.frente) return null;
+  if (S.divisor) { const t2 = hitCelular(h.P, r); if (t2 > 0 && t2 < ht.t) return null; }   // no caminho até o vidro, o aparelho real pode estar na frente
+  return ht;
+}
+function baseOlho(E, P) { const f = nrm(sub(P, E)), r = nrm(sub([1, 0, 0], mul(f, f[0]))), u = cross(r, f); return { f, r, u }; }   // quem olha está do lado da abertura: a linha dos olhos fica em x
+function olhosEst() { const E0 = olho(), r = [1, 0, 0]; return [sub(E0, mul(r, S.dio / 2)), add(E0, mul(r, S.dio / 2))]; }   // cabeça de pé: os olhos lado a lado em x
+function prepararEstereo() {
+  G = geo(); const [bw, bh, be] = G.T0.corpo, zs = [], cant = [];
+  for (const sa of [-1, 1]) for (const sb of [-1, 1]) for (const se of [0, 1]) cant.push(add(add(add(G.Pc, mul(G.ex, sa * bw / 2)), mul(G.ey, sb * bh / 2)), mul(G.nd, -se * be)));
+  let zp = Math.max(...cant.map(p => p[2])) + 2, yAp0 = Math.min(...cant.map(p => p[1])), yAp1 = Math.max(...cant.map(p => p[1]));
+  if (S.divisor) { const zs = EST.zs, yr = G.f - zs; zp = Math.max(zs + 42, zs + bh / 2 + 2); yAp0 = Math.min(-45, yAp0); yAp1 = yr + be + 2; }   // caixa em volta do vidro e do aparelho de pé
+  const centro = S.lay === "centro", A = S.abA, B = S.abB || S.abA, yA = centro ? 0 : yAp1 + 3 + B / 2, el = EST.el * deg, D = EST.D;   // abertura: ao pé do celular, ou no eixo (cata-vento); A em x (entre os olhos), B em y
+  const lado = centro ? -1 : 1;                                                      // de que lado fica quem olha (no cata-vento, do lado oposto ao celular)
+  const Pc = [0, yA + lado * EST.h / Math.tan(el), zp + EST.h];                      // centro do conteúdo: acima da abertura, na linha do olho
+  M = { centro: Pc, grade: [], ok: 0, total: 0, m: 1 };
+  S.ed = Math.round(D * Math.sin(el)); if (!EST.manterOlho) S.eh = Math.round(Pc[1] + lado * D * Math.cos(el)); EST.manterOlho = false;
+  const le = limEsp(), mg = S.folga, ax0 = -A / 2, ax1 = A / 2, ay0 = yA - B / 2, ay1 = yA + B / 2;
+  const lm = limMundo();                               // a caixa abraça o espelho como ele está (inclinado ou não)
+  CX = { zp, ax0, ax1, ay0, ay1, ra: 4, x0: Math.min(lm.x0, -bw / 2 - 6, -A / 2) - mg, x1: Math.max(lm.x1, bw / 2 + 6, A / 2) + mg, y0: Math.min(yAp0, lm.y0, ay0) - mg, y1: Math.max(lm.y1, ay1, yAp1) + mg,
+    z0: Math.min(...pontosEsp().map(p => p[2])) - 4, rc: 8 };
+  usarCaixa = true; COMP = null;
+  // mapa de cada olho: amostras de direção → pixel da tela (só muda quando o olho ou o aparelho mudam)
+  const T = G.T, k = G.T0.px[0] / G.T0.W, W = Math.round(T.W * k), H = Math.round(T.H * k), N = EST.n;   // os pixels reais do celular
+  EST.olhos = olhosEst(); EST.W = W; EST.H = H;
+  for (let e = 0; e < 2; e++) {
+    const E = EST.olhos[e], b = baseOlho(E, Pc), dist = len(sub(Pc, E)), tg = 0.75 * A / dist, mapa = new Int32Array(N * N).fill(-1);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const x = (2 * (i + 0.5) / N - 1) * tg, y = (1 - 2 * (j + 0.5) / N) * tg, d = nrm(add(b.f, add(mul(b.r, x), mul(b.u, y)))), ht = pixelDoOlho(E, d); if (!ht) continue;
+      const pi = Math.floor((ht.a / T.W + 0.5) * W), pj = Math.floor((0.5 - ht.b / T.H) * H); if (pi >= 0 && pi < W && pj >= 0 && pj < H) mapa[j * N + i] = pj * W + pi;
+    }
+    EST.mapa[e] = mapa; EST.cam[e] = { E, ...b, tg, dist };
+  }
+  // vazamento: amostras de um olho que caem em pixels que o outro também usa
+  const usa = [new Uint8Array(W * H), new Uint8Array(W * H)]; for (let e = 0; e < 2; e++) for (const p of EST.mapa[e]) if (p >= 0) usa[e][p] = 1;
+  let comum = 0, tot = 0; for (let p = 0; p < W * H; p++) { if (usa[0][p] || usa[1][p]) tot++; if (usa[0][p] && usa[1][p]) comum++; }
+  EST.conflito = tot ? comum / tot : 0; EST.acesos = tot;
+}
+function acenderEstereo() {                          // cada olho desenha o conteúdo do seu ponto de vista; os pixels dele recebem essas cores
+  if (!EST.mapa[0]) return;
+  const W = EST.W, H = EST.H, N = EST.n; if (cvT.width !== W || cvT.height !== H) { cvT.width = W; cvT.height = H; }
+  const xt = cvT.getContext("2d", { willReadFrequently: true }), out = xt.createImageData(W, H), o = out.data, k = S.cont === "jogo" ? EST.obj / 15 : EST.obj;
+  for (let p = 3; p < o.length; p += 4) o[p] = 255;
+  const soma = EST.soma && EST.soma.length === 3 * W * H ? EST.soma.fill(0) : (EST.soma = new Float32Array(3 * W * H)), cont = EST.cont && EST.cont.length === W * H ? EST.cont.fill(0) : (EST.cont = new Uint16Array(W * H));
+  for (let e = 0; e < 2; e++) {
+    const c = EST.cam[e], foc = (N / 2) / c.tg;
+    CAMX = { Ec: mul(sub(c.E, M.centro), 1 / k), f: c.f, r: c.r, u: c.u, foc, cx: N / 2, cy: N / 2, k };
+    desenharConteudo(); const src = cvC.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, N, N).data, mapa = EST.mapa[e];
+    for (let q = 0; q < N * N; q++) { const p = mapa[q]; if (p < 0) continue; const b = 4 * q; soma[3 * p] += src[b]; soma[3 * p + 1] += src[b + 1]; soma[3 * p + 2] += src[b + 2]; cont[p]++; }   // média das amostras que caem no mesmo pixel
+  }
+  for (let p = 0; p < W * H; p++) if (cont[p]) { const a = 4 * p; o[a] = soma[3 * p] / cont[p]; o[a + 1] = soma[3 * p + 1] / cont[p]; o[a + 2] = soma[3 * p + 2] / cont[p]; }
+  CAMX = null; xt.putImageData(out, 0, 0); pix = { d: o, W, H }; if (texTela) texTela.needsUpdate = true; desenharTelaBox();
+}
+/* reconstrução: cada olho acha o pixel da direção de um ponto do conteúdo; o pixel é quantizado (passo real do celular)
+   e o olho vê o centro dele numa direção um pouco diferente (Newton); o ponto fundido é o cruzamento das duas retas */
+function direcaoDoPixel(E, a, b, d0) {
+  const B = baseOlho(E, add(E, d0)); let x = 0, y = 0;
+  const F = (x, y) => { const h = pixelDoOlho(E, nrm(add(B.f, add(mul(B.r, x), mul(B.u, y))))); return h ? [h.a - a, h.b - b] : null; };
+  for (let it = 0; it < 8; it++) {
+    const e = F(x, y); if (!e) return null; if (Math.hypot(e[0], e[1]) < 1e-6) break;
+    const h = 1e-5, ex = F(x + h, y), ey = F(x, y + h); if (!ex || !ey) return null;
+    const J = [(ex[0] - e[0]) / h, (ey[0] - e[0]) / h, (ex[1] - e[1]) / h, (ey[1] - e[1]) / h], det = J[0] * J[3] - J[1] * J[2]; if (Math.abs(det) < 1e-12) return null;
+    x -= (J[3] * e[0] - J[1] * e[1]) / det; y -= (-J[2] * e[0] + J[0] * e[1]) / det;
+  }
+  return nrm(add(B.f, add(mul(B.r, x), mul(B.u, y))));
+}
+function fundir(P) {
+  const pas = G.T0.W / G.T0.px[0], linhas = [];
+  for (const E of EST.olhos) {
+    const d = nrm(sub(P, E)), h = pixelDoOlho(E, d); if (!h) return null;
+    const aq = (Math.floor(h.a / pas) + 0.5) * pas, bq = (Math.floor(h.b / pas) + 0.5) * pas, dq = direcaoDoPixel(E, aq, bq, d); if (!dq) return null;
+    linhas.push({ X: E, d: dq });
+  }
+  return converge(linhas);
+}
+/* o volume onde há profundidade: em cada altura acima do tampo, a região em que os DOIS olhos veem o ponto (cada um pelo seu pixel);
+   no centro de cada camada, o erro de profundidade do ponto fundido (pixel quantizado) e o conflito de foco (a luz vem do infinito) */
+function medirVolume() {
+  const camadas = [], yc = M.centro[1], E0 = olho();
+  for (let h = -40; h <= 240; h += 20) {
+    const z = CX.zp + h; if (z >= E0[2] - 40) break;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, n = 0;
+    for (let x = -120; x <= 120; x += 4) for (let y = yc - 140; y <= yc + 140; y += 4) {
+      const P = [x, y, z]; if (EST.olhos.every(E => pixelDoOlho(E, nrm(sub(P, E))))) { n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (!n) { camadas.push({ h, n: 0 }); continue; }
+    const P = [(x0 + x1) / 2, (y0 + y1) / 2, z], I = fundir(P), dist = len(sub(P, E0));
+    const dz = I ? Math.abs(dot(sub(I, P), nrm(sub(P, E0)))) : NaN, lat = I ? len(sub(sub(I, P), mul(nrm(sub(P, E0)), dot(sub(I, P), nrm(sub(P, E0)))))) : NaN;
+    camadas.push({ h, n, x0, x1, y0, y1, area: n * 16, dz, lat, dist, conflito: 1000 / dist });   // conflito em dioptrias: o olho converge a dist mm e a luz chega do infinito
+  }
+  EST.vol = camadas;
+}
+function cuboNoMundo(nPorAresta = 7) {               // arestas do cubo do conteúdo, na mesma pose do desenho, em mm do mundo
+  const a = 0.55 * relogio(), rot = p => { const c = Math.cos(a), s = Math.sin(a), q = [p[0] * c - p[1] * s, p[0] * s + p[1] * c, p[2]], c2 = Math.cos(0.4), s2 = Math.sin(0.4); return [q[0], q[1] * c2 - q[2] * s2, q[1] * s2 + q[2] * c2]; };
+  const V = []; for (const i of [-1, 1]) for (const j of [-1, 1]) for (const k of [-1, 1]) V.push(rot([i * 0.5, j * 0.5, k * 0.5]));
+  const P = [], k = S.cont === "jogo" ? EST.obj / 15 : EST.obj;
+  for (let i = 0; i < 8; i++) for (let j = i + 1; j < 8; j++) { const dd = sub(V[i], V[j]); if (Math.abs(len(dd) - 1) > 1e-6) continue;
+    for (let q = 0; q <= nPorAresta; q++) P.push(add(M.centro, mul(add(V[i], mul(sub(V[j], V[i]), q / nPorAresta)), k))); }
+  return P;
+}
+function projecaoReal(P, C, na) {                   // imagem real: cada pixel aceso da tela vira um ponto de luz onde os seus raios se cruzam (pixel escuro não manda luz)
+  const nb = Math.max(20, Math.round(na * G.T.H / G.T.W));
+  for (let j = 0; j < nb; j++) for (let i = 0; i < na; i++) {
+    const a = ((i + 0.5) / na - 0.5) * G.T.W, b = ((j + 0.5) / nb - 0.5) * G.T.H, c = amostra(a, b, ref); if (c[0] + c[1] + c[2] < 0.12) continue;
+    const im = imagemDe(pontoTela(a, b)); if (!im) continue;
+    P.push(...im.I); C.push(...c.map(v => Math.min(1, v * 1.8)));
+  }
+}
+function pontosJogoMundo() {                         // o jogo no mundo (mesma escala do desenho de cada olho): Terra, meteoros, nave, tiros, com as suas cores
+  const k = EST.obj / 15, W = p => add(M.centro, mul(p, k)), out = [];
+  for (let i = 0; i < 90; i++) { const z = 1 - 2 * (i + 0.5) / 90, r = Math.sqrt(1 - z * z), a = i * 2.399963, n = [r * Math.cos(a), r * Math.sin(a), z]; out.push([W(mul(n, TERRA.R)), corTerra(n, JOGO.tempo)]); }
+  for (const me of JOGO.met) for (let i = 0; i < 12; i++) { const z = 1 - 2 * (i + 0.5) / 12, r = Math.sqrt(1 - z * z), a = i * 2.399963; out.push([W(add(me.p, mul([r * Math.cos(a), r * Math.sin(a), z], me.r))), [0.85, 0.55, 0.3]]); }
+  if (JOGO.ativo) { const ax = eixoNave(); for (const [a, b, cor] of navePecas(JOGO.tempo)) { out.push([W(add(JOGO.nave, ax.M(a))), cor]); out.push([W(add(JOGO.nave, ax.M(b))), cor]); } }
+  for (const t of JOGO.tiros) out.push([W(t.p), [1, 0.95, 0.5]]);
+  return out;
+}
+function atualizarRecEst() {                         // a projeção em cima do aparato: o conteúdo refeito pelos dois olhos (cada ponto = cruzamento das duas linhas de visada)
+  if (!S.estereo || !EST.olhos) return; const P = [], C = [];
+  if (S.cont === "jogo") { for (const [Q, cor] of pontosJogoMundo()) { const I = fundir(Q); if (I) { P.push(...I); C.push(...cor.map(v => Math.min(1, v * 1.3))); } } }
+  else for (const Q of cuboNoMundo()) { const I = fundir(Q); if (I) { P.push(...I); C.push(0.75, 0.95, 0.88); } }
+  ptsImg.geometry.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); ptsImg.geometry.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+}
+function medirEstereo() {
+  const pas = G.T0.W / G.T0.px[0], erros = [], rec = [], C = M.centro;
+  const pts = []; for (const i of [-1, 0, 1]) for (const j of [-1, 0, 1]) for (const l of [-1, 0, 1]) pts.push(add(C, mul([i, j, l], EST.obj / 2)));
+  for (const P of pts) {
+    const linhas = [];
+    for (const E of EST.olhos) {
+      const d = nrm(sub(P, E)), h = pixelDoOlho(E, d); if (!h) break;
+      const aq = (Math.floor(h.a / pas) + 0.5) * pas, bq = (Math.floor(h.b / pas) + 0.5) * pas, dq = direcaoDoPixel(E, aq, bq, d); if (!dq) break;
+      linhas.push({ X: E, d: dq });
+    }
+    if (linhas.length < 2) continue; const I = converge(linhas); if (!I) continue; rec.push(I); erros.push(len(sub(I, P)));
+  }
+  EST.rec = rec; EST.erro = erros.length ? erros.reduce((a, b) => a + b, 0) / erros.length : NaN; EST.erroMax = erros.length ? Math.max(...erros) : NaN; EST.nRec = erros.length + "/" + pts.length;
+  // borrão de foco: a tela no foco manda feixes paralelos — o olho focado no conteúdo (a ~650 mm) vê cada pixel como um disco do tamanho da pupila
+  EST.foco = "infinito (feixes paralelos)";
+  { const pas = G.T0.W / G.T0.px[0], bl = [];
+    for (const P of [C, add(C, [EST.obj / 2, 0, 0]), add(C, [-EST.obj / 2, 0, 0]), add(C, [0, EST.obj / 2, 0]), add(C, [0, -EST.obj / 2, 0])]) for (const E of EST.olhos) {
+      const d = nrm(sub(P, E)), h = pixelDoOlho(E, d); if (!h) continue; const aq = (Math.floor(h.a / pas) + 0.5) * pas, bq = (Math.floor(h.b / pas) + 0.5) * pas, B0 = baseOlho(E, P), ds = [];
+      for (const [px, py] of [[0, 0], [2, 0], [-2, 0], [0, 2], [0, -2]]) { const Ep = add(E, add(mul(B0.r, px), mul(B0.u, py))), dq = direcaoDoPixel(Ep, aq, bq, d); if (dq) ds.push(dq); }
+      if (ds.length < 3) continue; let mx = 0; for (const a of ds) for (const b of ds) mx = Math.max(mx, len(sub(a, b))); bl.push(mx * len(sub(P, E)));
+    }
+    EST.borrao = bl.length ? Math.max(...bl) : NaN; }
+}
+const cvTela = document.getElementById("cTela");
+function desenharTelaBox() {
+  if (!cvTela || !cvT.width) return; const x = cvTela.getContext("2d"), W = cvTela.width, H = cvTela.height; x.imageSmoothingEnabled = false; x.fillStyle = "#05080a"; x.fillRect(0, 0, W, H);
+  const tit = document.getElementById("telaTit");
+  if (S.estereo && EST.mapa[0]) {                   // as duas imagens estéreo, cada uma onde o traçado mandou acender
+    const cx = [], Wt = EST.W;
+    for (let e = 0; e < 2; e++) { let i0 = 1e9, i1 = -1, j0 = 1e9, j1 = -1; for (const p of EST.mapa[e]) if (p >= 0) { const i = p % Wt, j = (p / Wt) | 0; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } cx.push([i0, i1, j0, j1]); }
+    const m = 6, i0 = Math.min(cx[0][0], cx[1][0]) - m, i1 = Math.max(cx[0][1], cx[1][1]) + m, j0 = Math.min(cx[0][2], cx[1][2]) - m, j1 = Math.max(cx[0][3], cx[1][3]) + m;
+    const esc = Math.min(W / (i1 - i0 + 1), (H - 28) / (j1 - j0 + 1)), ox = (W - esc * (i1 - i0 + 1)) / 2, oy = 22;
+    x.drawImage(cvT, i0, j0, i1 - i0 + 1, j1 - j0 + 1, ox, oy, esc * (i1 - i0 + 1), esc * (j1 - j0 + 1));
+    const pas = G.T0.W / G.T0.px[0];
+    [["#8FE3C8", "olho esquerdo"], ["#F2B25C", "olho direito"]].forEach(([cor, nome], e) => { const [a0, a1, b0, b1] = cx[e];
+      x.strokeStyle = cor; x.lineWidth = 2; x.strokeRect(ox + (a0 - i0) * esc, oy + (b0 - j0) * esc, (a1 - a0 + 1) * esc, (b1 - b0 + 1) * esc);
+      x.fillStyle = cor; x.font = "11px IBM Plex Mono, monospace"; x.fillText(`${nome} · ${((a1 - a0 + 1) * pas).toFixed(0)} × ${((b1 - b0 + 1) * pas).toFixed(0)} mm`, ox + (a0 - i0) * esc + 3, 14); });   // cada rótulo sobre a sua imagem
+    tit.textContent = "tela do celular: duas imagens pré-distorcidas, uma por olho (ampliadas)";
+  } else {                                          // a tela inteira, como o celular mostra (pré-compensada / girada)
+    const rot = cvT.height > cvT.width, w = rot ? cvT.height : cvT.width, h = rot ? cvT.width : cvT.height, esc = Math.min(W / w, H / h);
+    x.save(); x.translate(W / 2, H / 2); if (rot) x.rotate(-Math.PI / 2); x.drawImage(cvT, -cvT.width * esc / 2, -cvT.height * esc / 2, cvT.width * esc, cvT.height * esc); x.restore();
+    tit.textContent = S.comp && COMP ? "tela do celular: imagem pré-distorcida para o olho (o espelho a endireita)" : "tela do celular: o que o celular mostra";
+  }
+}
+function tudoEstereo() { prepararEstereo(); acenderEstereo(); medirEstereo(); medirVolume(); construir(); hud(); sync(); sujo(); }
+/* dois olhos (distância S.dio): cada um vê a imagem real de cada pixel, que fica numa superfície inclinada;
+   o que deveria ver é o conteúdo no plano de frente que passa pelo centro da imagem, como o olho do meio vê */
+function erroBinocular(n = 6) {
+  if (!COMP || !M.centro) return null;
+  const E0 = olho(), f = COMP.f, r = COMP.r, u = COMP.up, d = len(sub(COMP.C, E0)), pts = [];
+  for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
+    const a = (i / n - 0.5) * G.T.W * 0.96, b = (j / n - 0.5) * G.T.H * 0.96, Q = pontoTela(a, b), a0 = aparente(Q, E0, centroEsp()); if (!a0) continue;
+    const v = sub(a0.A, E0), z = dot(v, f); pts.push({ Q, P: add(E0, mul(nrm(add(f, add(mul(r, dot(v, r) / z), mul(u, dot(v, u) / z)))), d)) });
+  }
+  const res = { n: pts.length };
+  for (const [k, E] of [["esq", sub(E0, mul(r, S.dio / 2))], ["dir", add(E0, mul(r, S.dio / 2))]]) {
+    let m = 0, s2 = 0, mx = 0, vmx = 0, bmx = 0; const fy = nrm(sub(COMP.C, E)), ry = nrm(cross(fy, [0, 1, 0])), uy = cross(ry, fy);
+    for (const p of pts) { const ap = aparente(p.Q, E, centroEsp()); if (!ap) continue; m++;
+      const dw = sub(nrm(sub(ap.A, E)), nrm(sub(p.P, E))), dE = len(sub(p.P, E)), e = len(dw) * dE; s2 += e * e; mx = Math.max(mx, e); vmx = Math.max(vmx, Math.abs(dot(dw, uy)) * dE); bmx = Math.max(bmx, ap.rms); }
+    res[k] = { vistos: m, rms: m ? Math.sqrt(s2 / m) : NaN, max: mx, vert: vmx, borr: bmx };
+  }
+  res.rms = Math.max(res.esq.rms, res.dir.rms); res.vert = Math.max(res.esq.vert, res.dir.vert); res.vistos = Math.min(res.esq.vistos, res.dir.vistos) / Math.max(1, pts.length);
+  return res;
+}
+function medirComp() {
+  M.distorComp = NaN; if (!COMP || !M.vistos || M.vistos.length < 4) return;
+  const E = olho(), f = nrm(sub(M.centro, E)), ux = nrm(cross(f, [0, 1, 0])), vy = cross(ux, f), dist = len(sub(M.centro, E));
+  const P = M.vistos.map(v => { const st = stDe(v.g.a, v.g.b), w = sub(v.A, E), z = dot(w, f); return st ? [st[0], st[1], dot(w, ux) / z, dot(w, vy) / z] : null; })
+    .filter(p => p && p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1);
+  if (P.length < 4) return;
+  const fit = k => { let Saa = 0, Sab = 0, Sbb = 0, Sa = 0, Sb = 0, Sa_ = 0, Sb_ = 0, S1 = 0;
+    for (const p of P) { Saa += p[0] * p[0]; Sab += p[0] * p[1]; Sbb += p[1] * p[1]; Sa += p[0]; Sb += p[1]; Sa_ += p[0] * p[k]; Sb_ += p[1] * p[k]; S1 += p[k]; }
+    return solve3([Saa, Sab, Sa, Sab, Sbb, Sb, Sa, Sb, P.length], [Sa_, Sb_, S1]); };
+  const fx = fit(2), fy = fit(3); let mx = 0; if (!fx || !fy) return;   // pontos alinhados: o ajuste não tem solução
+  for (const p of P) mx = Math.max(mx, Math.hypot(fx[0] * p[0] + fx[1] * p[1] + fx[2] - p[2], fy[0] * p[0] + fy[1] * p[1] + fy[2] - p[3]) * dist);
+  M.distorComp = mx;
+}
+/* ================= Three.js ================= */
+if (typeof THREE === "undefined") { document.getElementById("erro").style.display = "flex"; throw new Error("sem THREE"); }
+const cv = document.getElementById("c3"), renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x070c0f);
+const camera = new THREE.PerspectiveCamera(36, 1, 5, 20000); camera.up.set(0, 1, 0);
+scene.add(new THREE.HemisphereLight(0xbfd8e6, 0x1a2228, 0.9)); const sol = new THREE.DirectionalLight(0xffffff, 0.5); sol.position.set(400, 900, 1200); scene.add(sol);
+const gCena = new THREE.Group(); scene.add(gCena);
+let texTela = new THREE.CanvasTexture(cvT);
+const ptsImg = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 3.2, vertexColors: true, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+ptsImg.frustumCulled = false; ptsImg.renderOrder = 10; scene.add(ptsImg);
+const linhas = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+linhas.frustumCulled = false; linhas.renderOrder = 9; scene.add(linhas);
+const v3 = p => new THREE.Vector3(p[0], p[1], p[2]);
+function construir() {
+  while (gCena.children.length) { const c = gCena.children[0]; gCena.remove(c); if (c.geometry) c.geometry.dispose(); }
+  // espelho: malha do recorte
+  const nx = 48, ny = 30, pos = [], idx = [];
+  const le = limEsp(), rL = S.Wm / 2;
+  for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
+    let x, y; if (meiaLua()) { y = le.y0 + j / ny * (le.y1 - le.y0); const w = Math.sqrt(Math.max(0, rL * rL - y * y)), xa = Math.max(-w, le.x0), xb = Math.min(w, le.x1); x = xa + (i / nx) * (xb - xa); } else { x = (i / nx - 0.5) * S.Wm; y = S.oy + (j / ny - 0.5) * S.Hm; }
+    pos.push(...supEsp(x, y));
+  }
+  const ok = k => noRecorte(pos[3 * k], pos[3 * k + 1]) || !(meiaLua() && S.corte);   // só a parte do espelho que a caixa deixa (paredes e tampa)
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const a = j * (nx + 1) + i; if (![a, a + 1, a + nx + 1, a + nx + 2].every(ok)) continue; idx.push(a, a + 1, a + nx + 1, a + 1, a + nx + 2, a + nx + 1); }
+  const gm = new THREE.BufferGeometry(); gm.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); gm.setIndex(idx); gm.computeVertexNormals();
+  gCena.add(new THREE.Mesh(gm, new THREE.MeshStandardMaterial({ color: 0x9aa6b2, metalness: 0.6, roughness: 0.35, side: THREE.DoubleSide })));
+  // tela
+  texTela.dispose(); texTela = new THREE.CanvasTexture(cvT);
+  const Tr = G.Tfis || G.T, Pr = G.Pdfis || G.Pd;    // com Fresnel: a tela de verdade (a virtual só existe para o espelho)
+  const tg = new THREE.PlaneGeometry(Tr.W, Tr.H), tela = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: texTela, side: THREE.DoubleSide }));
+  tela.position.set(...Pr); tela.lookAt(...sub(Pr, G.nd)); tela.rotateY(Math.PI);   // a frente da textura voltada para o espelho
+  if (S.divisor) { tela.material.transparent = true; tela.material.opacity = 0.15; }   // só a imagem da tela no vidro
+  gCena.add(tela);
+  const borda = new THREE.Mesh(new THREE.BoxGeometry(G.T0.W + 8, G.T0.H + 8, 6), new THREE.MeshStandardMaterial({ color: 0x111518, transparent: S.divisor, opacity: S.divisor ? 0 : 1 }));
+  borda.position.set(...(G.Pfis || G.Pc)); borda.quaternion.copy(tela.quaternion); borda.translateZ(-4); gCena.add(borda);
+  if (G.lente) { const fl = new THREE.Mesh(new THREE.PlaneGeometry(G.lente.W, G.lente.H), new THREE.MeshStandardMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+    fl.position.set(...G.lente.C); fl.quaternion.copy(tela.quaternion); gCena.add(fl); }   // lente Fresnel
+  if (CX) {
+    const rr = (p, x0, y0, x1, y1, r) => { p.moveTo(x0 + r, y0); p.lineTo(x1 - r, y0); p.quadraticCurveTo(x1, y0, x1, y0 + r); p.lineTo(x1, y1 - r); p.quadraticCurveTo(x1, y1, x1 - r, y1); p.lineTo(x0 + r, y1); p.quadraticCurveTo(x0, y1, x0, y1 - r); p.lineTo(x0, y0 + r); p.quadraticCurveTo(x0, y0, x0 + r, y0); return p; };
+    const mat = new THREE.MeshStandardMaterial({ color: 0x0d0f11, roughness: 0.97, metalness: 0, transparent: S.dentro, opacity: S.dentro ? 0.22 : 1, side: THREE.DoubleSide, depthWrite: !S.dentro });
+    const casco = rr(new THREE.Shape(), CX.x0, CX.y0, CX.x1, CX.y1, CX.rc); casco.holes.push(rr(new THREE.Path(), CX.x0 + 7, CX.y0 + 7, CX.x1 - 7, CX.y1 - 7, CX.rc - 7));
+    const gC = new THREE.ExtrudeGeometry(casco, { depth: Math.max(10, CX.zp - CX.z0 - 6), bevelEnabled: true, bevelThickness: 3, bevelSize: 2, bevelSegments: 3, curveSegments: 8 }); gC.translate(0, 0, CX.z0 + 3);
+    gCena.add(new THREE.Mesh(gC, mat));
+    const fr = rr(new THREE.Shape(), CX.x0, CX.y0, CX.x1, CX.y1, CX.rc);
+    fr.holes.push(rr(new THREE.Path(), CX.ax0, CX.gav ? CX.gav.y0 + 7 : CX.ay0, CX.ax1, CX.ay1, CX.ra));   // com o degrau, a passagem dele até a janela é um furo só
+    const gF = new THREE.ExtrudeGeometry(fr, { depth: 4, bevelEnabled: true, bevelThickness: 4, bevelSize: 4, bevelSegments: 5, curveSegments: 18 }); gF.translate(0, 0, CX.zp - 4);
+    gCena.add(new THREE.Mesh(gF, mat));
+    const gB = new THREE.ShapeGeometry(rr(new THREE.Shape(), CX.x0, CX.y0, CX.x1, CX.y1, CX.rc), 18); gB.translate(0, 0, CX.z0);
+    gCena.add(new THREE.Mesh(gB, mat));
+    const gV = new THREE.ShapeGeometry(rr(new THREE.Shape(), CX.ax0, CX.ay0, CX.ax1, CX.ay1, CX.ra), 18); gV.translate(0, 0, CX.zp + 0.5);
+    gCena.add(new THREE.Mesh(gV, new THREE.MeshStandardMaterial({ color: 0x0a1418, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.35, depthWrite: false })));
+    if (S.tampa) {                                  // arestas da caixa (preta e fosca, senão não se vê na cena) e a mesa embaixo
+      const zt = CX.zp + 4, cx0 = CX.x0, cx1 = CX.x1, cy0 = CX.y0, cy1 = CX.y1, z0 = CX.z0, P = [];
+      const q = [[cx0, cy0], [cx1, cy0], [cx1, cy1], [cx0, cy1]];
+      for (let i = 0; i < 4; i++) { const [a, b] = [q[i], q[(i + 1) % 4]]; P.push(a[0], a[1], z0, b[0], b[1], z0, a[0], a[1], zt, b[0], b[1], zt, a[0], a[1], z0, a[0], a[1], zt); }
+      const qa = [[CX.ax0, CX.ay0], [CX.ax1, CX.ay0], [CX.ax1, CX.ay1], [CX.ax0, CX.ay1]]; for (let i = 0; i < 4; i++) { const [a, b] = [qa[i], qa[(i + 1) % 4]]; P.push(a[0], a[1], zt, b[0], b[1], zt); }
+      const ge = new THREE.BufferGeometry(); ge.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+      gCena.add(new THREE.LineSegments(ge, new THREE.LineBasicMaterial({ color: 0x46525c })));
+      const mesa = new THREE.Mesh(new THREE.PlaneGeometry(900, 700), new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.8 })); mesa.position.set(0, (cy0 + cy1) / 2, z0 - 0.5); gCena.add(mesa);
+    }
+    if (CX.gav) {                                    // degrau oco: laterais, fundo, teto e o chanfro; aberto embaixo do lábio
+      const g = CX.gav, c = g.ch, P = [], x0 = CX.x0, x1 = CX.x1;
+      const quad = (a, b, cc, d) => P.push(...a, ...b, ...cc, ...a, ...cc, ...d);
+      const perfil = [[g.y0, g.z0], [c.yl, g.z0], [c.yl, c.zl], [c.y1, c.z1], [g.y0, c.z1]];   // perfil (y, z) das laterais
+      for (const x of [x0, x1]) for (let i = 1; i < perfil.length - 1; i++) P.push(x, ...perfil[0], x, ...perfil[i], x, ...perfil[i + 1]);
+      quad([x0, g.y0, g.z0], [x1, g.y0, g.z0], [x1, g.y0, c.z1], [x0, g.y0, c.z1]);   // fundo
+      quad([x0, g.y0, c.z1], [x1, g.y0, c.z1], [x1, c.y1, c.z1], [x0, c.y1, c.z1]);   // teto
+      quad([x0, c.yl, c.zl], [x1, c.yl, c.zl], [x1, c.y1, c.z1], [x0, c.y1, c.z1]);   // chanfro
+      const gd = new THREE.BufferGeometry(); gd.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); gd.computeVertexNormals();
+      gCena.add(new THREE.Mesh(gd, mat));
+      const ar = [[x0, c.yl, c.zl], [x1, c.yl, c.zl], [x0, c.y1, c.z1], [x1, c.y1, c.z1], [x0, g.y0, c.z1], [x1, g.y0, c.z1]], L = [];   // arestas, para o L se ler na cena escura
+      for (const [a, b] of [[0, 1], [2, 3], [4, 5], [0, 2], [1, 3], [2, 4], [3, 5]]) L.push(...ar[a], ...ar[b]);
+      const ge = new THREE.BufferGeometry(); ge.setAttribute("position", new THREE.Float32BufferAttribute(L, 3));
+      gCena.add(new THREE.LineSegments(ge, new THREE.LineBasicMaterial({ color: c.falha ? 0xe2694a : 0x46525c })));
+    }
+    // corpo do aparelho atrás da tela
+    const [bw, bh, be] = G.T.corpo, corpo = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, be), new THREE.MeshStandardMaterial({ color: 0x0c0f12, roughness: 0.4 }));
+    if (!S.divisor) { corpo.position.set(...add(G.Pc, mul(G.nd, -be / 2 - 0.5))); corpo.lookAt(...sub(corpo.position.toArray(), G.nd)); gCena.add(corpo); }
+    else {
+      const zs = EST.zs, yr = G.f - zs;                // aparelho real: de pé, tela virada para o vidro (−y)
+      const real = new THREE.Mesh(new THREE.BoxGeometry(G.T0.corpo[0], be, G.T0.corpo[1]), new THREE.MeshStandardMaterial({ color: 0x0c0f12, roughness: 0.4 })); real.position.set(0, yr + be / 2, zs); gCena.add(real);
+      const tr = new THREE.Mesh(new THREE.PlaneGeometry(G.T.W, G.T.H), new THREE.MeshBasicMaterial({ map: texTela, side: THREE.DoubleSide })); tr.position.set(0, yr - 0.3, zs); tr.rotation.x = Math.PI / 2; gCena.add(tr);
+      const vid = new THREE.Mesh(new THREE.PlaneGeometry(G.T0.corpo[0] + 10, 120), new THREE.MeshStandardMaterial({ color: 0x9fd8ff, metalness: 0.9, roughness: 0.05, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }));
+      vid.position.set(0, 0, zs); vid.rotation.x = Math.PI / 4; gCena.add(vid);   // vidro semiespelhado a 45° (normal ∝ (0, 1, −1))
+    }
+  }
+  // olho
+  const E = olho(), esf = new THREE.Mesh(new THREE.SphereGeometry(9, 16, 12), new THREE.MeshBasicMaterial({ color: 0xf2668b })); esf.position.set(...E); gCena.add(esf);
+  if (M.janela) {                                   // janela de visão no plano do olho
+    const w = M.janela, pts = [[w.xmin, w.ymin], [w.xmax, w.ymin], [w.xmax, w.ymax], [w.xmin, w.ymax], [w.xmin, w.ymin]].map(([x, y]) => new THREE.Vector3(x, y, E[2]));
+    gCena.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x8fe3c8, transparent: true, opacity: 0.7 })));
+  }
+  // imagem aérea: cada amostra da tela no cruzamento dos seus raios (traçado)
+  const P = [], C = [], k = S.estereo ? -1 : 12;
+  if (S.estereo && EST.rec) for (const I of EST.rec) { P.push(...I); C.push(0.56, 0.89, 0.78); }   // pontos que os dois olhos fundem
+  if (S.estereo && EST.vol) {                       // o volume onde há percepção de profundidade
+    const cam = EST.vol.filter(c => c.n), Lv = [], Kv = [];
+    cam.forEach((c, i) => { const z = CX.zp + c.h, q = [[c.x0, c.y0], [c.x1, c.y0], [c.x1, c.y1], [c.x0, c.y1]], cor = c.dz < 1 ? [0.56, 0.89, 0.78] : c.dz < 3 ? [0.95, 0.7, 0.36] : [0.95, 0.4, 0.55];
+      for (let k = 0; k < 4; k++) { const a = q[k], b = q[(k + 1) % 4]; Lv.push(a[0], a[1], z, b[0], b[1], z); Kv.push(...cor, ...cor); }
+      const pr = cam[i + 1]; if (pr) { const z2 = CX.zp + pr.h, q2 = [[pr.x0, pr.y0], [pr.x1, pr.y0], [pr.x1, pr.y1], [pr.x0, pr.y1]]; for (let k = 0; k < 4; k++) { Lv.push(q[k][0], q[k][1], z, q2[k][0], q2[k][1], z2); Kv.push(...cor, ...cor); } } });
+    const gv = new THREE.BufferGeometry(); gv.setAttribute("position", new THREE.Float32BufferAttribute(Lv, 3)); gv.setAttribute("color", new THREE.Float32BufferAttribute(Kv, 3));
+    gCena.add(new THREE.LineSegments(gv, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.8 })));
+  }
+  // a projeção como no Mirage: cada pixel aceso da tela (grade densa) vira um ponto de luz onde os seus raios se cruzam — o pixel escuro não manda luz
+  if (k > 0) projecaoReal(P, C, 110);
+  ptsImg.geometry.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); ptsImg.geometry.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+  if (S.estereo && (S.cont === "cubo" || S.cont === "jogo")) atualizarRecEst();
+  // a imagem aérea como superfície: vértices nos pontos traçados de uma grade da tela, cada um com a cor do seu pixel (textura da própria tela)
+  if (!S.estereo) { const na = 21, nb = 21, Vt = [], UV = [], ix = [], id = new Int32Array(na * nb).fill(-1);
+    for (let j = 0; j < nb; j++) for (let i = 0; i < na; i++) {
+      const a = (i / (na - 1) - 0.5) * G.T.W * 0.98, b = (j / (nb - 1) - 0.5) * G.T.H * 0.98, im = imagemDe(pontoTela(a, b)); if (!im) continue;
+      id[j * na + i] = Vt.length / 3; Vt.push(...im.I); UV.push(a / G.T.W + 0.5, b / G.T.H + 0.5);
+    }
+    for (let j = 0; j < nb - 1; j++) for (let i = 0; i < na - 1; i++) { const q = [id[j * na + i], id[j * na + i + 1], id[(j + 1) * na + i], id[(j + 1) * na + i + 1]]; if (q.every(v => v >= 0)) ix.push(q[0], q[1], q[3], q[0], q[3], q[2]); }
+    if (ix.length) { const gI = new THREE.BufferGeometry(); gI.setAttribute("position", new THREE.Float32BufferAttribute(Vt, 3)); gI.setAttribute("uv", new THREE.Float32BufferAttribute(UV, 2)); gI.setIndex(ix);
+      const mI = new THREE.Mesh(gI, new THREE.MeshBasicMaterial({ map: texTela, side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); mI.renderOrder = 11; gCena.add(mI); }
+  }
+  // raios de cinco pontos da tela
+  const L = [], K = [];
+  if (S.estereo && S.raios && EST.olhos) for (const [e, cor] of [[0, [0.56, 0.89, 0.78]], [1, [0.95, 0.7, 0.36]]]) {   // raios de cada olho até a tela
+    const c = EST.cam[e]; for (let q = 0; q < 9; q++) { const x = ((q % 3) - 1) * 0.6 * c.tg, y = (Math.floor(q / 3) - 1) * 0.6 * c.tg, d = nrm(add(c.f, add(mul(c.r, x), mul(c.u, y)))), h = hitEspelho(c.E, d), t = h && pixelDoOlho(c.E, d); if (!h || !t) continue;
+      L.push(...c.E, ...h.P, ...h.P, ...t.P); K.push(...cor, ...cor, ...cor, ...cor); } }
+  if (S.raios && !S.estereo) for (const [a, b, cor] of [[0, 0, [1, 0.8, 0.4]], [-0.45, 0, [0.95, 0.4, 0.55]], [0.45, 0, [0.56, 0.89, 0.78]], [0, 0.45, [0.5, 0.7, 1]], [0, -0.45, [1, 1, 1]]]) {
+    const Q = pontoTela(a * G.T.W, b * G.T.H), im = imagemDe(Q); if (!im) continue;
+    im.L.forEach((l, i) => { if (i % 9) return; L.push(...Q, ...l.X, ...l.X, ...add(im.I, mul(l.d, 260))); K.push(...cor, ...cor, ...cor, ...cor); });
+  }
+  linhas.geometry.setAttribute("position", new THREE.Float32BufferAttribute(L, 3)); linhas.geometry.setAttribute("color", new THREE.Float32BufferAttribute(K, 3));
+}
+const ORB = { az: 35, el: 18, dist: 2600 };
+function posCam() {
+  if (S.tampa) {                                    // acessório deitado sobre a mesa: z para cima
+    const alvo = ORB.alvo || (CX ? [0, (CX.y0 + CX.y1) / 2, (CX.z0 + (M.flut || CX.zp)) / 2] : [0, 0, 100]), a = ORB.az * deg, e = ORB.el * deg;
+    camera.up.set(0, 0, 1); camera.position.set(alvo[0] + ORB.dist * Math.cos(e) * Math.sin(a), alvo[1] - ORB.dist * Math.cos(e) * Math.cos(a), alvo[2] + ORB.dist * Math.sin(e)); camera.lookAt(...alvo); return;
+  }
+  camera.up.set(0, 1, 0);
+  const alvo = ORB.alvo || (M.centro ? mul(add(M.centro, [0, 0, 0]), 0.5) : [0, 0, 400]), a = ORB.az * deg, e = ORB.el * deg;
+  camera.position.set(alvo[0] + ORB.dist * Math.cos(e) * Math.sin(a), alvo[1] + ORB.dist * Math.sin(e), alvo[2] + ORB.dist * Math.cos(e) * Math.cos(a));
+  camera.lookAt(...alvo);
+}
+let arr = null;
+cv.addEventListener("pointerdown", e => { arr = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener("pointerup", () => arr = null);
+cv.addEventListener("pointermove", e => { if (!arr) return; ORB.az -= (e.clientX - arr[0]) * 0.3; ORB.el = clamp(ORB.el + (e.clientY - arr[1]) * 0.3, -80, 85); arr = [e.clientX, e.clientY]; });
+cv.addEventListener("wheel", e => { e.preventDefault(); ORB.dist = clamp(ORB.dist * Math.exp(e.deltaY * 0.001), 300, 9000); }, { passive: false });
+function redim() { const r = cv.parentElement.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+window.addEventListener("resize", redim);
+
+/* ---------- vista do olho, traçada em fatias (não trava a página) ---------- */
+const cvO = document.getElementById("cOlho"), ctxO = cvO.getContext("2d");
+let tarefa = null, rapido = false;
+function tamanhoOlho(A) {                          // o quadro do olho cabe em 32 % da largura e 42 % da altura da cena, sem deformar
+  const cena = cvO.closest("main") || document.body, r = cena.getBoundingClientRect(), w = Math.round(Math.min(520, 0.32 * r.width, 0.42 * r.height * A));
+  cvO.style.width = w + "px"; cvO.style.height = Math.round(w / A) + "px"; cena.style.setProperty("--olhoW", (w + 14) + "px");
+}
+const PUPILA = [[0, 0], [1.6, 0], [-1.6, 0], [0, 1.6], [0, -1.6], [1.1, 1.1], [-1.1, -1.1], [1.1, -1.1], [-1.1, 1.1]];   // ⌀4 mm
+function* olhoGen(passo) {
+  if (S.estereo && EST.cam[0]) {                    // olho esquerdo | olho direito, cada um traçado pela abertura, espelho e tela
+    if (cvO.width !== 640 || cvO.height !== 320) { cvO.width = 640; cvO.height = 320; } tamanhoOlho(2);
+    const W = 640, H = 320, img = ctxO.createImageData(W, H), o = img.data;
+    for (let j = 0; j < H; j += passo) { yield; for (let i = 0; i < W; i += passo) {
+      const e = i < W / 2 ? 0 : 1, c = EST.cam[e], x = (2 * ((i % (W / 2)) + passo / 2) / (W / 2) - 1) * c.tg, y = (1 - 2 * (j + passo / 2) / H) * c.tg;
+      const d = nrm(add(c.f, add(mul(c.r, x), mul(c.u, y)))); let col;
+      if (S.pupila && passo === 1) {                    // a pupila real: a luz de cada pixel chega paralela; o olho foca no infinito (nítido) ou no conteúdo (borra)
+        const Pf = add(c.E, mul(d, c.dist)), acc = [0, 0, 0];
+        for (const [a, b] of PUPILA) { const Ep = add(c.E, add(mul(c.r, a), mul(c.u, b))), dp = S.focoConteudo ? nrm(sub(Pf, Ep)) : d, q = raioOlho(Ep, dp); acc[0] += q[0]; acc[1] += q[1]; acc[2] += q[2]; }
+        col = acc.map(v => v / PUPILA.length);
+      } else col = raioOlho(c.E, d);
+      for (let jj = j; jj < Math.min(H, j + passo); jj++) for (let ii = i; ii < Math.min(W, i + passo); ii++) { const k = 4 * (jj * W + ii); o[k] = col[0] * 255; o[k + 1] = col[1] * 255; o[k + 2] = col[2] * 255; o[k + 3] = 255; }
+    } }
+    for (let j = 0; j < H; j++) { const k = 4 * (j * W + W / 2); o[k] = o[k + 1] = o[k + 2] = 90; }
+    ctxO.putImageData(img, 0, 0); return;
+  }
+  { const A = COMP && S.comp ? clamp((COMP.uR - COMP.uL) / (COMP.vT - COMP.vB), 0.45, 2.4) : 16 / 9, Hc = Math.round(Math.sqrt(176400 / A)), Wc = Math.round(Hc * A);   // o quadro toma a forma da projeção
+    if (cvO.width !== Wc || cvO.height !== Hc) { cvO.width = Wc; cvO.height = Hc; } tamanhoOlho(Wc / Hc); }
+  const W = cvO.width, H = cvO.height, img = ctxO.createImageData(W, H), o = img.data, E = olho(), C = M.centro || [0, 0, S.u];
+  const f = nrm(sub(C, E)), r = nrm(cross(f, [0, 1, 0])), u = cross(r, f), dist = len(sub(C, E));
+  let tg = 0.62 * Math.max(M.larg || G.T.W, (M.alt || G.T.H) * W / H) / dist, cu = 0, cv = 0;   // enquadra a imagem inteira
+  if (COMP && S.comp) { tg = 0.56 * Math.max(COMP.uR - COMP.uL, (COMP.vT - COMP.vB) * W / H); cu = (COMP.uL + COMP.uR) / 2; cv = (COMP.vB + COMP.vT) / 2; }   // ou o retângulo pré-compensado
+  const pup = S.pupila && passo === 1 ? [[0, 0], [1.6, 0], [-1.6, 0], [0, 1.6], [0, -1.6], [1.1, 1.1], [-1.1, -1.1]] : [[0, 0]];
+  for (let j = 0; j < H; j += passo) { yield; for (let i = 0; i < W; i += passo) {
+    const x = cu + (2 * (i + passo / 2) / W - 1) * tg, y = cv + (1 - 2 * (j + passo / 2) / H) * tg * H / W;
+    const Pf = add(E, mul(nrm(add(f, add(mul(r, x), mul(u, y)))), dist));   // foco no plano da imagem
+    let c0 = 0, c1 = 0, c2 = 0;
+    for (const [a, b] of pup) { const Ep = add(E, add(mul(r, a), mul(u, b))), c = raioOlho(Ep, nrm(sub(Pf, Ep))); c0 += c[0]; c1 += c[1]; c2 += c[2]; }
+    const m = 255 / pup.length;
+    for (let jj = j; jj < Math.min(H, j + passo); jj++) for (let ii = i; ii < Math.min(W, i + passo); ii++) { const k = 4 * (jj * W + ii); o[k] = c0 * m; o[k + 1] = c1 * m; o[k + 2] = c2 * m; o[k + 3] = 255; }
+  } }
+  ctxO.putImageData(img, 0, 0);
+}
+function agendar(passo) { tarefa = olhoGen(passo); rapido = passo > 1; }
+let tParado = 0, cheio = false;
+let ultimoT = performance.now(), pendente = false;
+function quadro(t) {
+  if (!TEMPO.congelado) TEMPO.t += Math.min(0.1, Math.max(0, (t - ultimoT) / 1000));   // relógio do simulador (congelável)
+  const dt = Math.min(0.1, (t - ultimoT) / 1000); ultimoT = t;
+  if (JOGO.ativo && S.cont === "jogo") {
+    somAgendar(); passoJogo(dt); JOGO.tPasso += dt;
+    if (JOGO.tPasso > 0.08) { JOGO.tPasso = 0; desenharConteudo(); montarTela(); if (tarefa && rapido) pendente = true; else { tParado = 0; cheio = false; agendar(3); } }
+    atualizarProjecao(dt);   // o jogo também aparece projetado em cima do aparato
+  }
+  if (S.passeio && (RAST.tP = (RAST.tP || 0) + dt) > 0.15) {
+    RAST.tP = 0; RAST.fase = (RAST.fase || 0) + 0.15; if (!RAST.base) RAST.base = [S.ex, S.eh];
+    S.ex = Math.round(RAST.base[0] + (S.estereo ? 110 : 32) * Math.sin(RAST.fase * 0.9)); S.eh = Math.round(RAST.base[1] + (S.estereo ? 0 : 40) * Math.sin(RAST.fase * 0.55)); seguirOlho(); sync();
+  }
+  if ((S.cont === "msg" || S.cont === "cubo") && !JOGO.ativo && (JOGO.tPasso = (JOGO.tPasso || 0) + dt) > 0.1) { JOGO.tPasso = 0; desenharConteudo(); montarTela(); atualizarProjecao(0.1); if (tarefa && rapido) pendente = true; else if (!tarefa) agendar(3); }   // a mensagem tremula
+  if (tarefa) { const t0 = performance.now(); while (performance.now() - t0 < 10) { if (tarefa.next().done) { tarefa = null; break; } } }
+  if (!tarefa && pendente) { pendente = false; agendar(3); }
+  if (!tarefa && !cheio && !JOGO.ativo && S.cont !== "msg" && (tParado += 1) > 12) { agendar(1); cheio = true; }
+  posCam(); renderer.render(scene, camera); requestAnimationFrame(quadro);
+}
+const RAST = {};
+function seguirOlho() {                            // o aparelho sabe onde está o olho: refaz a compensação (≈ 25 ms) e redesenha
+  if (S.estereo) { EST.manterOlho = true; prepararEstereo(); acenderEstereo(); medirEstereo(); medirVolume(); construir(); hud(); tParado = 0; cheio = false; agendar(3); return; }
+  if (!S.comp) { sujo(); return; }
+  const antes = COMP; prepararComp(); if (!COMP) COMP = antes;   // fora da janela: mantém a última
+  desenharConteudo(); montarTela(); if (tarefa && rapido) pendente = true; else { tParado = 0; cheio = false; agendar(3); }
+}
+let tProj = 0;
+function atualizarProjecao(dt) {
+  if ((tProj += dt) < 0.25) return; tProj = 0;
+  if (S.estereo) { atualizarRecEst(); return; }
+  const P = [], C = []; projecaoReal(P, C, 72);
+  ptsImg.geometry.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); ptsImg.geometry.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+}
+function sujo() { tParado = 0; cheio = false; agendar(3); }
+
+/* ---------- HUD ---------- */
+function hud() {
+  const f = (x, n = 1) => isFinite(x) ? x.toFixed(n).replace(".", ",") : "—", w = M.janela;
+  if (S.estereo) { document.getElementById("hud").innerHTML =
+    `<b>estéreo no foco</b> (como as pétalas da aba 3): ${S.divisor ? `${G.T0.nome.split(" ").slice(0, 3).join(" ")} de pé, perpendicular ao espelho; o vidro a 45° o põe no foco, sobre o eixo (brilho × 0,25)` : S.lay === "centro" ? `${G.T0.nome.split(" ").slice(0, 3).join(" ")} deitado no foco, ao lado do eixo (cata-vento)` : `${G.T0.nome.split(" ").slice(0, 3).join(" ")} deitado no foco, ao lado da abertura`} — fatia do espelho do Mirage (f = ${f(G.f, 1)} mm), abertura ${S.abA} × ${S.abB || S.abA} mm ${S.lay === "centro" ? "no eixo" : "ao pé do celular"}, olho a ${EST.el}° de elevação<br>` +
+    `cada olho tem os seus pixels: pixels usados pelos dois olhos <b class="${EST.conflito < 0.02 ? "ok" : "mau"}">${f(100 * EST.conflito, 1)} %</b> (${EST.acesos} pixels acesos)<br>` +
+    `volume refeito pelos dois olhos (${EST.nRec} pontos de um cubo de ${EST.obj} mm): erro médio <b class="${EST.erro < 0.5 ? "ok" : "mau"}">${f(EST.erro, 2)} mm</b>, pior ${f(EST.erroMax, 2)} mm (pixel do celular ${f(G.T0.W / G.T0.px[0], 3)} mm)<br>` +
+    `nitidez: cada pixel borra no máximo <b class="${EST.borrao < 0.5 ? "ok" : "mau"}">${f(EST.borrao, 2)} mm</b> no conteúdo (pupila ⌀4 mm, olho focado no infinito)<br>` +
+    `foco dos pixels: ${EST.foco} — o olho converge no conteúdo, mas a luz chega focada no infinito<br>` +
+    (EST.vol ? (() => { const c = EST.vol.filter(v => v.n), boa = c.filter(v => v.dz < 1); return `volume com profundidade (os dois olhos veem): de <b>${c.length ? c[0].h : "—"} a ${c.length ? c[c.length - 1].h : "—"} mm</b> do tampo (verde = erro de profundidade < 1 mm em ${boa.length} de ${c.length} camadas)<br>` + c.filter((v, i) => i % 2 === 0).map(v => `&nbsp;&nbsp;${v.h > 0 ? "+" : ""}${v.h} mm: ${f(v.x1 - v.x0, 0)} × ${f(v.y1 - v.y0, 0)} mm, profundidade ±${f(v.dz, 1)} mm, conflito de foco ${f(v.conflito, 1)} D`).join("<br>") + "<br>"; })() : "") +
+    `caixa por fora: <b>${f(CX.x1 - CX.x0, 0)} × ${f(CX.y1 - CX.y0, 0)} × ${f(CX.zp - CX.z0 + 8, 0)} mm ≈ ${f((CX.x1 - CX.x0) * (CX.y1 - CX.y0) * (CX.zp - CX.z0 + 8) / 1e6, 1)} L</b> · conteúdo ${EST.h} mm acima do tampo`; return; }
+  document.getElementById("hud").innerHTML = M.falha ? `<span class="mau">nenhum raio da tela chega ao recorte e volta: mude a distância, altura ou inclinação</span>` :
+    (S.forma === "faixa" ? `espelho em faixa de parabolóide ${S.Wm} × ${S.Hm} mm (centro em y = ${S.oy}), R no vértice ${S.R} mm (foco ${f(G.f, 0)} mm)` : meiaLua() ? (S.oy <= -S.Wm / 2 ? `espelho redondo ${parab() ? "parabólico" : "ESFÉRICO"} ⌀ ${S.Wm} mm, R ${S.R} mm (foco ${f(G.f, 0)} mm)` : `espelho meia-lua de ${parab() ? "parabolóide (perfil do Mirage)" : "esfera"} ⌀ ${S.Wm} mm, R no vértice ${S.R} mm (foco ${f(G.f, 0)} mm), corda em y = ${S.oy}`) : `espelho esférico R ${S.R} mm (foco ${f(G.f, 0)} mm), recorte ${S.Wm} × ${S.Hm} mm`) + (G.lente ? ` · ${G.T0.nome} a u = ${S.u} mm atrás de uma Fresnel (foco ${S.fresnel.F} mm, ${G.lente.W} × ${G.lente.H} mm) a ${S.fresnel.d} mm: o espelho vê uma tela virtual ${f(G.lente.k, 2)}× (${f(G.T.W, 0)} × ${f(G.T.H, 0)} mm)<br>` : ` · tela ${G.T.nome} ${G.T.W} × ${G.T.H} mm a u = ${S.u} mm<br>`) +
+    `imagem aérea: <b>${f(M.larg, 0)} × ${f(M.alt, 0)} mm</b>, aumento <b>${f(M.m, 2)}×</b> (paraxial ${f(M.parax.m, 2)}×), ${M.inv ? "de cabeça para baixo (inverte na vertical)" : "direita"}<br>` +
+    `flutua a <b>${f(M.flut, 0)} mm</b> do espelho (${f(M.flutBorda, 0)} mm à frente da borda do recorte) · paraxial v = ${f(M.parax.v, 0)} mm<br>` +
+    `imagem inclinada ${f(M.inclImg, 0)}° da vertical · borrão que o olho vê (pupila ⌀4 mm): <b class="${M.rmsOlho < 0.5 ? "ok" : "mau"}">${f(M.rmsOlho, 2)} mm</b> no pior ponto · com o espelho todo: centro ${f(M.rmsC, 1)}, pior ${f(M.rmsMax, 1)} mm<br>` +
+    `olho a ${S.ed} mm além da imagem: vê ${M.visto}/${M.total} pontos da grade · curvatura/trapézio que ele vê: <b class="${(M.distor || 0) < 2 ? "ok" : "mau"}">${f(M.distor, 1)} mm</b><br>` +
+    (COMP ? `${COMP.cheio ? `pixel a pixel (como na aba 3 do Mirage): o olho vê a projeção em <b>${f(Math.sqrt(COMP.areaFig) , 0)} mm</b> de lado equivalente (${f(COMP.areaFig / 100, 0)} cm²), contra ${f(COMP.areaRet / 100, 0)} cm² do maior retângulo — tela de ${f(G.T0.W * G.T0.H / 100, 0)} cm²<br>` : ""}${M.bino ? `dois olhos (${S.dio} mm, compensado para o meio): cada olho vê o conteúdo a <b class="${M.bino.rms < 1.5 ? "ok" : "mau"}">${f(M.bino.rms, 1)} mm</b> rms do lugar certo (pior ${f(Math.max(M.bino.esq.max, M.bino.dir.max), 1)} mm), disparidade vertical ${f(M.bino.vert, 1)} mm, vê ${Math.round(100 * M.bino.vistos)} % dos pontos<br>` : ""}pré-compensado para o olho atual: curvatura que sobra <b class="${(M.distorComp || 0) < 1 ? "ok" : "mau"}">${f(M.distorComp, 1)} mm</b> (sem compensar: ${f(M.distor, 1)} mm)<br>` : (S.comp ? `<span class="mau">sem pré-compensação: o olho não vê a tela inteira daqui</span><br>` : "")) +
+    (CX ? `caixa por fora: <b>${f(CX.x1 - CX.x0, 0)} × ${f(CX.y1 - CX.y0, 0)} × ${f((CX.gav ? CX.gav.z1 : CX.zp) - CX.z0 + 8, 0)} mm ≈ ${f(volCaixa(), 1)} L</b>${CX.gav ? ` com gaveta de ${f(CX.gav.z1 - CX.gav.z0, 0)} mm à frente para o aparelho` : ""} (Mirage 9″: ⌀229 mm, ≈ 3,7 L) · frente a ${f(CX.zp, 0)} mm do espelho, abertura ${f(CX.ax1 - CX.ax0, 0)} × ${f(CX.ay1 - CX.ay0, 0)} mm com cantos arredondados · a imagem sai <b>${f(M.flut - CX.zp, 0)} mm</b> para fora da abertura<br>` +
+      `espelho escondido: atrás da imagem o olho vê <b>${f(100 * (0.004 * S.fume + 0.012 * S.amb) / (ref * S.fume), 1)} %</b> do brilho do branco da imagem (vidro fumê ${Math.round(100 * S.fume)} %, sala ${Math.round(100 * S.amb)} %)<br>` : `sem gabinete: com a sala a ${Math.round(100 * S.amb)} %, o espelho e a borda dele aparecem atrás da imagem<br>`) +
+    (w ? `janela de onde se vê a imagem inteira (a ${S.ed} mm dela): <b>${w.xmax - w.xmin + 20} × ${w.ymax - w.ymin + 20} mm</b>` : `<span class="mau">de nenhuma posição se vê a imagem inteira</span>`);
+}
+
+/* ---------- interface ---------- */
+const fmt = { uso: v => Math.round(v * 100) + " %", usoB: v => v + " mm", folga: v => v + " mm", zpF: v => Math.round(v * 100) + " %", amb: v => Math.round(v * 100) + " %", fume: v => Math.round(v * 100) + " %", R: v => v + " mm", Wm: v => v + " mm", Hm: v => v + " mm", oy: v => v + " mm", u: v => v + " mm", dy: v => v + " mm", tau: v => v + "°", ed: v => v + " mm", eh: v => v + " mm", ex: v => v + " mm" };
+function sync() {
+  for (const k in fmt) { document.getElementById(k).value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]); }
+  for (const [id, key] of [["telaSeg", "tela"], ["contSeg", "cont"], ["formaSeg", "forma"]]) document.querySelectorAll("#" + id + " button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S[key]));
+  for (const k of ["comp", "caixa", "dentro", "rastreio", "passeio", "paralaxe", "cheio", "bino", "estereo"]) document.getElementById(k).checked = S[k];
+  document.getElementById("pupila").checked = S.pupila; document.getElementById("girar").checked = S.girar; document.getElementById("raios").checked = S.raios;
+}
+let tmr = null;
+const CHAVE = "holosion-acessorio-v1";                // o estado fica guardado: F5 volta exatamente aqui
+function guardar() { try { localStorage.setItem(CHAVE, JSON.stringify({ S, APAR, el: EST.el, ap: S.tela })); } catch (e) {} }
+function tudo() {
+  guardar();
+  if (S.estereo) { tudoEstereo(); return; }
+  G = geo(); desenharConteudo();
+  usarCaixa = false; medir(); calcularCaixa(); usarCaixa = !!CX; medir();      // o gabinete se ajusta aos raios e depois entra no traçado
+  if (S.comp) prepararComp(); else COMP = null;
+  montarTela(); medirComp(); M.bino = S.bino ? erroBinocular() : null; construir(); hud(); sync(); sujo();
+}
+for (const k in fmt) document.getElementById(k).addEventListener("input", e => { S[k] = +e.target.value; document.getElementById(k + "v").textContent = fmt[k](S[k]); clearTimeout(tmr); tmr = setTimeout(tudo, 60); });
+document.getElementById("telaSeg").addEventListener("click", e => { const v = e.target.dataset.v; if (!v) return; S.tela = v; const b = v.replace(/V$/, ""); if (TELAS[b + "V"]) { APAR.h = b; APAR.v = b + "V"; } tudo(); });
+document.getElementById("formaSeg").addEventListener("click", e => { const v = e.target.dataset.v; if (!v) return; S.forma = v; tudo(); });
+document.getElementById("contSeg").addEventListener("click", e => { const v = e.target.dataset.v; if (!v) return; S.cont = v; tudo(); });
+for (const k of ["comp", "caixa", "dentro", "cheio", "bino", "estereo"]) document.getElementById(k).addEventListener("change", e => { S[k] = e.target.checked; tudo(); });
+for (const k of ["rastreio", "paralaxe"]) document.getElementById(k).addEventListener("change", e => { S[k] = e.target.checked; seguirOlho(); });
+document.getElementById("passeio").addEventListener("change", e => { S.passeio = e.target.checked; if (S.passeio) { RAST.base = [S.ex, S.eh]; RAST.fase = 0; S.rastreio = true; } else if (RAST.base) { [S.ex, S.eh] = RAST.base; RAST.base = null; tudo(); } sync(); });
+document.getElementById("bComp").addEventListener("click", () => { S.comp = true; tudo(); });
+document.getElementById("bJogar").addEventListener("click", e => { e.target.blur(); iniciarJogo(); });
+document.getElementById("bParar").addEventListener("click", e => { e.target.blur(); pararJogo(); });
+document.getElementById("girar").addEventListener("change", e => { S.girar = e.target.checked; tudo(); });
+document.getElementById("paineis").addEventListener("click", e => {   // esconde um painel para ver a projeção na cena 3D
+  const b = e.target.closest("button"); if (!b) return; const p = document.getElementById(b.dataset.p), on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on); p.classList.toggle("escondido", !on);
+});
+{ const cena = document.getElementById("hud").closest("main"), w = cena.getBoundingClientRect().width || innerWidth - 290;   // tela estreita: as medidas começam escondidas (botão "medidas")
+  if (w < 1300) { document.getElementById("hud").classList.add("escondido"); document.getElementById("paineis").querySelector("button[data-p=hud]").setAttribute("aria-pressed", "false"); } }
+document.getElementById("congelar").addEventListener("change", e => { TEMPO.congelado = e.target.checked; });
+document.getElementById("focoConteudo").addEventListener("change", e => { S.focoConteudo = e.target.checked; sujo(); });
+document.getElementById("pupila").addEventListener("change", e => { S.pupila = e.target.checked; sujo(); });
+document.getElementById("raios").addEventListener("change", e => { S.raios = e.target.checked; construir(); });
+document.getElementById("bPortatil").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): imagem 146 × 116 mm, borrão 0,91 mm, o olho vê 6/35 pontos (sem janela da imagem inteira), caixa ≈ 6,7 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.incl = 0; S.prof = 0;
+  S.estereo = false; S.divisor = false;
+  // acessório: a meia-lua do Mirage (R = ⌀/√2) fica EMBAIXO do celular, que está deitado de tela para baixo no tampo; a abertura quadrada fica do outro lado,
+  // ao pé do celular; quem olha fica do lado da abertura e vê, através dela, o espelho sob o celular (busca pelo traçado: maior projeção por litro)
+  Object.assign(S, { tela: APAR.h, forma: "lua", lado: -1, Wm: 180, R: 127, oy: 0, u: 114, dy: -60, tau: 0, uso: 1, usoB: 0, caixa: true, tampa: true, quadrada: true, folga: 6, comp: true, cheio: true, girar: true, cont: "msg", ex: 0, raios: false, dentro: true });
+  G = geo(); usarCaixa = false; CX = null; medir();
+  if (M.centro) { S.ed = Math.round(380 * Math.sin(65 * deg)); S.eh = Math.round(M.centro[1] + 380 * Math.cos(65 * deg)); }   // olho a 65° de elevação, 380 mm da imagem, do lado da abertura
+  ORB.dist = 1100; tudo();
+});
+// todo preset (menos o do espelho de maquiagem e os botões que só ajustam a cena atual) volta ao espelho e à tela comuns
+document.addEventListener("click", e => { const bt = e.target.closest && e.target.closest("button.btn"); if (!bt) return;
+  const id = bt.id.replace(/^cel_/, ""); if (!/^b[A-Z]/.test(id) || ["bConsoleMaq", "bJogar", "bParar", "bComp", "bTreino", "bIncl"].includes(id)) return;
+  S.esfera = false; S.fresnel = null; }, true);
+document.getElementById("bConsoleMaq").addEventListener("click", () => {
+  // console em L com um espelho barato: espelho de maquiagem redondo ⌀ 20 cm, ESFÉRICO, foco 100 mm (meça o seu!), sem Fresnel.
+  // Busca pelo traçado (iPhone 15 Pro, janela ≥ 100 × 100 mm, nenhum raio no degrau): celular a 210 mm, 60 mm abaixo do eixo, inclinado 20°,
+  // olho 350 mm além da imagem → tela inteira 112 × 54 mm (0,79×) inclinada 15°, 124 mm fora da janela, borrão 0,29 mm,
+  // curvatura 7,2 → 0,0 mm compensada, janela 140 × 200 mm, caixa ≈ 16,6 L.
+  semear(); TEMPO.t = 0;
+  Object.assign(S, { tela: "ip15p", forma: "lua", esfera: true, lado: 1, Wm: 200, R: 200, oy: -200, u: 210, dy: -60, tau: 20, uso: 1, usoB: 0, incl: 0, prof: 0, corte: null,
+    fresnel: null, caixa: true, tampa: false, quadrada: false, folga: 40, zpF: 0.3, comp: true, cheio: false, girar: true, paralaxe: false,
+    estereo: false, divisor: false, ex: 0, ed: 350, eh: 170, raios: true, dentro: true, erroSup: null });
+  ORB.dist = 900; tudo();
+});
+document.getElementById("bConsoleR700").addEventListener("click", () => {
+  // o console em L dos vídeos (v6 e Short): meia-lua impressa de parabolóide R 700, ⌀ 460, corda em y = −40; iPhone 15 Pro a 700 mm
+  // (centro de curvatura, imagem 1:1), 110 mm abaixo do eixo; olho 140 mm acima do eixo, 600 mm além da imagem → 142 × 65 mm a 741 mm,
+  // 334 mm fora da janela, borrão 0,10 mm, curvatura 1,8 → 0,0 mm, janela 100 × 80 mm, caixa ≈ 148 L, nenhum raio no degrau.
+  semear(); TEMPO.t = 0;
+  Object.assign(S, { tela: "ip15p", forma: "lua", esfera: false, fresnel: null, lado: 1, Wm: 460, R: 700, oy: -40, u: 700, dy: -110, tau: 0, uso: 1, usoB: 0, incl: 0, prof: 0, corte: null,
+    caixa: true, tampa: false, quadrada: false, folga: 40, zpF: 0.55, comp: true, cheio: false, girar: true, paralaxe: true, estereo: false, divisor: false,
+    ex: 0, ed: 600, eh: 140, raios: true, dentro: true, erroSup: null });
+  ORB.dist = 2600; tudo();
+});
+document.getElementById("bConsoleMirage").addEventListener("click", () => {
+  // console em L usando o espelho de BAIXO do próprio Mirage, inteiro e sem cortar (parabolóide f = 80,6, R = 161,2, ⌀ 229).
+  // Busca pelo traçado da MAIOR imagem que fica à frente da janela, quase em pé, sem raio bloqueado pelo degrau (iPhone 15 Pro):
+  // celular a 150 mm, 55 mm abaixo do eixo, inclinado 30°, tela inteira, olho 900 mm além da imagem → 155 × 77 mm (1,10×) inclinada 15°,
+  // a 212 mm do espelho e 148 mm fora da janela, borrão 0,72 mm, janela 420 × 720 mm, caixa ≈ 19,1 L (contra 148 L do console R 700).
+  // O tamanho visível é limitado pelo espelho visto do olho (⌀ 229 × D/(D + v)).
+  semear(); TEMPO.t = 0;
+  Object.assign(S, { tela: "ip15p", forma: "lua", esfera: false, fresnel: null, lado: 1, Wm: 229, R: 161.2, oy: -130, u: 150, dy: -55, tau: 30, uso: 1, usoB: 0, incl: 0, prof: 0, corte: null,
+    caixa: true, tampa: false, quadrada: false, folga: 40, zpF: 0.3, comp: true, cheio: false, girar: true, paralaxe: false, estereo: false, divisor: false,
+    ex: 0, ed: 900, eh: 410, raios: true, dentro: true, erroSup: null });
+  ORB.dist = 1100; tudo();
+});
+document.getElementById("bAjustado").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): estéreo: erro de fusão 0,65 mm (pior 1,42), borrão 0,77 mm, 0,1 % de pixels em comum, caixa ≈ 4,8 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  // o estéreo nítido (fatia do Mirage, R 161,2) com o espelho inclinado 16° em direção a quem olha; o celular (deitado) acompanha o foco novo
+  document.getElementById("bEstereo").click();
+  const a = -16 * deg, f = S.R / 2; Object.assign(S, { incl: -16, prof: 0, dy: -f * Math.sin(a) - 26, u: f * Math.cos(a), oy: +(3 - f * Math.sin(a)).toFixed(1) });   // o celular exatamente no foco (arredondar 0,03 mm piora o erro de 0,64 para 0,73 mm)
+  EST.el = 72.5; EST.manterOlho = false; tudo();
+});
+document.getElementById("bMelhorEst").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): estéreo: erro de fusão 0,75 mm (pior 1,93), borrão 1,03 mm, 0,2 % de pixels em comum, caixa ≈ 4,7 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  // duas imagens (uma por olho) no espelho do "melhor dos mundos": mesma curvatura R 127 cobrindo o fundo, celular deitado no foco (u = f = 63,5),
+  // abertura de 60 × 56 ao pé dele, olhar ao longo do eixo a 88,5° (busca pelo traçado: dy −32…−20, 87…89,5°)
+  semear(); TEMPO.t = 0; S.incl = 0; S.prof = 0;
+  Object.assign(S, { tela: APAR.h, forma: "lua", lado: -1, Wm: 396.6, R: 127, oy: 165, corte: { x0: -110, x1: 110, y0: -98.2, y1: 165, z1: 63.5 + 8.8 + 2 - 3 }, u: 63.5, dy: -26, tau: 0, uso: 1, usoB: 0, caixa: true, tampa: true, folga: 3, lay: "lado", divisor: false,
+    comp: false, cheio: false, estereo: true, abA: 60, abB: 56, girar: false, dentro: true, cont: "cubo", ex: 0, rastreio: true, passeio: false, fume: 0.85, raios: false });
+  { const a = -16 * deg, f = S.R / 2; S.incl = -16; S.dy = -f * Math.sin(a) - 26; S.u = f * Math.cos(a); }   // meia-lua inclinada 16°, celular no foco novo
+  EST.el = 72.5; RAST.base = null; ORB.dist = 700; tudo();
+});
+document.getElementById("bMelhor").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): imagem 117 × 68 mm, borrão 0,56 mm, 35/35 pontos, janela 300 × 740 mm, caixa ≈ 11,2 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  // o melhor dos mundos (busca pelo traçado, 192 arranjos): a mesma curvatura (R 127) estendida também para baixo da abertura e cortada pela caixa;
+  // celular a 150 mm do espelho; olho a 75°: o olho do meio vê 35/35 pontos da tela e os dois olhos (64 mm) veem 48/49
+  document.getElementById("bLuaQuinas").click();
+  const cx = 110, yf = 165, r = Math.max(Math.hypot(cx, 98.2), Math.hypot(cx, yf));
+  Object.assign(S, { Wm: +(2 * r).toFixed(1), oy: yf, corte: { x0: -cx, x1: cx, y0: -98.2, y1: yf }, u: 150, dy: -40, bino: true });
+  G = geo(); usarCaixa = false; CX = null; medir(); if (M.centro) { S.ed = Math.round(380 * Math.sin(75 * deg)); S.eh = Math.round(M.centro[1] + 380 * Math.cos(75 * deg)); }
+  tudo();
+});
+document.getElementById("bLuaQuinas").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): imagem 153 × 115 mm, borrão 0,80 mm, 8/35 pontos, janela 20 × 120 mm, caixa ≈ 7,7 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  // a mesma meia-lua aumentada até o arco passar nas quinas internas da caixa e cortada pelas paredes (curvatura igual, R 127)
+  document.getElementById("bPortatil").click(); const r = Math.hypot(90, 98.2); S.Wm = +(2 * r).toFixed(1); S.corte = { x0: -90, x1: 90, y0: -98.2, y1: 0 };
+  S.dy = -45; S.u = 121;                              // celular um pouco mais perto da abertura e mais alto (busca pelo traçado, espelho fixo)
+  G = geo(); usarCaixa = false; CX = null; medir(); if (M.centro) { S.ed = Math.round(380 * Math.sin(50 * deg)); S.eh = Math.round(M.centro[1] + 380 * Math.cos(50 * deg)); }   // olho a 50°
+  tudo();
+});
+document.getElementById("bModelo").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): (retrato) imagem 32 × 60 mm, borrão 0,16 mm, 35/35 pontos, janela 100 × 200 mm, caixa ≈ 4,4 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.corte = null; S.incl = 0; S.prof = 0;
+  S.estereo = false;
+  // a disposição do Model.3mf com as proporções do celular; o espelho é uma fatia retangular do espelho do Mirage (parabolóide, foco 80,6 mm), da largura do celular
+  const dy = -80.7, y0 = -101, y1 = 82, uso = 0.35;
+  Object.assign(S, { tela: APAR.v, forma: "faixa", Wm: 76, Hm: y1 - y0, oy: (y0 + y1) / 2, R: 161.2, u: 133, dy, tau: 15, uso, usoB: 150.6 * (1 - uso) / 2, caixa: true, tampa: true, quadrada: true, folga: 3, comp: true, girar: true, cont: "msg", ex: 0 });
+  G = geo(); usarCaixa = false; CX = null; medir();
+  if (M.centro) { S.ed = Math.round(400 * Math.sin(80 * deg)); S.eh = Math.round(M.centro[1] + 400 * Math.cos(80 * deg)); }   // olho a 80° de elevação, do lado da abertura
+  ORB.dist = 800; tudo();
+});
+/* aprender: perturba a geometria (fatia do espelho do Mirage, altura/posição/inclinação do celular) e guarda o que o traçado diz ser melhor:
+   mais área da projeção vista pelo olho (pixel a pixel), borrão pequeno, imagem fora do tampo e caixa pequena */
+const TREINO = { rodando: false, hist: [] };
+function custoTreino() {
+  G = geo(); usarCaixa = false; CX = null; medir(); if (M.falha || !M.centro) return null;
+  S.eh = Math.round(M.centro[1] + S.ed / Math.tan(80 * deg)); medir();            // olho sempre a 80° de elevação, mesma distância
+  calcularCaixa(); if (!CX) return null; const sai = M.flut - CX.zp; usarCaixa = true; medir();
+  const antes = S.comp; S.comp = true; prepararComp(); if (!COMP) return null;
+  const area = COMP.areaFig / 100, vol = volCaixa(), borr = isFinite(M.rmsOlho) ? M.rmsOlho : 2;
+  let nota = area - 6 * vol - 300 * Math.max(0, borr - 0.5) - 20 * Math.max(0, 25 - sai);   // cm² de projeção, menos litros de caixa, menos penalidades
+  let bino = null; if (S.bino) { bino = erroBinocular(4); if (!bino || !isFinite(bino.rms)) return null; nota -= 25 * bino.rms + 25 * Math.max(0, bino.vert - 1) + 80 * Math.max(0, 0.9 - bino.vistos); }   // os dois olhos têm de ver o conteúdo no lugar
+  return { nota, area, vol, borr, sai, bino: bino && bino.rms, vert: bino && bino.vert };
+}
+async function treinar(passos = 160, fixos = []) {
+  if (TREINO.rodando) return; TREINO.rodando = true; semear(); /* o mesmo aprendizado dá sempre o mesmo resultado */ S.cheio = true; S.comp = true; const chaves = ["R", "u", "tau", "dy", "Wm", "Hm", "oy"].filter(k => !fixos.includes(k)), passo = { R: 12, u: 8, tau: 4, dy: 8, Wm: 14, Hm: 20, oy: 10 };
+  let atual = Object.fromEntries(["R", "u", "tau", "dy", "Wm", "Hm", "oy"].map(k => [k, S[k]])), c0 = custoTreino(), melhor = { p: { ...atual }, c: c0 }; TREINO.hist = [];
+  for (let i = 0; i < passos && TREINO.rodando; i++) {
+    const T = 8 * (1 - i / passos) + 0.3, novo = { ...atual };
+    for (const k of chaves) if (aleat() < 0.45) novo[k] = Math.round((novo[k] + (aleat() * 2 - 1) * passo[k] * (0.4 + T / 8)) * 10) / 10;
+    novo.R = clamp(novo.R, 90, 260); novo.u = clamp(novo.u, 0.52 * novo.R, 0.95 * novo.R); novo.tau = clamp(novo.tau, -10, 55); novo.Wm = clamp(novo.Wm, 80, 240); novo.Hm = clamp(novo.Hm, 120, 420);
+    Object.assign(S, novo); const c = custoTreino();
+    if (c && (!c0 || c.nota > c0.nota || aleat() < Math.exp((c.nota - c0.nota) / T))) { atual = novo; c0 = c; }
+    if (c && (!melhor.c || c.nota > melhor.c.nota)) melhor = { p: { ...novo }, c };
+    TREINO.hist.push(melhor.c ? melhor.c.nota : 0);
+    if (i % 4 === 0) { document.getElementById("hud").innerHTML = `aprendendo pelo traçado… passo ${i + 1}/${passos}<br>melhor: projeção <b>${melhor.c ? melhor.c.area.toFixed(0) : "—"} cm²</b>, caixa ${melhor.c ? melhor.c.vol.toFixed(1) : "—"} L, borrão ${melhor.c ? melhor.c.borr.toFixed(2) : "—"} mm, dois olhos ${melhor.c && melhor.c.bino != null ? melhor.c.bino.toFixed(1) : "—"} mm, sai ${melhor.c ? melhor.c.sai.toFixed(0) : "—"} mm`; await new Promise(r => setTimeout(r, 0)); }
+  }
+  Object.assign(S, melhor.p); TREINO.rodando = false; TREINO.melhor = melhor; custoTreino(); tudo();
+}
+document.getElementById("bTreino").addEventListener("click", () => treinar(200, S.forma === "faixa" ? ["R"] : []));   // na fatia do Mirage a curvatura fica a do brinquedo
+document.getElementById("bAprendido").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): (retrato) imagem 76 mm de largura, borrão 0,31 mm, 21/35 pontos, janela 220 × 940 mm, caixa ≈ 9,0 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.corte = null; S.incl = 0; S.prof = 0;
+  S.estereo = false;
+  // o que o recozimento acha partindo da opção B, R fixo em 2 × 80,6 mm, 200 passos, semente 20261108, custo com os dois olhos (refazível com ▶ aprender)
+  Object.assign(S, { tela: APAR.v, forma: "faixa", R: 161.2, u: 134.6, tau: 34.6, dy: -68.1, Wm: 126.6, Hm: 334, oy: -31.4, uso: 1, usoB: 0, caixa: true, tampa: true, quadrada: true, folga: 3, comp: true, cheio: true, girar: true, cont: "cubo", ex: 0, paralaxe: true, rastreio: true, passeio: false, fume: 0.85, raios: false, ed: 640 });
+  G = geo(); usarCaixa = false; CX = null; medir(); if (M.centro) S.eh = Math.round(M.centro[1] + S.ed / Math.tan(80 * deg));
+  RAST.base = null; ORB.dist = 1000; tudo();
+});
+document.getElementById("bEstereo").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): estéreo: erro de fusão 0,63 mm (pior 1,62), borrão 0,70 mm, 0,0 % de pixels em comum, caixa ≈ 4,2 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.corte = null; S.incl = 0; S.prof = 0;
+  // a disposição do Model.3mf: celular deitado de tela para baixo no foco da fatia (u = f = 80,6 mm), abertura de 56 mm ao pé dele
+  EST.el = 88.5; S.lay = "lado"; S.divisor = false;
+  Object.assign(S, { tela: APAR.h, forma: "faixa", R: 161.2, u: 80.6, tau: 0, dy: -26, Wm: 260, Hm: 149, oy: 3, uso: 1, usoB: 0, caixa: true, tampa: true, folga: 3,   // iPhone em paisagem: o lado comprido dá a paralaxe de lado a lado
+    comp: false, cheio: false, estereo: true, abA: 60, abB: 56, girar: false, dentro: true, cont: "cubo", ex: 0, rastreio: true, passeio: false, fume: 0.85, raios: true });
+  RAST.base = null; ORB.dist = 800; tudo();
+});
+document.getElementById("bDivisor").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): estéreo: erro de fusão 0,70 mm (pior 1,63), borrão 0,73 mm, 0,1 % de pixels em comum, brilho × 0,25, caixa ≈ 1,8 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.corte = null; S.incl = 0; S.prof = 0;
+  // celular de pé, perpendicular ao espelho; o vidro a 45° o põe no foco, sobre o eixo; abertura no eixo, olhar ao longo do eixo: feixes quase paralelos ao eixo = nitidez
+  Object.assign(S, { tela: APAR.h, forma: "faixa", R: 161.2, u: 80.6, tau: 0, dy: 0, Wm: 150, Hm: 90, oy: -12, uso: 1, usoB: 0, caixa: true, tampa: true, folga: 3, lay: "centro", divisor: true,
+    comp: false, cheio: false, estereo: true, abA: 60, abB: 60, girar: false, dentro: true, cont: "cubo", ex: 0, rastreio: true, passeio: false, fume: 0.85, raios: true });
+  EST.el = EST.elDivisor || 89; RAST.base = null; ORB.dist = 700; tudo();
+});
+document.getElementById("bCatavento").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): estéreo: erro de fusão 0,26 mm (pior 0,87), borrão 2,39 mm, 6,7 % de pixels em comum, caixa ≈ 5,4 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.corte = null; S.incl = 0; S.prof = 0;
+  S.divisor = false;
+  // como o cata-vento da aba 3: celular deitado no foco ao lado do eixo, abertura NO eixo, a projeção sai em cima da abertura e quem olha fica do lado oposto
+  const A = 72, B = 72, y1p = B / 2 + 3, dy = y1p + 38.2;
+  Object.assign(S, { tela: APAR.h, forma: "faixa", R: 161.2, u: 80.6, tau: 0, dy, Wm: 300, Hm: 0, oy: 0, uso: 1, usoB: 0, caixa: true, tampa: true, folga: 3, lay: "centro",
+    comp: false, cheio: false, estereo: true, abA: A, abB: B, girar: false, dentro: true, cont: "cubo", ex: 0, rastreio: true, passeio: false, fume: 0.85, raios: true });
+  const y0 = -B / 2 - 10, yf = dy + 38.2 + 4; S.Hm = Math.round(yf - y0); S.oy = Math.round((yf + y0) / 2);   // a fatia vai da beira da abertura até debaixo do celular
+  EST.el = EST.elCentro || 52; RAST.base = null; ORB.dist = 800; tudo();
+});
+document.getElementById("bOpB").addEventListener("click", () => {
+  // medido com o iPhone 15 Pro (2026-11-09): (retrato) imagem 79 × 129 mm, borrão 0,37 mm, 35/35 pontos, janela 260 × 460 mm, caixa ≈ 14,3 L. Números mais antigos nos comentários abaixo vinham de outro aparelho.
+  semear(); TEMPO.t = 0; S.corte = null; S.incl = 0; S.prof = 0;
+  // mesma disposição (celular deitado no tampo, abertura ao pé dele), fatia do espelho do Mirage (R = 2 × 80,6) grande o bastante para o olho ver a tela inteira
+  S.estereo = false; const dy = 15 - 80.7, y0 = -166, y1 = 200;
+  Object.assign(S, { tela: APAR.v, forma: "faixa", Wm: 180, Hm: y1 - y0, oy: (y0 + y1) / 2, R: 161.2, u: 145, dy, tau: 35, uso: 1, usoB: 0, caixa: true, tampa: true, quadrada: true, folga: 3, comp: true, girar: true, cont: "cubo", ex: 0, paralaxe: true, rastreio: true, passeio: false, fume: 0.85, raios: false, cheio: true });
+  G = geo(); usarCaixa = false; CX = null; medir();
+  if (M.centro) { S.ed = Math.round(650 * Math.sin(80 * deg)); S.eh = Math.round(M.centro[1] + 650 * Math.cos(80 * deg)); }   // olho a 650 mm, 80° de elevação, do lado da abertura
+  RAST.base = null; ORB.dist = 1100; tudo();
+});
+document.getElementById("b11").addEventListener("click", () => { S.u = S.R; tudo(); });
+document.getElementById("b2x").addEventListener("click", () => { S.u = Math.round(0.75 * S.R); tudo(); });
+document.getElementById("bIncl").addEventListener("click", () => {
+  // procura a inclinação da tela que deixa a imagem de pé (90°), pelo traçado
+  let melhor = S.tau, err = 1e9;
+  for (let t = -60; t <= 60; t += 2) { S.tau = t; medir(); if (isFinite(M.inclImg)) { const e = M.inclImg + (M.visto < M.total * 0.8 ? 90 : 0); if (e < err) { err = e; melhor = t; } } }   // de pé e ainda visível
+  S.tau = melhor; tudo();
+});
+{ let a = null;
+  cvO.addEventListener("pointerdown", e => { a = [e.clientX, e.clientY]; cvO.setPointerCapture(e.pointerId); });
+  cvO.addEventListener("pointerup", () => { a = null; medir(); if (S.rastreio) seguirOlho(); construir(); hud(); });
+  let tR = 0;
+  cvO.addEventListener("pointermove", e => { if (!a) return; S.ex = clamp(S.ex + (e.clientX - a[0]) * 1.5, -600, 600); S.eh = clamp(S.eh - (e.clientY - a[1]) * 1.5, -300, 1200); a = [e.clientX, e.clientY]; sync();
+    if (S.rastreio && performance.now() - tR > 110) { tR = performance.now(); seguirOlho(); } else sujo(); });
+}
+redim();
+{ let g = null; try { g = JSON.parse(localStorage.getItem(CHAVE)); } catch (e) {}
+  if (g && g.S) { const mig = t => ({ rn8p: "ip15p", rn8pV: "ip15pV" })[t] || t; if (g.S.tela) g.S.tela = mig(g.S.tela); if (g.APAR) { g.APAR.h = mig(g.APAR.h); g.APAR.v = mig(g.APAR.v); }   // só iPhone agora
+    Object.assign(S, g.S); Object.assign(APAR, g.APAR || {}); if (g.el) EST.el = g.el; S.passeio = false; tudo(); }   // volta ao último estado
+  else { const b = document.getElementById("bAjustado"); if (b) b.click(); else tudo(); } }   // primeira vez: a configuração mais nítida
+requestAnimationFrame(quadro);
+document.getElementById("bInicio").addEventListener("click", () => { try { localStorage.removeItem(CHAVE); } catch (e) {} document.getElementById("bAjustado").click(); });
+</script>
+</body>
+</html>

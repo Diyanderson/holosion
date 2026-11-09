@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Câmera do observador — o que o olho realmente recebe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1317; --panel:#111E25; --line:#26424E; --line-soft:#1A2E37;
+  --mint:#8FE3C8; --amber:#F2B25C; --rose:#F2668B; --sky:#7FB6E8;
+  --paper:#DDE8EB; --mute:#7C99A4; --warn:#E2694A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--ink)}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--paper);font-size:14px}
+.wrap{max-width:1380px;margin:0 auto;padding:26px 20px 50px}
+
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 5px}
+h1{font-family:"Archivo Narrow","Arial Narrow",sans-serif;font-weight:700;
+  font-size:clamp(24px,3.6vw,40px);line-height:1.02;margin:0;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--mint)}
+.sub{max-width:66ch;color:var(--mute);margin:9px 0 0;font-size:13px}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:20px;align-items:start}
+@media (max-width:940px){.grid{grid-template-columns:1fr}}
+
+.panel{background:var(--panel);border:1px solid var(--line-soft)}
+.panel-hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:11px 15px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.panel-hd h2{font-family:"Archivo Narrow",sans-serif;font-weight:600;font-size:14px;
+  letter-spacing:.06em;text-transform:uppercase;margin:0}
+.panel-hd .note{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--mute)}
+.eyes{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line-soft);padding:2px}
+figure{margin:0;position:relative;background:#060C0F}
+figcaption{position:absolute;top:7px;left:9px;font-family:"IBM Plex Mono",monospace;
+  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);
+  background:rgba(6,12,15,.7);padding:2px 6px}
+canvas{display:block;width:100%;height:auto;image-rendering:auto}
+
+aside{background:var(--panel);border:1px solid var(--line-soft);padding:16px 14px;
+  position:sticky;top:18px}
+@media (max-width:940px){aside{position:static}}
+.grp{border-top:1px solid var(--line-soft);padding-top:12px;margin-top:13px}
+.grp:first-child{border-top:0;padding-top:0;margin-top:0}
+.grp h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mint);margin:0 0 10px;font-weight:500}
+.opt{display:block;width:100%;text-align:left;background:transparent;border:1px solid var(--line);
+  color:var(--mute);padding:7px 9px;margin-bottom:5px;cursor:pointer;font-size:11.5px;
+  font-family:"IBM Plex Sans",sans-serif}
+.opt[aria-pressed=true]{border-color:var(--mint);color:var(--paper);background:rgba(143,227,200,.08)}
+.opt small{display:block;font-family:"IBM Plex Mono",monospace;font-size:9px;
+  letter-spacing:.06em;color:var(--mute);margin-top:2px}
+.opt:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.row{margin-bottom:11px}
+.row label{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nm{font-size:11.5px}
+.vl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;
+  background:var(--line);outline:none;margin:7px 0 0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+  background:var(--mint);transform:rotate(45deg);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--mint);border:0;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--sky);outline-offset:4px}
+.seg{display:flex;border:1px solid var(--line);margin-bottom:10px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mute);padding:6px 2px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;text-transform:uppercase}
+.seg button[aria-pressed=true]{background:var(--mint);color:#08130F;font-weight:600}
+
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
+  border-top:1px solid var(--line-soft)}
+.readout div{padding:10px 13px;border-right:1px solid var(--line-soft)}
+.readout div:last-child{border-right:0}
+.readout .k{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--mute);display:block;margin-bottom:3px}
+.readout .v{font-family:"IBM Plex Mono",monospace;font-size:15px}
+.readout .v.good{color:var(--mint)} .readout .v.bad{color:var(--warn)} .readout .v.warn{color:var(--amber)}
+.readout .v small{font-size:9px;color:var(--mute);margin-left:2px}
+
+#verdict{margin-top:18px;border:1px solid var(--line-soft);border-left:3px solid var(--mint);
+  background:var(--panel);padding:14px 16px;font-size:13px;line-height:1.55;max-width:80ch}
+#verdict b{color:var(--mint);font-weight:600}
+#verdict.no{border-left-color:var(--warn)}
+#verdict.no b{color:var(--warn)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Traçado reverso · do olho até a fonte · sem atalhos</p>
+  <h1>O que o olho<br><em>realmente recebe</em></h1>
+  <p class="sub">Cada pixel destas duas vistas é um raio disparado do olho, que desce pela abertura,
+  reflete no espelho inferior, reflete no superior e vai procurar a fonte lá no leito. O que voltar é o que se vê.</p>
+</header>
+
+<div class="grid">
+  <main>
+    <section class="panel">
+      <div class="panel-hd">
+        <h2>Par estereoscópico</h2>
+        <span class="note" id="viewNote"></span>
+      </div>
+      <div class="eyes">
+        <figure><figcaption>Olho esquerdo</figcaption><canvas id="cL"></canvas></figure>
+        <figure><figcaption>Olho direito</figcaption><canvas id="cR"></canvas></figure>
+      </div>
+      <div class="readout">
+        <div><span class="k">Ganho angular</span><span class="v" id="rAng">—</span></div>
+        <div><span class="k">Resolução do relé</span><span class="v" id="rRes">—</span></div>
+        <div><span class="k">Vistas distinguíveis</span><span class="v" id="rViews">—</span></div>
+        <div><span class="k">Campo de luz exigido</span><span class="v" id="rMpx">—</span></div>
+        <div><span class="k">Modos ópticos</span><span class="v" id="rModes">—</span></div>
+      </div>
+    </section>
+    <div id="verdict"></div>
+  </main>
+
+  <aside>
+    <div class="grp">
+      <h3>O que está no leito</h3>
+      <button class="opt" id="s_obj" aria-pressed="false">Objeto sólido
+        <small>peça opaca, se auto-oclui</small></button>
+      <button class="opt" id="s_cil" aria-pressed="true">Display cilíndrico
+        <small>superfície emissiva, lambertiana</small></button>
+      <button class="opt" id="s_domo" aria-pressed="false">Domo emissivo
+        <small>calota voltada para o espelho</small></button>
+      <button class="opt" id="s_esf" aria-pressed="false">Esfera emissiva
+        <small>sem pré-distorção</small></button>
+      <button class="opt" id="s_elip" aria-pressed="false">Elipsoide pré-corrigido
+        <small>1/m<sub>t</sub> lateral, 1/m<sub>L</sub> axial</small></button>
+      <button class="opt" id="s_lf" aria-pressed="false">Disco de campo de luz
+        <small>fonte plana, emissão direcional</small></button>
+    </div>
+
+    <div class="grp">
+      <h3>Observador</h3>
+      <div class="row">
+        <label for="elev"><span class="nm">Elevação</span><span class="vl" id="elevv"></span></label>
+        <input type="range" id="elev" min="10" max="88" step="1">
+      </div>
+      <div class="row">
+        <label for="azim"><span class="nm">Azimute</span><span class="vl" id="azimv"></span></label>
+        <input type="range" id="azim" min="0" max="360" step="2">
+      </div>
+      <div class="row">
+        <label for="dist"><span class="nm">Distância</span><span class="vl" id="distv"></span></label>
+        <input type="range" id="dist" min="180" max="900" step="10">
+      </div>
+      <div class="row">
+        <label for="sep"><span class="nm">Separação dos olhos</span><span class="vl" id="sepv"></span></label>
+        <input type="range" id="sep" min="0" max="220" step="2">
+      </div>
+    </div>
+
+    <div class="grp">
+      <h3>Óptica</h3>
+      <div class="seg" role="group" aria-label="Critério do foco intermediário">
+        <button id="mUnit" aria-pressed="true">Cópia 1:1</button>
+        <button id="mMax" aria-pressed="false">Mais luz</button>
+      </div>
+      <div class="row">
+        <label for="dz"><span class="nm">Altura da imagem</span><span class="vl" id="dzv"></span></label>
+        <input type="range" id="dz" min="0" max="60" step="1">
+      </div>
+      <div class="row">
+        <label for="D"><span class="nm">Separação dos vértices</span><span class="vl" id="Dv"></span></label>
+        <input type="range" id="D" min="90" max="190" step="2">
+      </div>
+      <div class="row">
+        <label for="rho1"><span class="nm">⌀ do espelho superior</span><span class="vl" id="rho1v"></span></label>
+        <input type="range" id="rho1" min="0.45" max="0.94" step="0.01">
+      </div>
+      <div class="row">
+        <label for="rho"><span class="nm">Raio do alvo</span><span class="vl" id="rhov"></span></label>
+        <input type="range" id="rho" min="3" max="16" step="0.5">
+      </div>
+    </div>
+  </aside>
+</div>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================
+   ESTADO
+   ========================================================== */
+const S = {
+  src: "cil", elev: 60, azim: 30, dist: 420, sep: 64,
+  mode: "unit", dz: 18, D: 130, rho1: 0.82, rho: 9
+};
+
+/* ==========================================================
+   ÓPTICA — par de elipsoides prolatos coaxiais
+   ========================================================== */
+function design() {
+  const D = S.D, z2 = D + S.dz;
+  const z1 = S.mode === "unit" ? D * z2 / (D + z2) : D * D / (D + z2);
+  const c1 = z1 / 2, a1 = D - z1 / 2, b1 = Math.sqrt(Math.max(1e-6, D * (D - z1)));
+  const c2 = (z1 + z2) / 2, a2 = (z1 + z2) / 2, b2 = Math.sqrt(Math.max(1e-6, z1 * z2));
+  const mt = (D - z1) * z2 / (D * z1);
+  return { D, z1, z2, c1, a1, b1, c2, a2, b2, mt, mL: mt * mt, R1: S.rho1 * b1, R2: b2 * 0.999, hole: 4 };
+}
+const zTop = (r, g) => g.c1 + g.a1 * Math.sqrt(Math.max(0, 1 - r * r / (g.b1 * g.b1)));
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+function unit(v) { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / m, v[1] / m, v[2] / m]; }
+function refl(d, n) { const u = unit(n), k = 2 * dot(d, u); return [d[0] - k * u[0], d[1] - k * u[1], d[2] - k * u[2]]; }
+function qroots(A, B, C) {
+  const dd = B * B - 4 * A * C; if (dd < 0) return null;
+  const s = Math.sqrt(dd); return [(-B - s) / (2 * A), (-B + s) / (2 * A)];
+}
+function hitEll(O, d, c, a, b, cap, rmin, rmax) {
+  const w = O[2] - c;
+  const A = d[2] * d[2] / (a * a) + (d[0] * d[0] + d[1] * d[1]) / (b * b);
+  const B = 2 * (w * d[2] / (a * a) + (O[0] * d[0] + O[1] * d[1]) / (b * b));
+  const C = w * w / (a * a) + (O[0] * O[0] + O[1] * O[1]) / (b * b) - 1;
+  const rt = qroots(A, B, C); if (!rt) return null;
+  let best = null;
+  for (const t of rt) {
+    if (t < 1e-6) continue;
+    const P = [O[0] + t * d[0], O[1] + t * d[1], O[2] + t * d[2]];
+    if (cap === "up" ? P[2] < c : P[2] > c) continue;
+    const r = Math.hypot(P[0], P[1]);
+    if (r < rmin - 1e-9 || r > rmax + 1e-9) continue;
+    if (!best || t < best.t) best = { t, P };
+  }
+  return best;
+}
+const nEll = (P, c, a, b) => [P[0] / (b * b), P[1] / (b * b), (P[2] - c) / (a * a)];
+
+/* traçado direto, usado só para medir borrão e cone */
+function traceFwd(O, P1, g) {
+  const d1 = unit(sub(P1, O));
+  const d2 = refl(d1, nEll(P1, g.c1, g.a1, g.b1));
+  const h2 = hitEll(P1, d2, g.c2, g.a2, g.b2, "low", 0, g.R2); if (!h2) return null;
+  const d3 = refl(d2, nEll(h2.P, g.c2, g.a2, g.b2)); if (d3[2] <= 0) return null;
+  if (hitEll(h2.P, d3, g.c1, g.a1, g.b1, "up", g.hole, g.R1)) return null;
+  return { P2: h2.P, d: unit(d3) };
+}
+function fitAperture(g, fieldR) {
+  const F = [[0, 0]];
+  for (let k = 0; k < 6; k++) { const a = k / 6 * 6.2832; F.push([fieldR * Math.cos(a), fieldR * Math.sin(a)]); }
+  for (let it = 0; it < 3; it++) {
+    let nR2 = 0, nH = 0;
+    for (const f of F) {
+      const O = [f[0], f[1], 0];
+      for (let i = 0; i < 40; i++) {
+        const r = g.hole + (g.R1 - g.hole) * (i + 0.5) / 40;
+        for (let j = 0; j < 4; j++) {
+          const ph = j * Math.PI / 2;
+          const P1 = [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)];
+          const d1 = unit(sub(P1, O));
+          const d2 = refl(d1, nEll(P1, g.c1, g.a1, g.b1));
+          const h2 = hitEll(P1, d2, g.c2, g.a2, g.b2, "low", 0, g.b2 * 0.9995);
+          if (!h2) continue;
+          nR2 = Math.max(nR2, Math.hypot(h2.P[0], h2.P[1]));
+          const d3 = refl(d2, nEll(h2.P, g.c2, g.a2, g.b2));
+          if (d3[2] <= 0) continue;
+          const k2 = (g.D - h2.P[2]) / d3[2];
+          nH = Math.max(nH, Math.hypot(h2.P[0] + k2 * d3[0], h2.P[1] + k2 * d3[1]));
+        }
+      }
+    }
+    g.R2 = Math.min(g.b2 * 0.999, nR2 * 1.02);
+    g.hole = Math.max(2.5, Math.min(g.R1 * 0.88, nH * 1.05));
+  }
+}
+
+/* ==========================================================
+   FONTES NO LEITO
+   ========================================================== */
+const FIGURE = [
+  [0, 0, 0.05, 0.24, 0], [0, 0, 0.17, 0.29, 0], [0, 0, 0.36, 0.25, 0],
+  [0, 0, 0.53, 0.20, 0], [0, 0, 0.72, 0.185, 1],
+  [0.15, 0, 0.48, 0.085, 2], [0.26, 0, 0.52, 0.077, 2], [0.38, 0, 0.57, 0.070, 2], [0.49, 0, 0.61, 0.063, 2],
+  [0, 0.14, 0.72, 0.070, 3], [0, 0.25, 0.71, 0.060, 3], [0, 0.36, 0.69, 0.050, 3],
+  [-0.04, 0, 0.86, 0.065, 4], [-0.09, 0, 0.93, 0.055, 4], [-0.14, 0, 1.00, 0.045, 4]
+];
+const FIGCOL = [[0.36, 0.80, 0.68], [0.86, 0.91, 0.92], [0.95, 0.40, 0.54], [0.95, 0.71, 0.36], [0.48, 0.71, 0.90]];
+
+/* textura procedural: faixas por latitude, xadrez e uma marca vermelha */
+function globe(u, v) {
+  const chk = ((Math.floor(u * 16) + Math.floor(v * 10)) & 1) ? 1 : 0.70;
+  let du = Math.abs(u - 0.12); du = Math.min(du, 1 - du);
+  const dv = v - 0.40;
+  if (du * du * 3.2 + dv * dv < 0.010) return [0.95 * chk, 0.30 * chk, 0.28 * chk];
+  return [(0.16 + 0.62 * v) * chk, (0.84 - 0.30 * v) * chk, (0.78 - 0.14 * v) * chk];
+}
+
+/* interseção com a fonte escolhida; devolve cor ou null */
+function hitSource(P, d, g, eye0, eyeD) {
+  const rho = S.rho;
+  const sph = (C, R) => {
+    const w = sub(P, C), b = dot(w, d), c = dot(w, w) - R * R;
+    const dd = b * b - c; if (dd < 0) return null;
+    const s = Math.sqrt(dd);
+    const t = (-b - s > 1e-5) ? -b - s : (-b + s > 1e-5 ? -b + s : null);
+    if (t === null) return null;
+    return { t, P: [P[0] + t * d[0], P[1] + t * d[1], P[2] + t * d[2]] };
+  };
+  const uv = (n) => [(Math.atan2(n[1], n[0]) / 6.2832 + 1) % 1, Math.acos(Math.max(-1, Math.min(1, n[2]))) / Math.PI];
+
+  if (S.src === "obj") {
+    let best = null, ci = 0;
+    for (const f of FIGURE) {
+      const H = rho * 2;
+      const h = sph([f[0] * H, f[1] * H, f[2] * H], f[3] * H);
+      if (h && (!best || h.t < best.t)) { best = h; ci = f[4]; }
+    }
+    if (!best) return null;
+    const C = FIGURE.find(f => f[4] === ci);
+    const n = unit(sub(best.P, [0, 0, best.P[2]]));
+    const lam = 0.45 + 0.55 * Math.max(0, -dot(unit(d), n));
+    const c = FIGCOL[ci];
+    return [c[0] * lam, c[1] * lam, c[2] * lam];
+  }
+
+  if (S.src === "cil") {
+    const H = 2 * rho;
+    const A = d[0] * d[0] + d[1] * d[1];
+    if (A > 1e-9) {
+      const B = 2 * (P[0] * d[0] + P[1] * d[1]), C = P[0] * P[0] + P[1] * P[1] - rho * rho;
+      const rt = qroots(A, B, C);
+      if (rt) for (const t of rt.sort((x, y) => x - y)) {
+        if (t < 1e-5) continue;
+        const z = P[2] + t * d[2];
+        if (z >= 0 && z <= H) {
+          const x = P[0] + t * d[0], y = P[1] + t * d[1];
+          return globe((Math.atan2(y, x) / 6.2832 + 1) % 1, 1 - z / H);
+        }
+      }
+    }
+    if (Math.abs(d[2]) > 1e-9) {                      // tampa
+      const t = (H - P[2]) / d[2];
+      if (t > 1e-5) {
+        const x = P[0] + t * d[0], y = P[1] + t * d[1], r = Math.hypot(x, y);
+        if (r <= rho) return globe((Math.atan2(y, x) / 6.2832 + 1) % 1, 0.05 + 0.1 * r / rho);
+      }
+    }
+    return null;
+  }
+
+  if (S.src === "domo" || S.src === "esf") {
+    const cz = S.src === "domo" ? 0 : rho;
+    const h = sph([0, 0, cz], rho);
+    if (!h) return null;
+    if (S.src === "domo" && h.P[2] < 0) return null;
+    const n = unit(sub(h.P, [0, 0, cz]));
+    const c = uv(n);
+    return globe(c[0], c[1]);
+  }
+
+  if (S.src === "elip") {
+    /* para que a IMAGEM seja uma esfera de raio rho centrada em z2+rho,
+       a fonte precisa ser um elipsoide: rho/m_t lateral, rho/m_L axial */
+    const A = rho / g.mt, B = rho / g.mL, cz = rho / g.mL;
+    const h = hitEll(P, d, cz, B, A, "up", 0, A) || hitEll(P, d, cz, B, A, "low", 0, A);
+    if (!h) return null;
+    const n = unit([h.P[0] / (A * A), h.P[1] / (A * A), (h.P[2] - cz) / (B * B)]);
+    const c = uv(n);
+    return globe(c[0], c[1]);
+  }
+
+  if (S.src === "lf") {
+    /* fonte plana. O disco não tem profundidade nenhuma: a profundidade
+       toda mora na DIREÇÃO em que cada ponto emite. O que ele precisa
+       emitir ao longo deste raio é exatamente o que uma esfera virtual
+       na posição da imagem mandaria — e é isso que devolvemos. */
+    if (Math.abs(d[2]) < 1e-9) return null;
+    const t = (0 - P[2]) / d[2];
+    if (t < 1e-5) return null;
+    const x = P[0] + t * d[0], y = P[1] + t * d[1];
+    if (Math.hypot(x, y) > rho * 1.8) return null;
+    const Cv = [0, 0, g.z2 + rho * g.mL], R = rho * g.mt;
+    const w = sub(eye0, Cv), b = dot(w, eyeD), c = dot(w, w) - R * R;
+    const dd = b * b - c; if (dd < 0) return null;
+    const tv = -b - Math.sqrt(dd); if (tv < 0) return null;
+    const Q = [eye0[0] + tv * eyeD[0], eye0[1] + tv * eyeD[1], eye0[2] + tv * eyeD[2]];
+    const n = unit(sub(Q, Cv));
+    const cc = uv(n);
+    const lam = 0.5 + 0.5 * Math.max(0, dot(n, unit([0.4, 0.3, 1])));
+    const col = globe(cc[0], cc[1]);
+    return [col[0] * lam, col[1] * lam, col[2] * lam];
+  }
+  return null;
+}
+
+/* ==========================================================
+   TRAÇADO REVERSO — um raio do olho até a fonte
+   ========================================================== */
+function shoot(E, d, g) {
+  const h1 = hitEll(E, d, g.c1, g.a1, g.b1, "up", g.hole, g.R1);
+  const h2 = hitEll(E, d, g.c2, g.a2, g.b2, "low", 0, g.R2);
+  if (!h2) return null;
+  if (h1 && h1.t < h2.t) return null;                       // barrado pelo espelho superior
+  const d2 = refl(d, nEll(h2.P, g.c2, g.a2, g.b2));
+  const h3 = hitEll(h2.P, d2, g.c1, g.a1, g.b1, "up", g.hole, g.R1);
+  if (!h3) return null;
+  const d3 = refl(d2, nEll(h3.P, g.c1, g.a1, g.b1));
+  return hitSource(h3.P, unit(d3), g, E, d);
+}
+
+/* ==========================================================
+   RENDER DAS DUAS VISTAS
+   ========================================================== */
+function eyePositions(g) {
+  const zT = g.z2 + S.rho * g.mL;
+  const T = [0, 0, zT];
+  const th = (90 - S.elev) * Math.PI / 180, az = S.azim * Math.PI / 180;
+  const L = S.dist;
+  const C = [T[0] + L * Math.sin(th) * Math.cos(az), T[1] + L * Math.sin(th) * Math.sin(az), zT + L * Math.cos(th)];
+  const w = unit(sub(T, C));
+  const right = unit(cross(w, [0, 0, 1]));
+  const half = S.sep / 2;
+  return {
+    T, L,
+    L_: [C[0] - right[0] * half, C[1] - right[1] * half, C[2] - right[2] * half],
+    R_: [C[0] + right[0] * half, C[1] + right[1] * half, C[2] + right[2] * half]
+  };
+}
+
+function renderEye(cv, E, T, g, W, H) {
+  const dpr = 1;
+  cv.width = W; cv.height = H;
+  cv.style.height = Math.round(cv.clientWidth * H / W) + "px";
+  const ctx = cv.getContext("2d");
+  const img = ctx.createImageData(W, H);
+
+  const w = unit(sub(T, E));
+  const right = unit(cross(w, [0, 0, 1]));
+  const up = cross(right, w);
+  const L = Math.hypot(E[0] - T[0], E[1] - T[1], E[2] - T[2]);
+  const halfH = 2.1 * S.rho * g.mL / L;
+  const halfW = halfH * W / H;
+
+  let hits = 0;
+  for (let j = 0; j < H; j++) {
+    const sy = (1 - 2 * (j + 0.5) / H) * halfH;
+    for (let i = 0; i < W; i++) {
+      const sx = (2 * (i + 0.5) / W - 1) * halfW;
+      const d = unit([w[0] + right[0] * sx + up[0] * sy,
+                      w[1] + right[1] * sx + up[1] * sy,
+                      w[2] + right[2] * sx + up[2] * sy]);
+      const c = shoot(E, d, g);
+      const k = (j * W + i) * 4;
+      if (c) {
+        hits++;
+        img.data[k] = Math.min(255, c[0] * 255);
+        img.data[k + 1] = Math.min(255, c[1] * 255);
+        img.data[k + 2] = Math.min(255, c[2] * 255);
+      } else {
+        img.data[k] = 8; img.data[k + 1] = 15; img.data[k + 2] = 19;
+      }
+      img.data[k + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return hits / (W * H);
+}
+
+/* ==========================================================
+   MÉTRICAS
+   ========================================================== */
+function metrics(g) {
+  // ganho angular: emissão no objeto -> visão na imagem
+  let a1 = 1e9, a2 = -1e9, t1 = 1e9, t2 = -1e9;
+  for (let i = 0; i < 90; i++) {
+    const r = g.hole + (g.R1 - g.hole) * (i + 0.5) / 90;
+    const zt = zTop(r, g);
+    const al = Math.atan2(r, zt) * 180 / Math.PI;
+    const t = traceFwd([0, 0, 0], [r, 0, zt], g);
+    if (!t) continue;
+    const th = Math.acos(Math.max(-1, Math.min(1, t.d[2]))) * 180 / Math.PI;
+    a1 = Math.min(a1, al); a2 = Math.max(a2, al);
+    t1 = Math.min(t1, th); t2 = Math.max(t2, th);
+  }
+  const gain = (a2 > a1) ? (t2 - t1) / (a2 - a1) : NaN;
+
+  // borrão no campo -> pontos resolvidos no diâmetro
+  const rays = [];
+  for (let i = 0; i < 220; i++) {
+    const u = (i + 0.5) / 220, r = Math.sqrt(g.hole ** 2 + u * (g.R1 ** 2 - g.hole ** 2)), ph = i * 2.399963229728653;
+    const t = traceFwd([S.rho, 0, 0], [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)], g);
+    if (t) rays.push(t);
+  }
+  let blur = NaN;
+  if (rays.length > 8) {
+    const m = [0, 0, 0, 0, 0, 0, 0, 0, 0], v = [0, 0, 0];
+    for (const { P2, d } of rays) {
+      const u = unit(d);
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+        const wgt = (i === j ? 1 : 0) - u[i] * u[j]; m[i * 3 + j] += wgt; v[i] += wgt * P2[j];
+      }
+    }
+    const det = m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]);
+    const d2f = (a, b, c, dd) => a * dd - b * c;
+    const col = k => {
+      const n = m.slice(); n[k] = v[0]; n[k + 3] = v[1]; n[k + 6] = v[2];
+      return (n[0] * d2f(n[4], n[5], n[7], n[8]) - n[1] * d2f(n[3], n[5], n[6], n[8]) + n[2] * d2f(n[3], n[4], n[6], n[7])) / det;
+    };
+    const X = [col(0), col(1), col(2)];
+    let s = 0;
+    for (const { P2, d } of rays) {
+      const u = unit(d), wv = sub(X, P2), t = dot(wv, u);
+      s += (wv[0] - t * u[0]) ** 2 + (wv[1] - t * u[1]) ** 2 + (wv[2] - t * u[2]) ** 2;
+    }
+    blur = Math.sqrt(s / rays.length);
+  }
+  const npix = isFinite(blur) && blur > 0 ? Math.round(S.rho / blur) : 0;
+
+  const rad = x => x * Math.PI / 180;
+  const OmObj = 2 * Math.PI * (Math.cos(rad(a1)) - Math.cos(rad(a2)));
+  const OmImg = 2 * Math.PI * (Math.cos(rad(t1)) - Math.cos(rad(t2)));
+  const OmEye = Math.PI * Math.pow(2 / S.dist, 2);
+  const views = OmImg / OmEye;
+  const etendue = Math.PI * S.rho * S.rho * OmObj;
+  const modes = etendue / (5e-4 * 5e-4);
+  const samples = npix * npix * views;
+  return { gain, blur, npix, views, modes, samples, t1, t2 };
+}
+
+/* ==========================================================
+   ORQUESTRAÇÃO
+   ========================================================== */
+const VERDICT = {
+  obj: ["no", "<b>Não é holograma — mas é 3D de verdade.</b> A peça é opaca e se auto-oclui; cada ponto dela vira um ponto de imagem numa profundidade própria. A paralaxe entre os dois olhos é real porque os pontos estão mesmo espalhados no espaço. O que não existe aqui é informação direcional: cada ponto manda a mesma cor para todo o anel de visão."],
+  cil: ["no", "<b>Um cilindro entra, um cilindro sai.</b> Um sistema de imagem leva superfície em superfície — ele não inventa volume. O display emissivo produz uma casca cilíndrica de luz flutuando, com profundidade real, mas continua sendo uma casca. E como cada pixel é lambertiano, os dois olhos veem a mesma textura no mesmo ponto: a paralaxe é a de um cilindro, não a de uma esfera."],
+  domo: ["no", "<b>Um domo convincente, e só de um lado.</b> A calota é imageada fielmente e, vista de dentro do anel, engana bem. Ande em azimute e a fraude aparece: o outro lado do domo não existe, porque nunca foi emitido. Isso se resolve com rastreio de cabeça para um observador — não com óptica."],
+  esf: ["no", "<b>Esfera na fonte, elipsoide na imagem.</b> A escala lateral é m<sub>t</sub> e a axial é m<sub>L</sub> = m<sub>t</sub>². Fora do modo 1:1 os dois não batem e a esfera sai esticada no eixo por um fator exatamente m<sub>t</sub>. Ainda é uma superfície emissiva, ainda sem informação direcional."],
+  elip: ["no", "<b>A pré-distorção corrige a forma, não a natureza.</b> Comprimindo a fonte por 1/m<sub>t</sub> lateralmente e 1/m<sub>t</sub>² no eixo, a imagem sai esférica como se pediu. Mas continua sendo uma superfície de luz sem emissão direcional — nenhuma pré-distorção geométrica cria informação que a fonte não emitiu."],
+  lf: ["yes", "<b>Aqui a coisa muda.</b> A fonte é um disco plano, sem profundidade nenhuma, e mesmo assim os dois olhos veem uma esfera com paralaxe correta. A profundidade veio da direção de emissão. O relé transporta isso porque no modo 1:1 o ganho angular é exatamente 1,00 e o mapeamento direção→direção é monotônico: o campo de luz que entra é o campo de luz que sai. Ainda assim, <b>não é um holograma</b> — não há frente de onda reconstruída nem interferência, é imagem integral autoestereoscópica. A distinção é física, não terminológica: um holograma carrega fase; isto carrega radiância por direção."]
+};
+
+let G = null, pending = null, settle = 0;
+
+function draw(draft) {
+  G = design();
+  fitAperture(G, S.rho * 1.2);
+
+  const ep = eyePositions(G);
+  const W = draft ? 132 : 264, H = draft ? 100 : 200;
+  const fL = renderEye(document.getElementById("cL"), ep.L_, ep.T, G, W, H);
+  const fR = renderEye(document.getElementById("cR"), ep.R_, ep.T, G, W, H);
+
+  if (draft) return;
+
+  const M = metrics(G);
+  const set = (id, txt, cls) => {
+    const el = document.getElementById(id);
+    el.innerHTML = txt; el.className = "v" + (cls ? " " + cls : "");
+  };
+  set("rAng", isFinite(M.gain) ? M.gain.toFixed(2) + "<small>×</small>" : "—",
+      Math.abs(M.gain - 1) < 0.03 ? "good" : "warn");
+  set("rRes", M.npix ? M.npix + " × " + M.npix : "—",
+      M.npix > 45 ? "good" : M.npix < 20 ? "bad" : "warn");
+  set("rViews", Math.round(M.views).toLocaleString("pt-BR"));
+  set("rMpx", (M.samples / 1e6).toFixed(1) + "<small>M</small>",
+      M.samples / 1e6 < 12 ? "good" : "warn");
+  set("rModes", (M.modes / 1e9).toFixed(1) + "<small>e9</small>", "good");
+
+  document.getElementById("viewNote").textContent =
+    "elevação " + S.elev + "° · visão útil " + (90 - M.t2).toFixed(0) + "°–" + (90 - M.t1).toFixed(0) + "° · "
+    + ((fL + fR) / 2 * 100).toFixed(0) + "% do quadro com luz";
+
+  const v = VERDICT[S.src];
+  const box = document.getElementById("verdict");
+  box.className = v[0] === "yes" ? "" : "no";
+  box.innerHTML = v[1];
+}
+
+function queue() {
+  if (pending) cancelAnimationFrame(pending);
+  settle = performance.now() + 200;
+  const step = () => {
+    if (performance.now() < settle) { pending = requestAnimationFrame(step); draw(true); return; }
+    pending = null; draw(false);
+  };
+  pending = requestAnimationFrame(step);
+}
+
+/* ==========================================================
+   INTERFACE
+   ========================================================== */
+const SRC = ["obj", "cil", "domo", "esf", "elip", "lf"];
+for (const k of SRC) {
+  document.getElementById("s_" + k).addEventListener("click", () => {
+    S.src = k;
+    for (const j of SRC) document.getElementById("s_" + j).setAttribute("aria-pressed", j === k);
+    queue();
+  });
+}
+function bind(id, key, fmt) {
+  const el = document.getElementById(id), out = document.getElementById(id + "v");
+  el.value = S[key]; if (out) out.textContent = fmt(S[key]);
+  el.addEventListener("input", () => {
+    S[key] = parseFloat(el.value);
+    if (out) out.textContent = fmt(S[key]);
+    queue();
+  });
+}
+bind("elev", "elev", v => v.toFixed(0) + "°");
+bind("azim", "azim", v => v.toFixed(0) + "°");
+bind("dist", "dist", v => v.toFixed(0) + " mm");
+bind("sep", "sep", v => v.toFixed(0) + " mm");
+bind("dz", "dz", v => "+" + v.toFixed(0) + " mm");
+bind("D", "D", v => v.toFixed(0) + " mm");
+bind("rho1", "rho1", v => (v * 100).toFixed(0) + " %");
+bind("rho", "rho", v => v.toFixed(1) + " mm");
+
+document.getElementById("mUnit").onclick = () => setMode("unit");
+document.getElementById("mMax").onclick = () => setMode("max");
+function setMode(m) {
+  S.mode = m;
+  document.getElementById("mUnit").setAttribute("aria-pressed", m === "unit");
+  document.getElementById("mMax").setAttribute("aria-pressed", m === "max");
+  queue();
+}
+addEventListener("resize", queue);
+draw(false);
+</script>
+</body>
+</html>

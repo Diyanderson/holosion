@@ -1,0 +1,20 @@
+# sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+# editores
+.vscode/
+.idea/
+# node / python
+node_modules/
+__pycache__/
+*.pyc
+# saídas temporárias do LaTeX
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.bbl
+*.blg
+# cópias temporárias do embutir
+*.bak.html

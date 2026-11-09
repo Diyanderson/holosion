@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco óptico — dois espelhos côncavos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1317;
+  --panel:#121F26;
+  --panel2:#0E1A20;
+  --line:#26424E;
+  --line-soft:#1A2E37;
+  --mint:#8FE3C8;
+  --amber:#F2B25C;
+  --rose:#F2668B;
+  --sky:#7FB6E8;
+  --paper:#DDE8EB;
+  --mute:#7C99A4;
+  --warn:#E2694A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1440px;margin:0 auto;padding:28px 22px 60px}
+
+/* ---------- cabeçalho ---------- */
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 6px
+}
+h1{
+  font-family:"Archivo Narrow","Arial Narrow",sans-serif;
+  font-weight:700;font-size:clamp(28px,4.2vw,46px);line-height:1.02;
+  letter-spacing:-.01em;margin:0;text-transform:uppercase
+}
+h1 em{font-style:normal;color:var(--mint)}
+.sub{max-width:62ch;color:var(--mute);margin:10px 0 0;font-size:13.5px}
+
+/* ---------- grade ---------- */
+.grid{display:grid;grid-template-columns:290px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+
+/* ---------- controles ---------- */
+.controls{
+  background:var(--panel);border:1px solid var(--line-soft);
+  padding:18px 16px;position:sticky;top:18px
+}
+@media (max-width:960px){.controls{position:static}}
+.ctl-group{border-top:1px solid var(--line-soft);padding-top:14px;margin-top:16px}
+.ctl-group:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.ctl-title{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mint);margin:0 0 12px
+}
+.row{margin-bottom:15px}
+.row label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.row .nm{font-size:12.5px;color:var(--paper)}
+.row .vl{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--amber)}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--line);
+  outline:none;margin:8px 0 0;cursor:pointer
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;background:var(--mint);
+  border-radius:0;transform:rotate(45deg);cursor:pointer
+}
+input[type=range]::-moz-range-thumb{
+  width:11px;height:11px;background:var(--mint);border:0;border-radius:0;cursor:pointer
+}
+input[type=range]:focus-visible{outline:2px solid var(--sky);outline-offset:4px}
+input[type=text]{
+  width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--paper);
+  font-family:"Archivo Narrow",sans-serif;font-size:16px;padding:6px 8px
+}
+.seg{display:flex;gap:0;border:1px solid var(--line)}
+.seg button{
+  flex:1;background:transparent;border:0;color:var(--mute);padding:7px 4px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase
+}
+.seg button[aria-pressed=true]{background:var(--mint);color:#08130F;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.btn{
+  width:100%;margin-top:8px;background:transparent;border:1px solid var(--line);
+  color:var(--paper);padding:9px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase
+}
+.btn:hover{border-color:var(--mint);color:var(--mint)}
+.btn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.chk{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-bottom:8px}
+.chk input{accent-color:var(--mint);width:14px;height:14px}
+
+/* ---------- painéis ---------- */
+.panel{background:var(--panel);border:1px solid var(--line-soft);margin-bottom:18px}
+.panel-hd{
+  display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap
+}
+.panel-hd h2{
+  font-family:"Archivo Narrow",sans-serif;font-weight:600;font-size:15px;
+  letter-spacing:.06em;text-transform:uppercase;margin:0
+}
+.panel-hd .note{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mute)}
+.panel-bd{padding:14px 16px}
+canvas{display:block;width:100%;height:auto}
+
+/* ---------- leituras ---------- */
+.readout{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));
+  border-top:1px solid var(--line-soft)
+}
+.readout div{padding:11px 14px;border-right:1px solid var(--line-soft)}
+.readout div:last-child{border-right:0}
+.readout .k{
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--mute);display:block;margin-bottom:3px
+}
+.readout .v{font-family:"IBM Plex Mono",monospace;font-size:16px;color:var(--paper)}
+.readout .v.good{color:var(--mint)}
+.readout .v.bad{color:var(--warn)}
+.readout .v small{font-size:10px;color:var(--mute);margin-left:2px}
+
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.trio{grid-template-columns:1fr}}
+
+.legend{
+  display:flex;gap:16px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--mute);padding:10px 16px;border-top:1px solid var(--line-soft)
+}
+.legend span{display:flex;align-items:center;gap:6px}
+.swatch{width:14px;height:2px;display:inline-block}
+
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pair figcaption{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:6px
+}
+figure{margin:0}
+
+footer{
+  margin-top:26px;padding-top:16px;border-top:1px solid var(--line-soft);
+  color:var(--mute);font-size:12.5px;max-width:78ch
+}
+footer b{color:var(--paper);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Traçado de raios · seção meridional · unidades em mm</p>
+  <h1>Dois espelhos côncavos<br><em>e a imagem que flutua no furo</em></h1>
+  <p class="sub">Objeto no vértice do espelho inferior, dupla reflexão, imagem real aérea no plano da abertura.
+  Mexa na flecha de cada concavidade e veja a aberração destruir a ilusão.</p>
+</header>
+
+<div class="grid">
+
+  <!-- ============ CONTROLES ============ -->
+  <aside class="controls">
+    <div class="ctl-group">
+      <p class="ctl-title">Geometria dos espelhos</p>
+
+      <div class="row">
+        <label for="s1"><span class="nm">Flecha — espelho inferior</span><span class="vl" id="s1v"></span></label>
+        <input type="range" id="s1" min="10" max="60" step="0.25">
+      </div>
+
+      <div class="row">
+        <label for="s2"><span class="nm">Flecha — espelho superior</span><span class="vl" id="s2v"></span></label>
+        <input type="range" id="s2" min="10" max="60" step="0.25">
+      </div>
+
+      <div class="row">
+        <label for="hole"><span class="nm">Raio da abertura</span><span class="vl" id="holev"></span></label>
+        <input type="range" id="hole" min="4" max="60" step="0.5">
+      </div>
+
+      <div class="row">
+        <label><span class="nm">Perfil da superfície</span></label>
+        <div class="seg" role="group" aria-label="Perfil da superfície">
+          <button id="btnPar" aria-pressed="true">Parabólico</button>
+          <button id="btnEsf" aria-pressed="false">Esférico</button>
+        </div>
+      </div>
+
+      <button class="btn" id="btnIdeal">Ajuste sem aberração</button>
+    </div>
+
+    <div class="ctl-group">
+      <p class="ctl-title">Objeto e observação</p>
+
+      <div class="row">
+        <label for="glyph"><span class="nm">Objeto</span></label>
+        <input type="text" id="glyph" maxlength="2" value="F">
+      </div>
+
+      <div class="row">
+        <label for="osize"><span class="nm">Altura do objeto</span><span class="vl" id="osizev"></span></label>
+        <input type="range" id="osize" min="2" max="40" step="0.5">
+      </div>
+
+      <div class="row">
+        <label for="dz"><span class="nm">Plano de observação Δz</span><span class="vl" id="dzv"></span></label>
+        <input type="range" id="dz" min="-40" max="40" step="0.25">
+      </div>
+
+      <button class="btn" id="btnFocus">Ir ao melhor foco</button>
+    </div>
+
+    <div class="ctl-group">
+      <p class="ctl-title">Traçado</p>
+      <label class="chk"><input type="checkbox" id="showBlocked" checked> Mostrar raios barrados</label>
+      <label class="chk"><input type="checkbox" id="showOff" checked> Feixe fora do eixo (coma)</label>
+      <label class="chk"><input type="checkbox" id="ignoreBlock"> Deixar passar a luz vinhetada</label>
+      <div class="row">
+        <label for="nray"><span class="nm">Raios no corte</span><span class="vl" id="nrayv"></span></label>
+        <input type="range" id="nray" min="6" max="60" step="2">
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ SAÍDA ============ -->
+  <main>
+
+    <section class="panel">
+      <div class="panel-hd">
+        <h2>Corte meridional</h2>
+        <span class="note" id="geomNote"></span>
+      </div>
+      <div class="panel-bd"><canvas id="cSection"></canvas></div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--mint)"></i> superfície refletora</span>
+        <span><i class="swatch" style="background:var(--amber)"></i> feixe do ponto axial</span>
+        <span><i class="swatch" style="background:var(--rose)"></i> feixe fora do eixo</span>
+        <span><i class="swatch" style="background:var(--warn)"></i> barrado pela abertura</span>
+        <span><i class="swatch" style="background:var(--sky)"></i> plano de observação</span>
+      </div>
+      <div class="readout">
+        <div><span class="k">Distância focal</span><span class="v" id="rF"></span></div>
+        <div><span class="k">Separação D</span><span class="v" id="rD"></span></div>
+        <div><span class="k">Condição f = D</span><span class="v" id="rCond"></span></div>
+        <div><span class="k">Mancha RMS</span><span class="v" id="rRms"></span></div>
+        <div><span class="k">Melhor foco</span><span class="v" id="rBf"></span></div>
+        <div><span class="k">Luz barrada</span><span class="v" id="rVig"></span></div>
+      </div>
+    </section>
+
+    <div class="trio">
+
+      <section class="panel">
+        <div class="panel-hd"><h2>Manchas</h2><span class="note">no plano Δz</span></div>
+        <div class="panel-bd"><canvas id="cSpot"></canvas></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-hd"><h2>Aberração longitudinal</h2><span class="note">zona × foco</span></div>
+        <div class="panel-bd"><canvas id="cLsa"></canvas></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-hd"><h2>Distorção radial</h2><span class="note">altura × erro %</span></div>
+        <div class="panel-bd"><canvas id="cDist"></canvas></div>
+      </section>
+
+    </div>
+
+    <section class="panel">
+      <div class="panel-hd">
+        <h2>A ilusão, como ela chega ao olho</h2>
+        <span class="note" id="imgNote"></span>
+      </div>
+      <div class="panel-bd">
+        <div class="pair">
+          <figure>
+            <figcaption>Objeto real — no vértice inferior</figcaption>
+            <canvas id="cObj"></canvas>
+          </figure>
+          <figure>
+            <figcaption>Imagem aérea — no plano da abertura</figcaption>
+            <canvas id="cImg"></canvas>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p><b>Uma ressalva de nome.</b> Não há holografia aqui: nenhuma frente de onda é registrada e reconstruída.
+      O que se forma é uma <b>imagem real aérea</b>, produto de duas reflexões sucessivas. A sensação de sólido
+      flutuando vem da paralaxe — cada olho recolhe um feixe diferente da mesma imagem real.</p>
+      <p><b>Por que existe um ajuste sem aberração.</b> Com os dois espelhos unidos pela borda, D = f₁ + f₂ vale só
+      quando a flecha é R⁄(2√2) ≈ 0,354·R. Aí o foco de cada espelho cai exatamente no vértice do outro, o espaço
+      intermediário fica colimado e o sistema fica afocal com aumento −1. Sair desse ponto joga o foco para fora do
+      plano da abertura e a imagem se apaga antes mesmo de borrar.</p>
+    </footer>
+
+  </main>
+</div>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================
+   ESTADO
+   ========================================================== */
+const R_APERTURE = 100;               // semi-abertura fixa (mm)
+const IDEAL_SAG  = R_APERTURE / (2 * Math.SQRT2);
+
+const S = {
+  s1: IDEAL_SAG,
+  s2: IDEAL_SAG,
+  hole: 22,
+  profile: "par",   // "par" | "esf"
+  glyph: "F",
+  osize: 14,
+  dz: 0,
+  nray: 22,
+  showBlocked: true,
+  showOff: true,
+  ignoreBlock: false
+};
+
+/* ==========================================================
+   GEOMETRIA / ÓPTICA
+   ========================================================== */
+function geom() {
+  const R = R_APERTURE, D = S.s1 + S.s2;
+  let f1, f2, Rc1, Rc2;
+  if (S.profile === "par") {
+    f1 = R * R / (4 * S.s1);
+    f2 = R * R / (4 * S.s2);
+    Rc1 = 2 * f1; Rc2 = 2 * f2;
+  } else {
+    Rc1 = (R * R + S.s1 * S.s1) / (2 * S.s1); f1 = Rc1 / 2;
+    Rc2 = (R * R + S.s2 * S.s2) / (2 * S.s2); f2 = Rc2 / 2;
+  }
+  return { R, D, f1, f2, Rc1, Rc2 };
+}
+
+// perfis z(r)
+function zBot(r, g) {
+  return S.profile === "par"
+    ? r * r / (4 * g.f1)
+    : g.Rc1 - Math.sqrt(Math.max(0, g.Rc1 * g.Rc1 - r * r));
+}
+function zTop(r, g) {
+  const sag = S.profile === "par"
+    ? r * r / (4 * g.f2)
+    : g.Rc2 - Math.sqrt(Math.max(0, g.Rc2 * g.Rc2 - r * r));
+  return g.D - sag;
+}
+
+// normais (não normalizadas — a reflexão normaliza)
+function nTop(P, g) {
+  return S.profile === "par"
+    ? [P[0] / (2 * g.f2), P[1] / (2 * g.f2), 1]
+    : [P[0], P[1], P[2] - (g.D - g.Rc2)];
+}
+function nBot(P, g) {
+  return S.profile === "par"
+    ? [P[0] / (2 * g.f1), P[1] / (2 * g.f1), -1]
+    : [P[0], P[1], P[2] - g.Rc1];
+}
+
+// álgebra vetorial
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+function unit(v) { const m = Math.hypot(v[0], v[1], v[2]); return [v[0] / m, v[1] / m, v[2] / m]; }
+function reflect(d, n) {
+  const u = unit(n), k = 2 * dot(d, u);
+  return [d[0] - k * u[0], d[1] - k * u[1], d[2] - k * u[2]];
+}
+function quad(A, B, C) {
+  if (Math.abs(A) < 1e-12) return Math.abs(B) < 1e-12 ? [] : [-C / B];
+  const disc = B * B - 4 * A * C;
+  if (disc < 0) return [];
+  const sd = Math.sqrt(disc);
+  return [(-B - sd) / (2 * A), (-B + sd) / (2 * A)];
+}
+
+// interseção com o espelho INFERIOR, vindo de O na direção d (unitária)
+function hitBot(O, d, g) {
+  let roots;
+  if (S.profile === "par") {
+    const A = d[0] * d[0] + d[1] * d[1];
+    const B = 2 * (O[0] * d[0] + O[1] * d[1]) - 4 * g.f1 * d[2];
+    const C = O[0] * O[0] + O[1] * O[1] - 4 * g.f1 * O[2];
+    roots = quad(A, B, C);
+  } else {
+    const Cc = [0, 0, g.Rc1], w = sub(O, Cc);
+    roots = quad(1, 2 * dot(d, w), dot(w, w) - g.Rc1 * g.Rc1);
+  }
+  let best = null;
+  for (const t of roots) {
+    if (t < 1e-7) continue;
+    const P = [O[0] + t * d[0], O[1] + t * d[1], O[2] + t * d[2]];
+    const r = Math.hypot(P[0], P[1]);
+    if (r > g.R) continue;
+    if (S.profile === "esf" && P[2] > g.Rc1) continue;   // calota correta
+    if (best === null || t < best.t) best = { t, P };
+  }
+  return best;
+}
+
+/* Traça um raio partindo de O e mirando o ponto P1 da superfície superior.
+   Devolve os vértices do caminho e a direção final, ou null.               */
+function traceRay(O, P1, g, zobs, ignoreBlock) {
+  const d1 = unit(sub(P1, O));
+
+  // o segmento não pode atravessar a tigela inferior
+  for (let k = 1; k <= 5; k++) {
+    const u = k / 6;
+    const x = O[0] + u * (P1[0] - O[0]), y = O[1] + u * (P1[1] - O[1]), z = O[2] + u * (P1[2] - O[2]);
+    if (z < zBot(Math.hypot(x, y), g) - 1e-6) return null;
+  }
+
+  const d2 = reflect(d1, nTop(P1, g));
+  const h2 = hitBot(P1, d2, g);
+  if (!h2) return null;
+  const P2 = h2.P;
+  const d3 = reflect(d2, nBot(P2, g));
+  if (d3[2] <= 1e-9) return { O, P1, P2, d3, blocked: true, exit: null, obs: null };
+
+  // passagem pela abertura (plano z = D)
+  const tA = (g.D - P2[2]) / d3[2];
+  const A = [P2[0] + tA * d3[0], P2[1] + tA * d3[1], g.D];
+  const vign = Math.hypot(A[0], A[1]) > S.hole;
+  const blocked = vign && !(ignoreBlock || S.ignoreBlock);
+
+  const tO = (zobs - P2[2]) / d3[2];
+  const obs = tO > 0 ? [P2[0] + tO * d3[0], P2[1] + tO * d3[1], zobs] : null;
+
+  return { O, P1, P2, d3, blocked, vign, exit: A, obs };
+}
+
+// amostragem da pupila anular do espelho superior (espiral de ângulo áureo)
+function pupil(n, g) {
+  const pts = [], a2 = S.hole * S.hole, R2 = g.R * g.R;
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n;
+    const r = Math.sqrt(a2 + u * (R2 - a2));
+    const ph = i * 2.399963229728653;
+    pts.push([r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)]);
+  }
+  return pts;
+}
+
+// mancha de um ponto-objeto no plano zobs
+function spotOf(objXY, g, zobs, n, ignoreBlock) {
+  const O = [objXY[0], objXY[1], 0];
+  const pts = [], P = pupil(n, g);
+  let lost = 0;
+  for (const p1 of P) {
+    const r = traceRay(O, p1, g, zobs, ignoreBlock);
+    if (!r || !r.obs) { lost++; continue; }
+    if (r.vign) lost++;
+    if (r.blocked) continue;
+    pts.push(r.obs);
+  }
+  if (!pts.length) return { n: 0, cx: NaN, cy: NaN, rms: NaN, vig: 1, pts };
+  let cx = 0, cy = 0;
+  for (const p of pts) { cx += p[0]; cy += p[1]; }
+  cx /= pts.length; cy /= pts.length;
+  let s = 0;
+  for (const p of pts) s += (p[0] - cx) ** 2 + (p[1] - cy) ** 2;
+  return { n: pts.length, cx, cy, rms: Math.sqrt(s / pts.length), vig: lost / P.length, pts };
+}
+
+// varredura do melhor foco (mínimo RMS axial)
+function bestFocus(g) {
+  let bz = g.D, br = Infinity;
+  for (let i = -60; i <= 60; i++) {
+    const z = g.D + i * (g.D / 120);
+    const sp = spotOf([0, 0], g, z, 60, true);
+    if (sp.n > 6 && sp.rms < br) { br = sp.rms; bz = z; }
+  }
+  return { z: bz, rms: br };
+}
+
+/* ==========================================================
+   CANVAS — utilitários
+   ========================================================== */
+function setup(cv, wCSS, hCSS) {
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(wCSS * dpr);
+  cv.height = Math.round(hCSS * dpr);
+  cv.style.height = hCSS + "px";
+  const x = cv.getContext("2d");
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.clearRect(0, 0, wCSS, hCSS);
+  return x;
+}
+const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+
+function axes(x, w, h, pad, xlab, ylab) {
+  x.strokeStyle = css("--line-soft"); x.lineWidth = 1;
+  x.beginPath();
+  x.moveTo(pad, pad * .4); x.lineTo(pad, h - pad);
+  x.lineTo(w - pad * .4, h - pad);
+  x.stroke();
+  x.fillStyle = css("--mute");
+  x.font = '9px "IBM Plex Mono", monospace';
+  x.textAlign = "right"; x.fillText(xlab, w - pad * .4, h - pad + 14);
+  x.textAlign = "left"; x.fillText(ylab, pad - 2, pad * .4 - 4);
+}
+
+/* ==========================================================
+   1 — CORTE MERIDIONAL
+   ========================================================== */
+function drawSection(g, zobs) {
+  const cv = document.getElementById("cSection");
+  const w = cv.parentElement.clientWidth;
+  const h = Math.max(340, Math.min(560, w * 0.52));
+  const x = setup(cv, w, h);
+
+  const xmin = -g.R * 1.18, xmax = g.R * 1.18;
+  const zmin = -g.D * 0.22, zmax = g.D * 1.30;
+  const sc = Math.min(w / (xmax - xmin), h / (zmax - zmin));
+  const ox = w / 2, oz = h - (0 - zmin) * sc;
+  const PX = X => ox + X * sc;
+  const PZ = Z => oz - Z * sc;
+
+  // malha de 10 mm
+  x.strokeStyle = css("--line-soft"); x.globalAlpha = .34; x.lineWidth = 1;
+  for (let v = Math.ceil(xmin / 10) * 10; v <= xmax; v += 10) {
+    x.beginPath(); x.moveTo(PX(v), 0); x.lineTo(PX(v), h); x.stroke();
+  }
+  for (let v = Math.ceil(zmin / 10) * 10; v <= zmax; v += 10) {
+    x.beginPath(); x.moveTo(0, PZ(v)); x.lineTo(w, PZ(v)); x.stroke();
+  }
+  x.globalAlpha = 1;
+
+  // eixo óptico
+  x.strokeStyle = css("--sky"); x.globalAlpha = .35;
+  x.setLineDash([5, 5]); x.beginPath();
+  x.moveTo(PX(0), PZ(zmin)); x.lineTo(PX(0), PZ(zmax)); x.stroke();
+  x.setLineDash([]); x.globalAlpha = 1;
+
+  // plano de observação
+  x.strokeStyle = css("--sky"); x.globalAlpha = .8; x.lineWidth = 1;
+  x.setLineDash([2, 4]);
+  x.beginPath(); x.moveTo(PX(xmin), PZ(zobs)); x.lineTo(PX(xmax), PZ(zobs)); x.stroke();
+  x.setLineDash([]);
+  x.fillStyle = css("--sky"); x.font = '9px "IBM Plex Mono", monospace';
+  x.textAlign = "left"; x.fillText("observação", PX(xmin) + 4, PZ(zobs) - 5);
+  x.globalAlpha = 1;
+
+  // superfícies
+  const curve = (fn, from, to) => {
+    x.beginPath();
+    for (let i = 0; i <= 160; i++) {
+      const r = from + (to - from) * i / 160;
+      const X = r, Z = fn(Math.abs(r), g);
+      i ? x.lineTo(PX(X), PZ(Z)) : x.moveTo(PX(X), PZ(Z));
+    }
+    x.stroke();
+  };
+  x.strokeStyle = css("--mint"); x.lineWidth = 2.4;
+  curve(zBot, -g.R, g.R);
+  curve(zTop, -g.R, -S.hole);
+  curve(zTop, S.hole, g.R);
+
+  // borda da abertura
+  x.fillStyle = css("--mint");
+  for (const sgn of [-1, 1]) {
+    x.beginPath();
+    x.arc(PX(sgn * S.hole), PZ(zTop(S.hole, g)), 2.6, 0, 7);
+    x.fill();
+  }
+
+  // feixes
+  const nHalf = Math.max(3, Math.round(S.nray / 2));
+  const zones = [];
+  for (let i = 0; i < nHalf; i++) zones.push(S.hole + (g.R - S.hole) * (i + 0.5) / nHalf);
+
+  function beam(objX, colorKey) {
+    const col = css(colorKey);
+    for (const sgn of [-1, 1]) {
+      for (const r of zones) {
+        const P1 = [sgn * r, 0, zTop(r, g)];
+        const ray = traceRay([objX, 0, 0], P1, g, zobs);
+        if (!ray) continue;
+        const dim = ray.vign;
+        if (ray.blocked && !S.showBlocked) continue;
+        x.strokeStyle = dim ? css("--warn") : col;
+        x.globalAlpha = dim ? .30 : .62;
+        x.lineWidth = dim ? 0.9 : 1.1;
+        const end = ray.obs || [ray.P2[0] + ray.d3[0] * 40, 0, ray.P2[2] + ray.d3[2] * 40];
+        x.beginPath();
+        x.moveTo(PX(objX), PZ(0));
+        x.lineTo(PX(ray.P1[0]), PZ(ray.P1[2]));
+        x.lineTo(PX(ray.P2[0]), PZ(ray.P2[2]));
+        x.lineTo(PX(end[0]), PZ(end[2]));
+        x.stroke();
+      }
+    }
+    x.globalAlpha = 1;
+  }
+
+  beam(0, "--amber");
+  if (S.showOff) beam(S.osize * 0.5, "--rose");
+
+  // objeto
+  x.fillStyle = css("--paper");
+  x.beginPath(); x.arc(PX(0), PZ(0), 3.2, 0, 7); x.fill();
+  if (S.showOff) {
+    x.fillStyle = css("--rose");
+    x.beginPath(); x.arc(PX(S.osize * 0.5), PZ(0), 2.6, 0, 7); x.fill();
+  }
+  x.fillStyle = css("--mute"); x.font = '9px "IBM Plex Mono", monospace';
+  x.textAlign = "center"; x.fillText("objeto", PX(0), PZ(0) + 15);
+
+  // cota da flecha
+  x.strokeStyle = css("--mute"); x.globalAlpha = .5; x.lineWidth = 1;
+  x.setLineDash([2, 3]);
+  x.beginPath(); x.moveTo(PX(-g.R), PZ(S.s1)); x.lineTo(PX(g.R * 1.1), PZ(S.s1)); x.stroke();
+  x.setLineDash([]); x.globalAlpha = 1;
+  x.fillStyle = css("--mute"); x.textAlign = "right";
+  x.fillText("crista inf. " + S.s1.toFixed(1), PX(g.R * 1.1), PZ(S.s1) - 4);
+}
+
+/* ==========================================================
+   2 — DIAGRAMA DE MANCHAS
+   ========================================================== */
+function drawSpot(g, zobs, spAx, spOff) {
+  const cv = document.getElementById("cSpot");
+  const w = cv.parentElement.clientWidth;
+  const x = setup(cv, w, w * 0.84);
+  const h = w * 0.84, pad = 8;
+
+  const rmax = Math.max(0.4,
+    ...[spAx, spOff].flatMap(sp => sp.pts.map(p => Math.hypot(p[0] - (sp.cx || 0), p[1] - (sp.cy || 0)))));
+  const box = Math.min(w, h) / 2 - pad;
+  const sc = box / (rmax * 1.15);
+  const cx = w / 2, cy = h / 2;
+
+  x.strokeStyle = css("--line-soft"); x.lineWidth = 1;
+  for (const f of [.33, .66, 1]) { x.beginPath(); x.arc(cx, cy, box * f, 0, 7); x.stroke(); }
+  x.beginPath(); x.moveTo(cx - box, cy); x.lineTo(cx + box, cy);
+  x.moveTo(cx, cy - box); x.lineTo(cx, cy + box); x.stroke();
+
+  const plot = (sp, col) => {
+    if (!sp.n) return;
+    x.fillStyle = col; x.globalAlpha = .8;
+    for (const p of sp.pts) {
+      x.beginPath();
+      x.arc(cx + (p[0] - sp.cx) * sc, cy - (p[1] - sp.cy) * sc, 1.4, 0, 7);
+      x.fill();
+    }
+    x.globalAlpha = 1;
+  };
+  plot(spAx, css("--amber"));
+  if (S.showOff) plot(spOff, css("--rose"));
+
+  x.fillStyle = css("--mute"); x.font = '9px "IBM Plex Mono", monospace';
+  x.textAlign = "center";
+  x.fillText("escala ±" + (rmax * 1.15).toFixed(2) + " mm", cx, h - 3);
+}
+
+/* ==========================================================
+   3 — ABERRAÇÃO ESFÉRICA LONGITUDINAL
+   ========================================================== */
+function drawLsa(g) {
+  const cv = document.getElementById("cLsa");
+  const w = cv.parentElement.clientWidth;
+  const h = w * 0.84;
+  const x = setup(cv, w, h);
+  const pad = 30;
+
+  const data = [];
+  const N = 46;
+  for (let i = 0; i < N; i++) {
+    const r = S.hole + (g.R - S.hole) * (i + 0.5) / N;
+    const ray = traceRay([0, 0, 0], [r, 0, zTop(r, g)], g, g.D);
+    if (!ray || Math.abs(ray.d3[0]) < 1e-9) continue;
+    const t = -ray.P2[0] / ray.d3[0];
+    if (t <= 0) continue;
+    data.push([r, ray.P2[2] + t * ray.d3[2] - g.D, ray.blocked]);
+  }
+  axes(x, w, h, pad, "zona r", "Δz");
+  if (!data.length) return;
+
+  let lo = Infinity, hi = -Infinity;
+  for (const d of data) { lo = Math.min(lo, d[1]); hi = Math.max(hi, d[1]); }
+  const span = Math.max(2, (hi - lo) * 1.3, Math.abs(hi) * 2.2, Math.abs(lo) * 2.2);
+  const mid = (hi + lo) / 2;
+  const PX = r => pad + (r / g.R) * (w - pad * 1.4);
+  const PY = v => (h - pad) - ((v - (mid - span / 2)) / span) * (h - pad * 1.4);
+
+  // linha do plano da abertura
+  x.strokeStyle = css("--sky"); x.globalAlpha = .55; x.setLineDash([3, 3]);
+  x.beginPath(); x.moveTo(pad, PY(0)); x.lineTo(w - pad * .4, PY(0)); x.stroke();
+  x.setLineDash([]); x.globalAlpha = 1;
+  x.fillStyle = css("--sky"); x.font = '9px "IBM Plex Mono", monospace';
+  x.textAlign = "left"; x.fillText("abertura", pad + 3, PY(0) - 4);
+
+  x.strokeStyle = css("--amber"); x.lineWidth = 1.8;
+  x.beginPath();
+  data.forEach((d, i) => i ? x.lineTo(PX(d[0]), PY(d[1])) : x.moveTo(PX(d[0]), PY(d[1])));
+  x.stroke();
+
+  x.fillStyle = css("--warn");
+  for (const d of data) if (d[2]) { x.beginPath(); x.arc(PX(d[0]), PY(d[1]), 2, 0, 7); x.fill(); }
+
+  x.fillStyle = css("--mute"); x.textAlign = "right";
+  x.fillText((mid + span / 2).toFixed(1) + " mm", pad - 4, PY(mid + span / 2) + 3);
+  x.fillText((mid - span / 2).toFixed(1) + " mm", pad - 4, PY(mid - span / 2) + 3);
+}
+
+/* ==========================================================
+   4 — DISTORÇÃO RADIAL
+   ========================================================== */
+function drawDistortion(g, zobs) {
+  const cv = document.getElementById("cDist");
+  const w = cv.parentElement.clientWidth;
+  const h = w * 0.84;
+  const x = setup(cv, w, h);
+  const pad = 30;
+  axes(x, w, h, pad, "h obj", "erro %");
+
+  const hmax = Math.max(1, S.osize / 2);
+  const pts = [];
+  let m0 = null;
+  for (let i = 1; i <= 14; i++) {
+    const ho = hmax * i / 14;
+    const sp = spotOf([ho, 0], g, zobs, 90);
+    if (sp.n < 8) continue;
+    const hi = Math.hypot(sp.cx, sp.cy);
+    if (m0 === null) m0 = hi / ho;
+    pts.push([ho, m0 ? (hi / (m0 * ho) - 1) * 100 : 0, sp.rms]);
+  }
+  if (!pts.length) return;
+
+  let amp = 1;
+  for (const p of pts) amp = Math.max(amp, Math.abs(p[1]) * 1.25);
+  const PX = v => pad + (v / hmax) * (w - pad * 1.4);
+  const PY = v => (h - pad) / 2 + pad * .2 - (v / amp) * ((h - pad * 1.4) / 2);
+
+  x.strokeStyle = css("--line-soft"); x.setLineDash([3, 3]);
+  x.beginPath(); x.moveTo(pad, PY(0)); x.lineTo(w - pad * .4, PY(0)); x.stroke();
+  x.setLineDash([]);
+
+  x.strokeStyle = css("--rose"); x.lineWidth = 1.8;
+  x.beginPath();
+  pts.forEach((p, i) => i ? x.lineTo(PX(p[0]), PY(p[1])) : x.moveTo(PX(p[0]), PY(p[1])));
+  x.stroke();
+
+  x.fillStyle = css("--mute"); x.font = '9px "IBM Plex Mono", monospace';
+  x.textAlign = "right";
+  x.fillText("+" + amp.toFixed(1) + "%", pad - 4, PY(amp) + 3);
+  x.fillText("-" + amp.toFixed(1) + "%", pad - 4, PY(-amp) + 3);
+  x.textAlign = "left";
+  x.fillText("borrão " + pts[pts.length - 1][2].toFixed(2) + " mm", pad + 4, pad * .4 + 6);
+}
+
+/* ==========================================================
+   5 — OBJETO E IMAGEM SIMULADA
+   ========================================================== */
+let glyphCache = { key: "", pts: [] };
+
+function sampleGlyph(txt, halfMM) {
+  const key = txt + "|" + halfMM.toFixed(2);
+  if (glyphCache.key === key) return glyphCache.pts;
+  const N = 96;
+  const oc = document.createElement("canvas");
+  oc.width = oc.height = N;
+  const c = oc.getContext("2d");
+  c.fillStyle = "#fff";
+  c.textAlign = "center"; c.textBaseline = "middle";
+  c.font = '700 ' + Math.round(N * 0.8) + 'px "Archivo Narrow", Arial, sans-serif';
+  c.fillText(txt || "F", N / 2, N / 2);
+  const d = c.getImageData(0, 0, N, N).data;
+  const pts = [];
+  for (let j = 0; j < N; j += 2) {
+    for (let i = 0; i < N; i += 2) {
+      if (d[(j * N + i) * 4 + 3] > 120) {
+        pts.push([(i / N - 0.5) * 2 * halfMM, (0.5 - j / N) * 2 * halfMM]);
+      }
+    }
+  }
+  glyphCache = { key, pts };
+  return pts;
+}
+
+function drawObject(pts, fov) {
+  const cv = document.getElementById("cObj");
+  const w = cv.parentElement.clientWidth / 2 - 5;
+  const x = setup(cv, w, w);
+  const sc = w / (2 * fov);
+  x.fillStyle = css("--panel2"); x.fillRect(0, 0, w, w);
+  x.fillStyle = css("--paper");
+  const px = Math.max(1.5, sc * 0.6);
+  for (const p of pts) x.fillRect(w / 2 + p[0] * sc - px / 2, w / 2 - p[1] * sc - px / 2, px, px);
+}
+
+function drawImage(pts, g, zobs, fov) {
+  const cv = document.getElementById("cImg");
+  const w = Math.round(cv.parentElement.clientWidth / 2 - 5);
+  const x = setup(cv, w, w);
+  const sc = w / (2 * fov);
+
+  const acc = new Float32Array(w * w);
+  const P = pupil(48, g);
+  let hit = 0, tot = 0;
+
+  for (const o of pts) {
+    const O = [o[0], o[1], 0];
+    for (const p1 of P) {
+      tot++;
+      const ray = traceRay(O, p1, g, zobs);
+      if (!ray || ray.blocked || !ray.obs) continue;
+      hit++;
+      const fx = w / 2 + ray.obs[0] * sc, fy = w / 2 - ray.obs[1] * sc;
+      const ix = Math.floor(fx), iy = Math.floor(fy);
+      if (ix < 0 || iy < 0 || ix >= w - 1 || iy >= w - 1) continue;
+      const ax = fx - ix, ay = fy - iy;
+      acc[iy * w + ix]         += (1 - ax) * (1 - ay);
+      acc[iy * w + ix + 1]     += ax * (1 - ay);
+      acc[(iy + 1) * w + ix]   += (1 - ax) * ay;
+      acc[(iy + 1) * w + ix + 1] += ax * ay;
+    }
+  }
+
+  let mx = 0;
+  for (let i = 0; i < acc.length; i++) if (acc[i] > mx) mx = acc[i];
+
+  const img = x.createImageData(w, w);
+  const bg = [14, 26, 32];
+  for (let i = 0; i < acc.length; i++) {
+    const v = mx > 0 ? Math.pow(Math.min(1, acc[i] / (mx * 0.55)), 0.72) : 0;
+    img.data[i * 4]     = bg[0] + v * (223 - bg[0]);
+    img.data[i * 4 + 1] = bg[1] + v * (255 - bg[1]);
+    img.data[i * 4 + 2] = bg[2] + v * (238 - bg[2]);
+    img.data[i * 4 + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+
+  if (hit / Math.max(1, tot) < 0.02) {
+    x.fillStyle = css("--warn");
+    x.font = '600 12px "IBM Plex Mono", monospace';
+    x.textAlign = "center";
+    x.fillText("sem imagem na abertura", w / 2, w / 2);
+  }
+  return hit / Math.max(1, tot);
+}
+
+/* ==========================================================
+   ORQUESTRAÇÃO
+   ========================================================== */
+function render() {
+  const g = geom();
+  const zobs = g.D + S.dz;
+
+  const spAx  = spotOf([0, 0], g, zobs, 260);
+  const spOff = spotOf([S.osize * 0.5, 0], g, zobs, 260);
+  const bf = bestFocus(g);
+
+  drawSection(g, zobs);
+  drawSpot(g, zobs, spAx, spOff);
+  drawLsa(g);
+  drawDistortion(g, zobs);
+
+  const fov = Math.max(2, S.osize * 0.85);
+  const pts = sampleGlyph(S.glyph, S.osize / 2);
+  drawObject(pts, fov);
+  const thru = drawImage(pts, g, zobs, fov);
+
+  // leituras
+  const idealErr = Math.abs(g.f1 - g.D) / g.D;
+  document.getElementById("rF").innerHTML = g.f1.toFixed(1) + '<small>mm</small>';
+  document.getElementById("rD").innerHTML = g.D.toFixed(1) + '<small>mm</small>';
+  const cond = document.getElementById("rCond");
+  cond.textContent = (g.f1 / g.D).toFixed(3);
+  cond.className = "v " + (idealErr < 0.03 ? "good" : "bad");
+
+  const rms = document.getElementById("rRms");
+  rms.innerHTML = isFinite(spAx.rms) ? spAx.rms.toFixed(3) + '<small>mm</small>' : "—";
+  rms.className = "v " + (spAx.rms < 0.5 ? "good" : spAx.rms > 3 ? "bad" : "");
+
+  document.getElementById("rBf").innerHTML = (bf.z - g.D).toFixed(1) + '<small>mm</small>';
+
+  const vig = document.getElementById("rVig");
+  vig.innerHTML = (spAx.vig * 100).toFixed(0) + '<small>%</small>';
+  vig.className = "v " + (spAx.vig > 0.5 ? "bad" : spAx.vig < 0.15 ? "good" : "");
+
+  document.getElementById("geomNote").textContent =
+    "R = " + g.R + " mm · flecha ideal " + IDEAL_SAG.toFixed(1) + " mm · " +
+    (S.profile === "par" ? "parabólico" : "esférico, Rc = " + g.Rc1.toFixed(0) + " mm");
+
+  document.getElementById("imgNote").textContent =
+    (thru * 100).toFixed(0) + "% dos raios chegam · campo ±" + fov.toFixed(1) + " mm";
+
+  bfCache = bf;
+}
+let bfCache = null;
+
+/* ==========================================================
+   INTERFACE
+   ========================================================== */
+function bindRange(id, key, fmt) {
+  const el = document.getElementById(id), out = document.getElementById(id + "v");
+  el.value = S[key];
+  out.textContent = fmt(S[key]);
+  el.addEventListener("input", () => {
+    S[key] = parseFloat(el.value);
+    out.textContent = fmt(S[key]);
+    schedule();
+  });
+}
+const mm = v => v.toFixed(1) + " mm";
+
+bindRange("s1", "s1", mm);
+bindRange("s2", "s2", mm);
+bindRange("hole", "hole", mm);
+bindRange("osize", "osize", mm);
+bindRange("dz", "dz", v => (v >= 0 ? "+" : "") + v.toFixed(1) + " mm");
+bindRange("nray", "nray", v => v.toFixed(0));
+
+const btnPar = document.getElementById("btnPar"), btnEsf = document.getElementById("btnEsf");
+function setProfile(p) {
+  S.profile = p;
+  btnPar.setAttribute("aria-pressed", p === "par");
+  btnEsf.setAttribute("aria-pressed", p === "esf");
+  schedule();
+}
+btnPar.onclick = () => setProfile("par");
+btnEsf.onclick = () => setProfile("esf");
+
+document.getElementById("btnIdeal").onclick = () => {
+  S.s1 = S.s2 = IDEAL_SAG; S.dz = 0;
+  for (const [id, k] of [["s1", "s1"], ["s2", "s2"], ["dz", "dz"]]) {
+    const el = document.getElementById(id);
+    el.value = S[k];
+    document.getElementById(id + "v").textContent =
+      id === "dz" ? "+0.0 mm" : mm(S[k]);
+  }
+  schedule();
+};
+
+document.getElementById("btnFocus").onclick = () => {
+  if (!bfCache) return;
+  const g = geom();
+  const v = Math.max(-40, Math.min(40, bfCache.z - g.D));
+  S.dz = v;
+  const el = document.getElementById("dz");
+  el.value = v;
+  document.getElementById("dzv").textContent = (v >= 0 ? "+" : "") + v.toFixed(1) + " mm";
+  schedule();
+};
+
+document.getElementById("glyph").addEventListener("input", e => {
+  S.glyph = e.target.value || "F"; schedule();
+});
+document.getElementById("showBlocked").addEventListener("change", e => {
+  S.showBlocked = e.target.checked; schedule();
+});
+document.getElementById("showOff").addEventListener("change", e => {
+  S.showOff = e.target.checked; schedule();
+});
+document.getElementById("ignoreBlock").addEventListener("change", e => {
+  S.ignoreBlock = e.target.checked; schedule();
+});
+
+let pending = null;
+function schedule() {
+  if (pending) cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(() => { pending = null; render(); });
+}
+window.addEventListener("resize", schedule);
+
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { glyphCache.key = ""; schedule(); });
+render();
+</script>
+</body>
+</html>

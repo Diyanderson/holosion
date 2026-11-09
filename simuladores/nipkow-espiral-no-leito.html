@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espiral de Nipkow no leito — imagem volumétrica por varredura, relayada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+<style>
+:root{
+  --ink:#0B1317; --panel:#111E25; --line:#26424E; --line-soft:#1A2E37;
+  --mint:#8FE3C8; --amber:#F2B25C; --rose:#F2668B; --sky:#7FB6E8;
+  --paper:#DDE8EB; --mute:#7C99A4; --warn:#E2694A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink)}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--paper);
+  display:grid;grid-template-columns:286px 1fr;min-height:100vh}
+canvas{display:block}
+
+#ui{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--panel);
+  border-right:1px solid var(--line-soft);padding:16px 14px}
+#ui::-webkit-scrollbar{width:5px}
+#ui::-webkit-scrollbar-thumb{background:var(--line)}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 5px}
+h1{font-family:"Archivo Narrow","Arial Narrow",sans-serif;font-weight:700;
+  font-size:26px;line-height:1;margin:0;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--mint)}
+.lead{font-size:11.5px;color:var(--mute);margin:8px 0 0;line-height:1.45}
+.grp{border-top:1px solid var(--line-soft);padding-top:12px;margin-top:13px}
+.grp h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mint);margin:0 0 10px;font-weight:500}
+.row{margin-bottom:11px}
+.row label{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nm{font-size:11.5px}
+.vl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;
+  background:var(--line);outline:none;margin:7px 0 0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+  background:var(--mint);transform:rotate(45deg);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--mint);border:0;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--sky);outline-offset:4px}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);margin-bottom:10px}
+.seg button{flex:1 1 30%;background:transparent;border:0;color:var(--mute);padding:6px 2px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase}
+.seg button[aria-pressed=true]{background:var(--mint);color:#08130F;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.chk{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer;margin-bottom:6px}
+.chk input{accent-color:var(--mint);width:13px;height:13px}
+.btn{width:100%;margin-top:5px;background:transparent;border:1px solid var(--line);color:var(--paper);
+  padding:7px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase}
+.btn:hover{border-color:var(--mint);color:var(--mint)}
+.btn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.note{font-size:10.5px;color:var(--mute);line-height:1.4;margin:2px 0 0}
+#presets{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px}
+#presets button{background:transparent;border:1px solid var(--line);color:var(--mute);
+  padding:6px 2px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.35}
+#presets button b{display:block;font-size:12px;color:var(--paper);font-weight:600}
+#presets button[aria-pressed=true]{background:var(--mint);border-color:var(--mint);color:#08130F}
+#presets button[aria-pressed=true] b{color:#08130F}
+
+main{padding:16px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-content:start}
+.pn{background:var(--panel);border:1px solid var(--line-soft);min-width:0}
+.pn .eh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+.pn h4{font-family:"Archivo Narrow",sans-serif;font-weight:600;font-size:12.5px;
+  letter-spacing:.07em;text-transform:uppercase;margin:0}
+.pn .eh span{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--mute);text-align:right}
+.pn canvas{width:100%;height:auto;background:#05090B}
+#v3{cursor:grab;touch-action:none}
+.v3bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line-soft)}
+.v3bar .seg{margin:0;flex:0 0 auto}.v3bar .seg button{flex:0 0 auto;padding:4px 10px}
+.v3bar label{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--mute);display:flex;gap:6px;align-items:center}
+.v3bar input[type=range]{width:180px}
+.v3bar .v3t{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--mint);text-transform:uppercase;letter-spacing:.08em}
+.v3bar .v3btn{width:auto;margin:0;padding:3px 10px}
+#camWrap{position:relative}
+#camLbl{position:absolute;left:10px;top:8px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--mute);pointer-events:none}
+#hud{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
+  border:1px solid var(--line-soft);background:var(--panel)}
+#hud div{padding:8px 12px;border-right:1px solid var(--line-soft)}
+#hud .k{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);display:block;margin-bottom:2px}
+#hud .v{font-family:"IBM Plex Mono",monospace;font-size:14px}
+#hud .v.good{color:var(--mint)} #hud .v.bad{color:var(--warn)} #hud .v.warn{color:var(--amber)}
+#hud .v small{font-size:9px;color:var(--mute);margin-left:2px}
+.math{padding:10px 14px 14px;font-size:12px;line-height:1.5;color:var(--paper)}
+.math h5{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mint);margin:12px 0 4px;font-weight:500}
+.math h5:first-child{margin-top:2px}
+.math p{margin:0 0 4px;color:var(--mute)}
+.math code,.math pre{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--amber)}
+.math pre{margin:3px 0 6px;padding:6px 8px;background:#0A1419;border-left:2px solid var(--line);white-space:pre-wrap}
+#ver .r{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:4px 12px;align-items:baseline;
+  border-bottom:1px solid var(--line-soft)}
+#ver .lb{font-size:11px;color:var(--mute);line-height:1.3}
+#ver .m{font-family:"IBM Plex Mono",monospace;font-size:11.5px;text-align:right;white-space:nowrap}
+#ver .e{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--mute);text-align:right;white-space:nowrap}
+#ver .m.ok{color:var(--mint)} #ver .m.off{color:var(--warn)} #ver .m.info{color:var(--paper)}
+#busy{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--amber);min-height:14px;margin-top:6px}
+@media (max-width:1100px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside id="ui">
+  <p class="eyebrow">Holosion · etapa 10</p>
+  <h1>Espiral de <em>Nipkow</em> no leito</h1>
+  <p class="lead">Uma escada em espiral de raios de arame fosco gira no leito. Um galvo manda pulsos de laser pelo furo:
+  cada pulso acende o ponto onde um raio da espiral cruza o feixe naquele instante. O ângulo do galvo escolhe a direção;
+  a fase da rotação escolhe a profundidade. Os pontos acesos são fontes reais e o relé os reforma no ar. A câmera traça
+  do olho até o rotor — nada é desenhado. Não é holograma: é imagem volumétrica por varredura, relayada.</p>
+
+  <div class="grp">
+    <h3>Óptica (presets calibrados)</h3>
+    <div id="presets"></div>
+    <p class="note" id="optNote"></p>
+  </div>
+
+  <div class="grp">
+    <h3>Padrão programado (espaço da imagem)</h3>
+    <div class="seg" id="objSeg">
+      <button data-v="naves">2 naves</button><button data-v="helice">hélice</button><button data-v="cubo">cubo</button>
+      <button data-v="onda">onda</button><button data-v="trevo">trevo</button><button data-v="toro">toro</button><button data-v="rosto">rosto</button><button data-v="ponto">ponto</button>
+    </div>
+    <div class="row"><label><span class="nm">voxels</span><span class="vl" id="nptsv"></span></label>
+      <input type="range" id="npts" min="8" max="6000" step="1"></div>
+    <button class="btn" id="bMax">resolução máxima: pontos encostados (passo = ⌀ do feixe)</button>
+    <label class="chk"><input type="checkbox" id="cheio"> superfície cheia (rosto: pele preenchida, não só contornos)</label>
+    <div class="row"><label><span class="nm">meia-largura</span><span class="vl" id="sizev"></span></label>
+      <input type="range" id="size" min="1" max="25" step="0.25"></div>
+    <div class="row"><label><span class="nm">altura sobre o plano conjugado</span><span class="vl" id="h0v"></span></label>
+      <input type="range" id="h0" min="0" max="30" step="0.25"></div>
+    <div class="row"><label><span class="nm">profundidade relativa</span><span class="vl" id="zkv"></span></label>
+      <input type="range" id="zk" min="0" max="1" step="0.05"></div>
+    <button class="btn" id="bPleno">▶ rosto pleno colorido: superfície cheia, sem vazios</button>
+    <button class="btn" id="bMir">▶ Mirage 9″ + laser pointer sem foco (ponto ⌀ 2 mm)</button>
+    <button class="btn" id="bMirF">▶ Mirage 9″ + laser com foco ajustado (ponto ⌀ 0,2 mm)</button>
+    <button class="btn" id="bDemo">▶ demonstração: objeto colorido girando, observador caminhando</button>
+    <label class="chk"><input type="checkbox" id="cor"> cor RGB (três lasers no mesmo galvo)</label>
+    <label class="chk"><input type="checkbox" id="anim"> programa animado (o padrão muda a cada volta)</label>
+    <label class="chk"><input type="checkbox" id="tombar"> girar em 3D (tombando, não só em torno do eixo)</label>
+    <label class="chk"><input type="checkbox" id="passeio"> observador caminhando em volta (dentro do anel de visão)</label>
+    <div class="row"><label><span class="nm">giro do padrão</span><span class="vl" id="animRatev"></span></label>
+      <input type="range" id="animRate" min="0" max="120" step="5"></div>
+  </div>
+
+  <div class="grp">
+    <h3>Rotor: escada em espiral (arame ou gravada)</h3>
+    <div class="row"><label><span class="nm">raios (degraus) M</span><span class="vl" id="Mv"></span></label>
+      <input type="range" id="M" min="6" max="64" step="1"></div>
+    <div class="row"><label><span class="nm">raio do rotor</span><span class="vl" id="Rv"></span></label>
+      <input type="range" id="R" min="3" max="28" step="0.25"></div>
+    <div class="row"><label><span class="nm">altura da escada</span><span class="vl" id="zMaxv"></span></label>
+      <input type="range" id="zMax" min="2" max="30" step="0.25"></div>
+    <div class="row"><label><span class="nm">diâmetro do arame / da microfissura</span><span class="vl" id="fiov"></span></label>
+      <input type="range" id="fio" min="0.03" max="2" step="0.01"></div>
+    <div class="row"><label><span class="nm">diâmetro do eixo (cubo)</span><span class="vl" id="eixov"></span></label>
+      <input type="range" id="eixo" min="0.2" max="6" step="0.05"></div>
+    <div class="row"><label><span class="nm">rotação</span><span class="vl" id="rpsv"></span></label>
+      <input type="range" id="rps" min="5" max="200" step="1"></div>
+    <label class="chk"><input type="checkbox" id="vortice"> ordem em vórtice (degraus vizinhos a ~137,5° um do outro)</label>
+  </div>
+
+  <div class="grp">
+    <h3>Meio: arame no ar ou escada gravada num bloco</h3>
+    <div class="seg" id="meioSeg"><button data-v="arame">arame no ar</button><button data-v="vidro">vidro K9 gravado</button><button data-v="acrilico">acrílico gravado</button></div>
+    <div class="row"><label><span class="nm">face de cima acima do último degrau</span><span class="vl" id="topov"></span></label>
+      <input type="range" id="topo" min="0.3" max="6" step="0.1"></div>
+    <div class="row"><label><span class="nm">margem do bloco além do raio do rotor</span><span class="vl" id="bordav"></span></label>
+      <input type="range" id="borda" min="0.5" max="6" step="0.1"></div>
+    <div class="row"><label><span class="nm">passo entre microfissuras (gravação)</span><span class="vl" id="pgv"></span></label>
+      <input type="range" id="pg" min="0.02" max="0.2" step="0.005"></div>
+    <div class="row"><label><span class="nm">luz ambiente (névoa dos pontos apagados)</span><span class="vl" id="ambv"></span></label>
+      <input type="range" id="amb" min="0" max="1" step="0.02"></div>
+    <button class="btn" id="bXyz">exportar nuvem de pontos da gravação (.xyz)</button>
+    <button class="btn" id="bDxf">exportar nuvem de pontos da gravação (.dxf)</button>
+    <p class="note" id="meioNote"></p>
+  </div>
+
+  <div class="grp">
+    <h3>Luz endereçada</h3>
+    <div class="seg" id="fonteSeg"><button data-v="vetor">galvo ILDA vetorial</button><button data-v="galvo">galvo ponto a ponto</button><button data-v="dlp">projetor DLP</button></div>
+    <div class="row"><label><span class="nm">DLP: quadros binários por segundo</span><span class="vl" id="fdlpv"></span></label>
+      <input type="range" id="fdlp" min="2" max="32" step="1"></div>
+    <div class="row"><label><span class="nm">pivô acima da imagem</span><span class="vl" id="gHv"></span></label>
+      <input type="range" id="gH" min="30" max="300" step="5"></div>
+    <div class="row"><label><span class="nm">diâmetro do ponto do feixe</span><span class="vl" id="spotv"></span></label>
+      <input type="range" id="spot" min="0.03" max="3" step="0.01"></div>
+    <div class="row"><label><span class="nm">duração do pulso</span><span class="vl" id="pulsov"></span></label>
+      <input type="range" id="pulso" min="1" max="50" step="1"></div>
+    <div class="row"><label><span class="nm">vetorial: pontos por segundo (ILDA)</span><span class="vl" id="ppsv"></span></label>
+      <input type="range" id="pps" min="10" max="60" step="1"></div>
+    <div class="row"><label><span class="nm">vetorial: passo máximo por ponto</span><span class="vl" id="passov"></span></label>
+      <input type="range" id="passo" min="0.1" max="2" step="0.05"></div>
+    <div class="row"><label><span class="nm">galvo: assentamento por salto</span><span class="vl" id="assentav"></span></label>
+      <input type="range" id="assenta" min="20" max="500" step="10"></div>
+    <div class="row"><label><span class="nm">galvo: velocidade angular</span><span class="vl" id="omegav"></span></label>
+      <input type="range" id="omega" min="1" max="50" step="1"></div>
+    <p class="note">Vetorial: o galvo segue a sequência de pontos no relógio do DAC (k pontos/s), sem parar para assentar; um salto de Δθ ocupa ⌈Δθ/passo⌉ pontos — é o modo de shows de laser (galvos ILDA de ~US$ 100–300) e de desenho do FELIX. Ponto a ponto: o galvo para e assenta em cada voxel (pior caso). Galvo: um ponto por vez; pulsos que ele não alcança a tempo vão para a volta seguinte. DLP: um quadro binário por fatia de fase acende todos os voxels da fatia juntos; o pivô é a pupila do projetor.</p>
+  </div>
+
+  <div class="grp">
+    <h3>Observador</h3>
+    <div class="row"><label><span class="nm">θ do olho (no lóbulo)</span><span class="vl" id="eyeThv"></span></label>
+      <input type="range" id="eyeTh" min="0" max="40" step="0.1"></div>
+    <div class="row"><label><span class="nm">azimute φ</span><span class="vl" id="eyePhv"></span></label>
+      <input type="range" id="eyePh" min="-180" max="180" step="1"></div>
+    <div class="row"><label><span class="nm">distância à imagem</span><span class="vl" id="eyeDistv"></span></label>
+      <input type="range" id="eyeDist" min="200" max="700" step="10"></div>
+    <div class="row"><label><span class="nm">resolução</span><span class="vl" id="resv"></span></label>
+      <input type="range" id="res" min="80" max="280" step="10"></div>
+    <label class="chk"><input type="checkbox" id="stereo"> estéreo de vista cruzada</label>
+    <label class="chk"><input type="checkbox" id="alvo"> sobrepor alvo (referência, não traçado)</label>
+    <div class="row"><label><span class="nm">instante mostrado ψ (painel do rotor)</span><span class="vl" id="psiv"></span></label>
+      <input type="range" id="psi" min="0" max="360" step="1"></div>
+  </div>
+
+  <div class="grp">
+    <button class="btn" id="bVer">verificar (traçado direto)</button>
+    <div id="busy"></div>
+  </div>
+</aside>
+
+<main>
+  <div id="hud"></div>
+
+  <section class="pn" style="grid-column:1 / -1">
+    <div class="eh"><h4>Arame e raios em 3D</h4><span id="v3Info"></span></div>
+    <div class="v3bar">
+      <div class="seg" id="v3Seg"><button data-v="rotor">rotor (arame)</button><button data-v="aparelho">aparelho inteiro</button></div>
+      <label>voxel <input type="range" id="v3Sel" min="0" max="0" step="1"><span id="v3SelV"></span></label>
+      <label>raios espalhados <input type="range" id="v3N" min="8" max="160" step="4"><span id="v3NV"></span></label>
+      <label><input type="checkbox" id="v3Fat"> feixes de toda a fatia de fase</label>
+    </div>
+    <div class="v3bar">
+      <span class="v3t">projeção em cima</span>
+      <label>x <input type="range" id="ox" min="-25" max="25" step="0.25"><span id="oxv"></span></label>
+      <label>y <input type="range" id="oy" min="-25" max="25" step="0.25"><span id="oyv"></span></label>
+      <label>altura <input type="range" id="h0b" min="0" max="30" step="0.25"><span id="h0bv"></span></label>
+      <label>giro <input type="range" id="giro" min="-180" max="180" step="5"><span id="girov"></span></label>
+      <button class="btn v3btn" id="v3Cent">centralizar</button>
+      <span class="v3t">Shift + arrastar move a projeção</span>
+    </div>
+    <canvas id="v3" width="1100" height="500"></canvas>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Câmera do observador</h4><span id="camInfo"></span></div>
+    <div id="camWrap"><canvas id="cam" width="720" height="560"></canvas><div id="camLbl"></div></div>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Rotor visto de cima</h4><span>raios na fase ψ · pulsos desta fatia em verde · todos os voxels por fase</span></div>
+    <canvas id="rotor" width="560" height="560"></canvas>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Agenda de Nipkow</h4><span>fase do pulso × degrau aceso · cor = volta em que o pulso cabe · vermelho = feixe tapado</span></div>
+    <canvas id="agenda" width="720" height="300"></canvas>
+  </section>
+
+  <section class="pn">
+    <div class="eh"><h4>Corte meridional</h4><span>espelhos, rotor, galvo, feixes e alvo no ar</span></div>
+    <canvas id="cut" width="560" height="430"></canvas>
+  </section>
+
+  <section class="pn" style="grid-column:1 / -1">
+    <div class="eh"><h4>Verificação</h4><span>medido por traçado direto do ponto aceso pelo relé, sem usar o alvo</span></div>
+    <div id="ver"><div class="r"><span class="lb">Clique em “verificar”.</span><span></span><span></span></div></div>
+  </section>
+
+  <section class="pn" style="grid-column:1 / -1">
+    <div class="eh"><h4>A matemática</h4><span>spec §3.8</span></div>
+    <div class="math" style="columns:2 360px;column-gap:28px">
+      <h5>1 · Relé (núcleo comum)</h5>
+      <pre>z₁ = D·z₂/(m·D + z₂)    b₁² = D(D − z₁)    b₂² = z₁z₂</pre>
+      <p>O vértice de M2 (z = 0) é conjugado da imagem em z₂. Um ponto aceso a altura h acima do leito vira um ponto no ar perto de z₂ + h.</p>
+      <h5>2 · Conjugado de um voxel</h5>
+      <p>Do alvo Q no ar, 40 raios para trás pelo lóbulo (abertura → M2 → M1) dão 40 retas no espaço do objeto. O ponto a acender é o de mínimos quadrados:</p>
+      <pre>Q° = argmin Σ |(I − d̂d̂ᵀ)(X − Aᵢ)|²        (converge)</pre>
+      <h5>3 · Rotor: escada em espiral</h5>
+      <pre>degrau k:  z_k = z₀ + (z_max − z₀)·k/(M − 1)
+            φ_k = 2πk/M          (uma volta: nenhum degrau fica em cima de outro)
+raio do degrau na fase ψ:  r·(cos(φ_k+ψ), sen(φ_k+ψ), z_k),  r ∈ [r_cubo, R]</pre>
+      <h5>4 · Endereçamento (o Nipkow 3D)</h5>
+      <p>O feixe sai do pivô G e mira Q°. Ele cruza a altura de cada degrau num ponto B_k; escolhe-se o degrau mais perto de Q°. O pulso dispara quando esse degrau passa por B_k:</p>
+      <pre>B_k = G + λ_k·b̂,   λ_k = (z_k − G_z)/b̂_z
+ψ = atan2(B_k,y, B_k,x) − φ_k
+erro de profundidade ≤ ½·Δz/|b̂_z|,   Δz = (z_max − z₀)/(M − 1)</pre>
+      <p>Direção: galvo. Profundidade: tempo. É a espiral de furos de Nipkow, com um eixo a mais.</p>
+      <h5>5 · O que a câmera calcula</h5>
+      <p>Cada pixel é um raio do olho refeito ao contrário até o espaço do objeto (reta A + t·d̂). Acende se passar a menos de ½·ponto de algum B aceso e se o trecho de B para cima não cruzar nenhum outro degrau naquela fase. A soma de todos os pulsos de uma volta é o que a persistência da visão integra.</p>
+      <h5>6 · Por que fosco</h5>
+      <p>Um arame polido reflete o feixe num cone de Keller em torno do próprio eixo: só as direções desse leque recebem luz, e o leque cruza o lóbulo de visão em duas retas. Fosco, o ponto aceso espalha para todo o lóbulo e é uma fonte real: paralaxe completa, inclusive vertical — o que a gravura especular não tem.</p>
+      <h5>7 · Orçamento de tempo</h5>
+      <pre>pulsos/s = voxels × rotações/s
+borrão do ponto = 2π·r·f_rot·τ_pulso
+salto ponto a ponto = assentamento + (ângulo do feixe / 2)/ω   (o espelho gira metade)
+salto vetorial = ⌈ângulo do feixe / passo⌉ / pontos por segundo   (sem assentar)
+cabe na volta se: t(ψ) − t(pulso anterior da volta) ≥ salto + pulso
+quadros/s = f_rot / nº de voltas necessárias
+DLP: fatias por volta = f_DLP / f_rot;  todos os voxels de uma fatia acendem juntos</pre>
+      <p>Dois voxels na mesma fase não cabem na mesma volta: vão para a seguinte. É o preço de endereçar profundidade pelo tempo.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const PRESETS = [
+ {m:1,dz:10,mpar:1.0000,rho:0.5389},{m:1,dz:30,mpar:1.0000,rho:0.5745},{m:1,dz:70,mpar:1.0000,rho:0.6963},
+ {m:2,dz:10,mpar:2.0739,rho:0.5154},{m:2,dz:30,mpar:2.0727,rho:0.5147},{m:2,dz:70,mpar:2.0828,rho:0.5507},
+ {m:3,dz:10,mpar:3.1529,rho:0.5162},{m:3,dz:30,mpar:3.1491,rho:0.5144},{m:3,dz:70,mpar:3.1622,rho:0.5397},
+ {m:1,dz:0,mirage:true,nome:"Mirage 9″"}
+];
+const PRESET_D = 278, FIELD = 8;
+const S = {
+  preset: 0, obj: "naves", npts: 120, size: 5, h0: 4, zk: 0.8, anim: false, animRate: 30, animAng: 0, tempo: 0,
+  M: 24, R: 8, zMax: 9, vortice: false, meio: "arame", topo: 1, borda: 3, pg: 0.05, amb: 0, fio: 0.1, eixo: 1.2, rps: 30, cheio: false,
+  gH: 100, spot: 0.12, pulso: 5, assenta: 150, omega: 10, fonte: "vetor", fdlp: 20, pps: 30, passo: 0.5,
+  ox: 0, oy: 0, giro: 0, cor: true, tombar: false, tomb: 0, passeio: false,
+  eyeTh: NaN, eyePh: -90, eyeDist: 350, res: 170, stereo: false, alvo: false, psi: 0
+};
+const deg = Math.PI / 180;
+
+/* ==========================================================
+   ÓPTICA — mesmo núcleo dos outros simuladores
+   ========================================================== */
+let g = null, VC = null, L = null;
+function design() {
+  const P = PRESETS[S.preset];
+  if (P.mirage) {        // brinquedo Mirage: par parabólico = elipsoides com o foco intermediário levado a ±L (raios paralelos entre os espelhos)
+    // f = separação dos vértices = 80,6 mm, furo ⌀ 62,5 mm (SPIE 9665, 2015); espelhos de 9″ se encontram em r = √2·f ≈ 114 mm
+    const D = 80.6, z2 = D, L = 1e9;
+    const G = { D, z1: -L, z2, c1: -L / 2, a1: D + L / 2, b1: Math.sqrt(D * (D + L)), c2: (L + z2) / 2, a2: (L + z2) / 2, b2: Math.sqrt(L * z2),
+                hole: 31.25, plateR: 0, R1: 114, R2: 114, fixo: true, field: 15 };
+    G.mt = -z2 / D; return G;
+  }
+  const D = PRESET_D, z2 = D + P.dz;
+  const z1 = D * z2 / (P.mpar * D + z2);
+  const G = { D, z1, z2, c1: z1 / 2, a1: D - z1 / 2, b1: Math.sqrt(D * (D - z1)),
+              c2: (z1 + z2) / 2, a2: (z1 + z2) / 2, b2: Math.sqrt(z1 * z2), hole: 4, plateR: 0 };
+  G.mt = (D - z1) * z2 / (D * z1); G.R1 = P.rho * G.b1; G.R2 = 0.9 * G.b2;
+  return G;
+}
+const zTop = (r, G) => G.c1 + G.a1 * Math.sqrt(Math.max(0, 1 - r * r / (G.b1 * G.b1)));
+const zBot = (r, G) => G.c2 - G.a2 * Math.sqrt(Math.max(0, 1 - r * r / (G.b2 * G.b2)));
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const lerp = (a, b, w) => [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w];
+function unit(v) { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / m, v[1] / m, v[2] / m]; }
+function refl(d, n) { const u = unit(n), k = 2 * dot(d, u); return [d[0] - k * u[0], d[1] - k * u[1], d[2] - k * u[2]]; }
+const rotz = (v, a) => { const c = Math.cos(a), s = Math.sin(a); return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]]; };
+const dirTP = (th, ph) => [Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph), Math.cos(th)];
+function qroots(A, B, C) {
+  const dd = B * B - 4 * A * C; if (dd < 0) return null;
+  const s = Math.sqrt(dd); return [(-B - s) / (2 * A), (-B + s) / (2 * A)];
+}
+function hitEll(O, d, c, a, b, cap, rmin, rmax) {
+  const w = O[2] - c;
+  const A = d[2] * d[2] / (a * a) + (d[0] * d[0] + d[1] * d[1]) / (b * b);
+  const B = 2 * (w * d[2] / (a * a) + (O[0] * d[0] + O[1] * d[1]) / (b * b));
+  const C = w * w / (a * a) + (O[0] * O[0] + O[1] * O[1]) / (b * b) - 1;
+  const rt = qroots(A, B, C); if (!rt) return null;
+  let best = null;
+  for (const t of rt) {
+    if (t < 1e-6) continue;
+    const P = [O[0] + t * d[0], O[1] + t * d[1], O[2] + t * d[2]];
+    if (cap === "up" ? P[2] < c : P[2] > c) continue;
+    const r = Math.hypot(P[0], P[1]);
+    if (r < rmin - 1e-9 || r > rmax + 1e-9) continue;
+    if (!best || t < best.t) best = { t, P };
+  }
+  return best;
+}
+const nEll = (P, c, a, b) => [P[0] / (b * b), P[1] / (b * b), (P[2] - c) / (a * a)];
+
+/* --- um raio: placa -> superior -> inferior -> saída.
+   A placa cobre o miolo do espelho inferior: raio que desce ali bate nela. --- */
+function trace(O, P1) {
+  const d1 = unit(sub(P1, O));
+  const d2 = refl(d1, nEll(P1, g.c1, g.a1, g.b1));
+  const h2 = hitEll(P1, d2, g.c2, g.a2, g.b2, "low", 0, g.R2);
+  if (!h2) return null;
+  const P2 = h2.P;
+  if (Math.hypot(P2[0], P2[1]) < g.plateR) return null;
+  if (cortaBloco(P1, d2, h2.t)) return null;
+  const d3 = refl(d2, nEll(P2, g.c2, g.a2, g.b2));
+  if (d3[2] <= 1e-9) return null;
+  if (cortaBloco(P2, d3, Infinity)) return null;
+  if (hitEll(P2, d3, g.c1, g.a1, g.b1, "up", g.hole, g.R1)) return null;
+  return { P1, P2, d: d3 };
+}
+
+function fitAperture(G, fieldR) {
+  const field = [[0, 0]];
+  for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; field.push([fieldR * Math.cos(a), fieldR * Math.sin(a)]); }
+  for (let it = 0; it < 3; it++) {
+    let needR2 = 0, needHole = 0;
+    for (const f of field) {
+      const O = [f[0], f[1], 0];
+      for (let i = 0; i < 46; i++) {
+        const r = G.hole + (G.R1 - G.hole) * (i + 0.5) / 46;
+        for (let j = 0; j < 4; j++) {
+          const ph = j * Math.PI / 2;
+          const P1 = [r * Math.cos(ph), r * Math.sin(ph), zTop(r, G)];
+          const d1 = unit(sub(P1, O));
+          const d2 = refl(d1, nEll(P1, G.c1, G.a1, G.b1));
+          const h2 = hitEll(P1, d2, G.c2, G.a2, G.b2, "low", 0, G.b2 * 0.9995);
+          if (!h2) continue;
+          needR2 = Math.max(needR2, Math.hypot(h2.P[0], h2.P[1]));
+          const d3 = refl(d2, nEll(h2.P, G.c2, G.a2, G.b2));
+          if (d3[2] <= 0) continue;
+          const k2 = (G.D - h2.P[2]) / d3[2];
+          needHole = Math.max(needHole, Math.hypot(h2.P[0] + k2 * d3[0], h2.P[1] + k2 * d3[1]));
+        }
+      }
+    }
+    G.R2 = Math.min(G.b2 * 0.999, needR2 * 1.02);
+    G.hole = Math.max(2.5, Math.min(G.R1 * 0.88, needHole * 1.05));
+  }
+}
+
+function viewCone(fieldR) {
+  const scan = (O, n) => {
+    const A = [];
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.5) / n, r = Math.sqrt(g.hole * g.hole + u * (g.R1 * g.R1 - g.hole * g.hole));
+      const ph = i * 2.399963229728653;
+      const t = trace(O, [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)]);
+      if (t) A.push(Math.acos(Math.max(-1, Math.min(1, unit(t.d)[2]))) / deg);
+    }
+    return A.sort((a, b) => a - b);
+  };
+  const ax = scan([0, 0, 0], 300);
+  if (!ax.length) return null;
+  let lo = ax[0], hi = ax[ax.length - 1];
+  for (let k = 0; k < 6; k++) {
+    const a = k / 6 * 6.2832, c = scan([fieldR * Math.cos(a), fieldR * Math.sin(a), 0], 150);
+    if (!c.length) continue;
+    lo = Math.max(lo, c[0]); hi = Math.min(hi, c[c.length - 1]);
+  }
+  if (hi <= lo) { lo = ax[0]; hi = ax[ax.length - 1]; }
+  return { tmin: lo, tmax: hi, tmed: ax[Math.floor(ax.length / 2)] };
+}
+
+/* --- ponto de convergência de um feixe (mínimos quadrados sobre retas) --- */
+function converge(rays) {
+  const m = [0, 0, 0, 0, 0, 0, 0, 0, 0], v = [0, 0, 0];
+  for (const { P2, d } of rays) {
+    const u = unit(d);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      const w = (i === j ? 1 : 0) - u[i] * u[j];
+      m[i * 3 + j] += w; v[i] += w * P2[j];
+    }
+  }
+  const det = m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]);
+  if (Math.abs(det) < 1e-12) return null;
+  const dt2 = (a, b, c, d) => a * d - b * c;
+  const col = k => {
+    const n = m.slice(); n[k] = v[0]; n[k + 3] = v[1]; n[k + 6] = v[2];
+    return (n[0] * dt2(n[4], n[5], n[7], n[8]) - n[1] * dt2(n[3], n[5], n[6], n[8]) + n[2] * dt2(n[3], n[4], n[6], n[7])) / det;
+  };
+  return { P: [col(0), col(1), col(2)] };
+}
+
+/* ==========================================================
+   RELÉ AO CONTRÁRIO — do olho até o espaço do objeto
+   ========================================================== */
+/* raio que desce de E com direção dd → reta no espaço do objeto {A, d} (d desce do M1 para o leito) */
+function objLine(E, dd) {
+  if (dd[2] >= 0) return null;
+  const k = (g.D - E[2]) / dd[2];
+  if (k > 0 && Math.hypot(E[0] + k * dd[0], E[1] + k * dd[1]) > g.hole) return null;   // verso do superior
+  const h2 = hitEll(E, dd, g.c2, g.a2, g.b2, "low", 0, g.R2);
+  if (!h2) return null;
+  if (Math.hypot(h2.P[0], h2.P[1]) < g.plateR) return { A: E, d: unit(dd), direto: true };   // vê o rotor direto pelo furo
+  if (cortaBloco(h2.P, mul(unit(dd), -1), Infinity)) return null;
+  const d1 = refl(dd, nEll(h2.P, g.c2, g.a2, g.b2));
+  const h1 = hitEll(h2.P, d1, g.c1, g.a1, g.b1, "up", g.hole, g.R1);
+  if (!h1) return null;
+  if (cortaBloco(h2.P, unit(d1), h1.t * Math.hypot(...d1))) return null;
+  const d2 = refl(d1, nEll(h1.P, g.c1, g.a1, g.b1));
+  if (d2[2] >= 0) return null;
+  return { A: h1.P, d: unit(d2), P2: h2.P, P1: h1.P };
+}
+/* ponto do espaço do objeto que o relé leva até Q (mínimos quadrados sobre 40 retas do lóbulo) */
+function objConj(Q) {
+  const lines = [];
+  for (let i = 0; i < 40; i++) {
+    const u = (i + 0.5) / 40, th = (VC.tmin + u * (VC.tmax - VC.tmin)) * deg, ph = i * 2.399963229728653;
+    const d = dirTP(th, ph), l = objLine(add(Q, mul(d, 300)), mul(d, -1));
+    if (!l || l.direto) continue;
+    const m = bloco() ? noMeio(l, nMeio(LAMBDA[1])) : l;
+    if (m) lines.push({ P2: m.A, d: m.d });
+  }
+  if (lines.length < 4) return null;
+  const c = converge(lines); if (!c) return null;
+  let s = 0; for (const l of lines) { const w = sub(c.P, l.P2), p = sub(w, mul(l.d, dot(w, l.d))); s += dot(p, p); }
+  return { P: c.P, rms: Math.sqrt(s / lines.length) };
+}
+
+/* ==========================================================
+   MEIO — arame fosco no ar, ou a mesma escada gravada (microfissuras) dentro de um bloco
+   transparente que gira junto. Índice pela fórmula de Sellmeier, λ em µm:
+   vidro K9 ≈ N-BK7 (Schott); acrílico = PMMA (Sultanova et al. 2009)
+   ========================================================== */
+const SELL = { vidro: [[1.03961212, 0.00600069867], [0.231792344, 0.0200179144], [1.01046945, 103.560653]],
+               acrilico: [[1.1819, 0.011313]] };
+const LAMBDA = [0.638, 0.532, 0.450];              // lasers R, G, B (µm); o verde é o de projeto
+function nMeio(lam) {
+  const c = SELL[S.meio]; if (!c) return 1;
+  const l2 = lam * lam; return Math.sqrt(1 + c.reduce((a, [B, C]) => a + B * l2 / (l2 - C), 0));
+}
+const bloco = () => S.meio !== "arame";
+const zTopo = () => S.zMax + S.topo;               // face de cima, plana e horizontal
+const RB = () => S.R + S.borda;                    // raio do bloco
+function placa() { g.plateR = bloco() ? RB() + 0.3 : S.R + 0.8; }   // base preta do rotor / do bloco tapa o miolo de M2
+/* refração numa face horizontal (normal ẑ): as componentes horizontais escalam por n1/n2 */
+function refrDir(d, n1, n2) {
+  const k = n1 / n2, h2 = k * k * (d[0] * d[0] + d[1] * d[1]); if (h2 >= 1) return null;
+  return [k * d[0], k * d[1], Math.sign(d[2]) * Math.sqrt(1 - h2)];
+}
+/* ponto X da face z = zT por onde passa o raio A → X → P que obedece a Snell (nA·sen θA = nP·sen θP); bissecção */
+function pelaFace(A, P, nA, nP, zT) {
+  const hA = Math.abs(A[2] - zT), hP = Math.abs(P[2] - zT), ux = P[0] - A[0], uy = P[1] - A[1], L = Math.hypot(ux, uy);
+  let lo = 0, hi = 1;
+  if (L > 1e-12) for (let i = 0; i < 52; i++) { const t = (lo + hi) / 2, a = t * L, b = (1 - t) * L;
+    if (nA * a / Math.hypot(a, hA) > nP * b / Math.hypot(b, hP)) hi = t; else lo = t; }
+  const t = (lo + hi) / 2; return [A[0] + t * ux, A[1] + t * uy, zT];
+}
+/* reta do espaço do objeto (no ar, descendo) → continuação dentro do bloco */
+function noMeio(l, n) {
+  const zT = zTopo(), X = add(l.A, mul(l.d, (zT - l.A[2]) / l.d[2]));
+  if (Math.hypot(X[0], X[1]) > RB()) return null;
+  const d = refrDir(l.d, 1, n); return d ? { A: X, d, direto: l.direto } : null;
+}
+/* o trecho A + t·d (0 < t < tMax) entra no bloco pela face de cima? */
+function cortaBloco(A, d, tMax) {
+  if (!bloco() || Math.abs(d[2]) < 1e-12) return false;
+  const t = (zTopo() - A[2]) / d[2];
+  return t > 1e-9 && t < tMax && Math.hypot(A[0] + t * d[0], A[1] + t * d[1]) < RB();
+}
+/* refletância de Fresnel (luz não polarizada), ci = cosseno do ângulo de incidência */
+function fresnelR(ci, n1, n2) {
+  const si = Math.sqrt(Math.max(0, 1 - ci * ci)) * n1 / n2; if (si >= 1) return 1;
+  const ct = Math.sqrt(1 - si * si), rs = (n1 * ci - n2 * ct) / (n1 * ci + n2 * ct), rp = (n1 * ct - n2 * ci) / (n1 * ct + n2 * ci);
+  return (rs * rs + rp * rp) / 2;
+}
+/* a face de cima reflete parte do feixe do galvo como um espelho: para onde vai esse reflexo, pelo relé? */
+function brilhoDe(f) {
+  const R = fresnelR(Math.abs(f.b[2]), 1, nMeio(LAMBDA[1])), rf = [f.b[0], f.b[1], -f.b[2]];
+  const h = hitEll(f.X, rf, g.c1, g.a1, g.b1, "up", g.hole, g.R1); if (!h) return { R, anel: false };
+  const t = trace(f.X, h.P); if (!t) return { R, P1: h.P, anel: false };
+  const d = unit(t.d), th = Math.acos(d[2]) / deg;
+  return { R, P1: h.P, P2: t.P2, d, th, anel: th >= VC.tmin && th <= VC.tmax };
+}
+/* nuvem de pontos da gravação: microfissuras ao longo de cada degrau, no referencial do bloco
+   (origem no centro da base, z para cima, x = marca de fase ψ = 0) */
+const nuvemN = () => { let n = 0; for (let k = 0; k < S.M; k++) n += Math.max(1, Math.round((S.R - RIN) / S.pg)) + 1; return n; };
+function nuvem() {
+  const P = [];
+  for (let k = 0; k < S.M; k++) { const s = spoke(k, 0), L = S.R - RIN, n = Math.max(1, Math.round(L / S.pg));
+    for (let i = 0; i <= n; i++) P.push(lerp(s.a, s.b, i / n)); }
+  return P;
+}
+function baixar(nome, txt) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([txt], { type: "text/plain" }));
+  a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function exportarNuvem(tipo) {
+  RIN = S.eixo / 2; const P = nuvem(), f4 = v => v.toFixed(4);
+  const cab = ["Holosion — escada em espiral gravada (microfissuras) para o rotor do estágio 10",
+    "unidades: mm · origem no centro da base do bloco · z para cima · eixo x = marca de fase (psi = 0)",
+    "bloco: cilindro " + (S.meio === "acrilico" ? "de acrílico (PMMA)" : "de vidro K9") + " ⌀ " + (2 * RB()).toFixed(2) + " mm × altura " + zTopo().toFixed(2) + " mm, face de cima plana e polida",
+    S.M + " degraus de " + RIN.toFixed(2) + " a " + S.R.toFixed(2) + " mm do eixo, z de " + Z0.toFixed(2) + " a " + S.zMax.toFixed(2) + " mm" +
+    (S.vortice ? ", ordem em vórtice (passo " + passoAng() + ")" : ", ordem sequencial") + " · passo entre pontos " + S.pg + " mm · " + P.length + " pontos",
+    "coordenadas físicas dentro do material (a refração da face já está no projeto: não compensar de novo)"];
+  const nome = "escada-gravada-" + S.meio + "-M" + S.M + "-R" + S.R + "-z" + S.zMax.toFixed(2);
+  if (tipo === "xyz") baixar(nome + ".xyz", cab.map(l => "# " + l).join("\n") + "\n" + P.map(p => p.map(f4).join(" ")).join("\n") + "\n");
+  else baixar(nome + ".dxf", ["0", "SECTION", "2", "HEADER", "9", "$INSUNITS", "70", "4", "0", "ENDSEC", "0", "SECTION", "2", "ENTITIES"]
+    .concat(...cab.map(l => ["999", l]), ...P.map(p => ["0", "POINT", "8", "ESCADA", "10", f4(p[0]), "20", f4(p[1]), "30", f4(p[2])]), ["0", "ENDSEC", "0", "EOF"]).join("\n") + "\n");
+}
+
+/* ==========================================================
+   ROTOR — escada em espiral de raios de arame
+   ========================================================== */
+let RIN = 0.6; const Z0 = 0.4;                     // raio do cubo central (= S.eixo/2) e altura do primeiro degrau (mm)
+const zK = k => Z0 + (S.zMax - Z0) * k / Math.max(1, S.M - 1);
+/* ordem dos degraus: sequencial (escada) ou em vórtice — degrau k no ângulo k·p (mod M), p ≈ 0,382·M primo com M,
+   de modo que degraus vizinhos em altura ficam longe em ângulo */
+const mdc = (a, b) => b ? mdc(b, a % b) : a;
+const passoAng = () => { if (!S.vortice) return 1; let p = Math.round(0.381966 * S.M); while (mdc(p, S.M) !== 1) p++; return p; };
+const phiK = k => 2 * Math.PI * ((k * passoAng()) % S.M) / S.M;
+const mod2pi = a => ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+function spoke(k, psi) {
+  const a = phiK(k) + psi, c = Math.cos(a), s = Math.sin(a), z = zK(k);
+  return { k, a: [RIN * c, RIN * s, z], b: [S.R * c, S.R * s, z] };
+}
+/* distância entre segmentos p0p1 e q0q1 */
+function segDist(p0, p1, q0, q1) {
+  const u = sub(p1, p0), v = sub(q1, q0), w = sub(p0, q0);
+  const a = dot(u, u), b = dot(u, v), c = dot(v, v), d = dot(u, w), e = dot(v, w), D = a * c - b * b;
+  let sN, sD = D, tN, tD = D;
+  if (D < 1e-12) { sN = 0; sD = 1; tN = e; tD = c; }
+  else { sN = b * e - c * d; tN = a * e - b * d; if (sN < 0) { sN = 0; tN = e; tD = c; } else if (sN > sD) { sN = sD; tN = e + b; tD = c; } }
+  if (tN < 0) { tN = 0; if (-d < 0) sN = 0; else if (-d > a) sN = sD; else { sN = -d; sD = a; } }
+  else if (tN > tD) { tN = tD; if (-d + b < 0) sN = 0; else if (-d + b > a) sN = sD; else { sN = -d + b; sD = a; } }
+  const sc = Math.abs(sN) < 1e-12 ? 0 : sN / sD, tc = Math.abs(tN) < 1e-12 ? 0 : tN / tD;
+  return Math.hypot(...sub(add(w, mul(u, sc)), mul(v, tc)));
+}
+/* o trecho de B na direção up (até sair do rotor) cruza outro degrau ou o cubo? */
+function tapado(B, up, sp, kSelf, folga) {
+  if (up[2] <= 1e-9) return false;
+  const top = add(B, mul(up, (S.zMax + 0.6 - B[2]) / up[2]));
+  for (const s of sp) {
+    if (s.k === kSelf || s.a[2] < B[2] - 1e-9) continue;
+    if (segDist(B, top, s.a, s.b) < S.fio / 2 + folga) return true;
+  }
+  return !bloco() && segDist(B, top, [0, 0, 0], [0, 0, S.zMax]) < RIN;
+}
+
+/* ==========================================================
+   AGENDA — para cada voxel: degrau, fase do pulso, ponto aceso
+   ========================================================== */
+let PTS = [], CONJ = [], FL = [], STATS = {}, COR = [];
+/* cor de cada voxel (0–1): três lasers combinados no mesmo feixe; o arame fosco e os espelhos são acromáticos */
+const hsl = (h, s, l) => { const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  return [0, 8, 4].map(n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))); };
+function corDe(k, t, nCurvas, u) {
+  if (S.obj === "rosto") {
+    const tg = curves.tags[k];
+    if (tg === "iris") return [0.25, 0.85, 1];
+    if (tg === "olho") return [0.95, 0.97, 1];
+    if (tg === "boca") return [1, 0.22, 0.3];
+    if (tg === "sobrancelha") return [0.75, 0.45, 1];
+    if (tg === "nariz") return [1, 0.65, 0.25];
+    return hsl(230 - 190 * Math.max(0, Math.min(1, (u[2] + 0.55) / 1.1)), 0.9, 0.55);   // relevo: azul fundo → amarelo alto
+  }
+  if (S.obj === "naves") return k < 9 ? hsl(18 + 20 * t, 0.95, 0.55) : hsl(190 + 20 * t, 0.9, 0.55);
+  if (S.obj === "cubo") return [[1, 0.25, 0.2], [0.25, 1, 0.35], [0.3, 0.45, 1]][Math.floor(k / 4)];
+  if (S.obj === "toro") return hsl(360 * (k + t) / nCurvas, 0.9, 0.55);
+  return hsl((360 * t + 120 * k) % 360, 0.95, 0.55);
+}
+const galvoP = () => [0, 0, g.z2 + S.gH];
+function planFlash(Q, Qo, i) {
+  const G = galvoP(), gr = bloco(), zT = zTopo(), n = gr ? nMeio(LAMBDA[1]) : 1;
+  if (gr && Qo[2] > zT - 1e-6) return { i, Q, Qo, ok: false, why: "acima do bloco" };
+  const X = gr ? pelaFace(G, Qo, 1, n, zT) : G, b = unit(sub(gr ? X : Qo, G));   // no bloco o feixe entra pela face e refrata
+  const kD = (g.D - G[2]) / b[2];
+  if (Math.hypot(G[0] + kD * b[0], G[1] + kD * b[1]) > g.hole) return { i, Q, Qo, ok: false, why: "furo" };
+  if (gr && Math.hypot(X[0], X[1]) > RB()) return { i, Q, Qo, ok: false, why: "fora do bloco" };
+  const dg = gr ? refrDir(b, 1, n) : b, cand = [];
+  for (let k = 0; k < S.M; k++) {
+    const B = add(X, mul(dg, (zK(k) - X[2]) / dg[2])), r = Math.hypot(B[0], B[1]);
+    if (r < RIN + S.fio || r > S.R) continue;
+    cand.push({ k, B, e: Math.hypot(...sub(B, Qo)) });
+  }
+  if (!cand.length) return { i, Q, Qo, ok: false, why: "fora do rotor" };
+  cand.sort((u, v) => u.e - v.e);
+  // degrau mais próximo; se outro degrau tapa o feixe, tenta o vizinho (erro de profundidade até um degrau a mais)
+  const dz = (S.zMax - Z0) / Math.max(1, S.M - 1);
+  let f0 = null;
+  for (const c of cand) {
+    if (f0 && c.e > cand[0].e + 1.6 * dz) break;
+    const psi = mod2pi(Math.atan2(c.B[1], c.B[0]) - phiK(c.k));
+    const sp = []; for (let k = 0; k < S.M; k++) sp.push(spoke(k, psi));
+    const f = { i, Q, Qo, k: c.k, B: c.B, e: c.e, psi, sp, b, dg, X: gr ? X : null };
+    // R, G e B refratam diferente: cada cor acende um ponto um pouco diferente do mesmo degrau
+    if (gr) f.Bc = LAMBDA.map(l => { const d = refrDir(b, 1, nMeio(l)); return add(X, mul(d, (zK(c.k) - X[2]) / d[2])); });
+    f.ok = !tapado(c.B, mul(dg, -1), sp, c.k, S.spot / 2);
+    if (f.ok) { f.vizinho = !!f0; return f; }
+    if (!f0) { f0 = f; f0.why = "feixe tapado"; }
+  }
+  return f0;
+}
+const centroImg = () => [S.ox, S.oy, g.z2 + S.h0];
+function samplePoints() {
+  const C = centroImg(), gr = S.giro * deg, pos = (x, y, z) => { const r = rotz([x, y, 0], gr); return [C[0] + r[0], C[1] + r[1], z]; };
+  if (S.obj === "ponto") { COR = [[1, 1, 1]]; return [C]; }
+  if (S.obj === "onda") {                          // superfície que muda a cada volta: z = A·sen(2πr/s − t)
+    const n = Math.max(3, Math.round(Math.sqrt(S.npts))), pts = []; COR = [];
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const x = (2 * (i + 0.5) / n - 1) * S.size, y = (2 * (j + 0.5) / n - 1) * S.size, r = Math.hypot(x, y);
+      if (r > S.size) continue;
+      const h = Math.sin(2 * Math.PI * r / S.size * 1.2 - S.tempo * 3);
+      pts.push(pos(x, y, C[2] + S.size * S.zk * 0.45 * h)); COR.push(hsl(220 - 200 * (h + 1) / 2, 0.95, 0.55));
+    }
+    return pts;
+  }
+  if (S.obj === "rosto" && S.cheio) return rostoCheio(C, pos);
+  const cs = curves(), lens = cs.map(f => { let l = 0, p = f(0); for (let i = 1; i <= 200; i++) { const q = f(i / 200); l += Math.hypot(...sub(q, p)); p = q; } return l; });
+  const tot = lens.reduce((a, b) => a + b, 0), pts = [], tb = S.tomb * deg, ct = Math.cos(tb), st = Math.sin(tb);
+  COR = [];
+  cs.forEach((f, k) => {
+    const n = Math.max(2, Math.round(S.npts * lens[k] / tot));
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n, u = f(t), z = u[2] * S.zk;          // tombar: giro em torno de x, pelo centro do objeto
+      const v = [u[0], u[1] * ct - z * st, u[1] * st + z * ct];
+      pts.push(pos(v[0] * S.size, v[1] * S.size, C[2] + v[2] * S.size)); COR.push(corDe(k, t, cs.length, u));
+    }
+  });
+  return pts;
+}
+const g2 = (x, y, cx, cy, sx, sy) => Math.exp(-(((x - cx) / sx) ** 2) - (((y - cy) / sy) ** 2));
+function rostoH(x, y) {                            // relevo da máscara genérica (unidades do objeto, 0 na borda)
+  const e = 1 - (x / 0.74) ** 2 - (y / 0.98) ** 2; if (e <= 0) return 0;
+  return 0.42 * Math.sqrt(e)
+    + 0.30 * g2(x, y, 0, -0.12, 0.10, 0.30) + 0.08 * g2(x, y, 0, 0.12, 0.08, 0.22)      // nariz e dorso
+    - 0.13 * g2(Math.abs(x), y, 0.29, 0.16, 0.15, 0.09)                                // órbitas
+    + 0.06 * g2(Math.abs(x), y, 0.29, 0.31, 0.18, 0.04)                                // arcos das sobrancelhas
+    + 0.07 * g2(x, y, 0, -0.50, 0.20, 0.07) + 0.05 * g2(x, y, 0, -0.78, 0.18, 0.10)    // lábios e queixo
+    + 0.05 * g2(Math.abs(x), y, 0.42, -0.10, 0.16, 0.16);                              // maçãs
+}
+/* cor da pele pintada (o programa, não a física): pele sombreada por uma luz fixa, maçãs, olhos, íris, cílios,
+   sobrancelhas, narinas, lábios e cabelo; (gx, gy) = inclinação da superfície */
+function corPele(x, y, gx, gy) {
+  const ax = Math.abs(x), mix = (a, b, w) => a.map((v, i) => v + (b[i] - v) * Math.max(0, Math.min(1, w)));
+  const luz = 0.55 + 0.6 * Math.max(0, dot(unit([-gx, -gy, 1]), unit([-0.45, 0.55, 0.7])));
+  let c = mix([0.98, 0.68, 0.5], [1, 0.4, 0.42], 0.5 * g2(ax, y, 0.42, -0.2, 0.13, 0.12));   // pele + maçãs
+  c = mix(c, [0.35, 0.14, 0.1], g2(ax, y, 0.05, -0.3, 0.028, 0.02) * 1.4);                    // narinas
+  const ym = -0.485, w = Math.max(0, 1 - (x / 0.2) ** 2);                                      // lábios
+  if (Math.abs(x) < 0.2 && y < ym + 0.045 * w + 0.008 && y > ym - 0.065 * w - 0.008) c = Math.abs(y - ym) < 0.007 ? [0.4, 0.08, 0.12] : [0.92, 0.22, 0.32];
+  const tb = (ax - 0.14) / 0.3;                                                                // sobrancelhas
+  if (tb >= 0 && tb <= 1 && Math.abs(y - 0.29 - 0.05 * Math.sin(Math.PI * tb)) < 0.024 * (1.2 - 0.6 * tb)) c = [0.42, 0.22, 0.12];
+  if (y > 0.72 - 0.35 * (ax / 0.74) ** 4) c = mix([0.58, 0.3, 0.12], [0.85, 0.55, 0.25], 0.5 + 0.5 * Math.sin(70 * x + 9 * y));   // cabelo
+  c = c.map(v => v * luz);
+  const dx = ax - 0.29, dy = y - 0.15, q = (dx / 0.13) ** 2 + (dy / (dy > 0 ? 0.054 : 0.036)) ** 2, r = Math.hypot(dx, dy);
+  if (q < 1) c = r < 0.02 ? [0.04, 0.05, 0.12] : r < 0.05 ? [0.2, 0.62, 0.95] : [0.95, 0.95, 0.97];  // olho: pupila, íris, branco
+  else if (q < 1.35 && dy > 0) c = [0.3, 0.13, 0.08];                                          // cílios
+  return c.map(v => Math.max(0, Math.min(1, v)));
+}
+/* rosto cheio: a superfície do relevo numa malha hexagonal, com pontos extras ao longo da encosta onde ela é
+   íngreme (área real / área projetada) — sem vazios também vista de lado */
+function rostoCheio(C, pos) {
+  const p = Math.sqrt(Math.PI * 0.74 * 0.98 / (Math.max(50, S.npts) * 0.866));            // passo (unidades do objeto)
+  const zf = (x, y) => (2 * rostoH(x, y) - 0.55) * S.zk;
+  const tb = S.tomb * deg, ct = Math.cos(tb), st = Math.sin(tb), pts = []; COR = [];
+  const poe = (x, y, gx, gy) => { const z = zf(x, y), v = [x, y * ct - z * st, y * st + z * ct];
+    pts.push(pos(v[0] * S.size, v[1] * S.size, C[2] + v[2] * S.size)); COR.push(corPele(x, y, gx, gy)); };
+  for (let j = 0, y; (y = -0.98 + (j + 0.5) * p * 0.866) < 0.98; j++)
+    for (let i = 0, x; (x = -0.74 + (i + 0.25 + (j % 2) * 0.5) * p) < 0.74; i++) {
+      if ((x / 0.74) ** 2 + (y / 0.98) ** 2 >= 0.995) continue;
+      const e = 1e-4, gx = (zf(x + e, y) - zf(x - e, y)) / (2 * e), gy = (zf(x, y + e) - zf(x, y - e)) / (2 * e), sl = Math.hypot(gx, gy);
+      const n = Math.min(6, Math.max(1, Math.round(Math.sqrt(1 + sl * sl))));
+      for (let q = 0; q < n; q++) { const t = n === 1 ? 0 : ((q + 0.5) / n - 0.5) * p / sl; poe(x + t * gx, y + t * gy, gx, gy); }
+    }
+  return pts;
+}
+function edges(V, E) { return E.map(([a, b]) => t => lerp(V[a], V[b], t)); }
+function curves() {
+  const TAU = 2 * Math.PI;
+  switch (S.obj) {
+    case "trevo": return [t => { const a = TAU * t; return [(Math.sin(a) + 2 * Math.sin(2 * a)) / 3, (Math.cos(a) - 2 * Math.cos(2 * a)) / 3, -Math.sin(3 * a)]; }];
+    case "borromeo": {
+      const a = 1, b = 0.5;
+      return [t => [a * Math.cos(TAU * t), b * Math.sin(TAU * t), 0],
+              t => [0, a * Math.cos(TAU * t), b * Math.sin(TAU * t)],
+              t => [b * Math.sin(TAU * t), 0, a * Math.cos(TAU * t)]];
+    }
+    case "cubo": {
+      const V = []; for (let i = 0; i < 8; i++) V.push([(i & 1 ? 1 : -1) * 0.6, (i & 2 ? 1 : -1) * 0.6, (i & 4 ? 1 : -1) * 0.6]);
+      const R = v => { const a = 30 * deg, b = 25 * deg;
+        const x = v[0] * Math.cos(a) - v[1] * Math.sin(a), y = v[0] * Math.sin(a) + v[1] * Math.cos(a);
+        return [x, y * Math.cos(b) - v[2] * Math.sin(b), y * Math.sin(b) + v[2] * Math.cos(b)]; };
+      const E = [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+      return edges(V.map(R), E);
+    }
+    case "helice": return [t => [0.8 * Math.cos(TAU * 2 * t), 0.8 * Math.sin(TAU * 2 * t), 2 * t - 1]];
+    case "ponto": return [];
+    case "rosto": {
+      const h = rostoH;
+      const P = (x, y) => [x, y, 2 * h(x, y) - 0.55];
+      const cs = [], tag = [];
+      const poe = (fn, t) => { cs.push(fn); tag.push(t); };
+      poe(t => { const a = TAU * t; return P(0.735 * Math.cos(a), 0.975 * Math.sin(a)); }, "borda");
+      for (let i = 1; i <= 11; i++) { const y = -0.95 + 1.9 * i / 12, w = 0.74 * Math.sqrt(1 - (y / 0.98) ** 2) * 0.97;
+        poe(t => P(-w + 2 * w * t, y), "nivel"); }                                            // cortes horizontais do relevo
+      for (const sx of [-1, 1]) {
+        poe(t => { const a = TAU * t; return P(sx * 0.29 + 0.13 * Math.cos(a), 0.15 + 0.045 * Math.sin(a) * (Math.sin(a) > 0 ? 1.2 : 0.8)); }, "olho");
+        poe(t => { const a = TAU * t; return P(sx * 0.29 + 0.035 * Math.cos(a), 0.15 + 0.035 * Math.sin(a)); }, "iris");
+        poe(t => { const x = sx * (0.14 + 0.30 * t); return P(x, 0.29 + 0.05 * Math.sin(Math.PI * t)); }, "sobrancelha");
+      }
+      poe(t => P(0, 0.22 - 0.48 * t), "nariz");
+      poe(t => { const a = Math.PI * (1.15 + 0.7 * t); return P(0.085 * Math.cos(a) * 1.4, -0.27 + 0.05 * Math.sin(a)); }, "nariz");
+      poe(t => { const x = -0.2 + 0.4 * t; return P(x, -0.48 + 0.035 * Math.sin(Math.PI * t) - 0.02 * Math.cos(TAU * t * 2)); }, "boca");
+      poe(t => { const x = -0.2 + 0.4 * t; return P(x, -0.49 - 0.06 * Math.sin(Math.PI * t)); }, "boca");
+      curves.tags = tag;
+      return cs;
+    }
+    case "toro": {                                 // 8 meridianos + 3 paralelos de um toro
+      const R0 = 0.62, r0 = 0.32, cs = [];
+      for (let m = 0; m < 8; m++) { const a = TAU * m / 8; cs.push(t => { const b = TAU * t;
+        return [(R0 + r0 * Math.cos(b)) * Math.cos(a), (R0 + r0 * Math.cos(b)) * Math.sin(a), r0 * Math.sin(b) / 0.6]; }); }
+      for (const b of [0, TAU / 3, -TAU / 3]) cs.push(t => { const a = TAU * t;
+        return [(R0 + r0 * Math.cos(b)) * Math.cos(a), (R0 + r0 * Math.cos(b)) * Math.sin(a), r0 * Math.sin(b) / 0.6]; });
+      return cs;
+    }
+    default: {                                     // duas naves genéricas em cunha, frente a frente
+      const ship = (cx, cy, cz, yaw, s) => {
+        const B = [[0, 1, 0], [-0.55, -0.6, 0], [0.55, -0.6, 0], [0, -0.45, 0.5], [0, -0.6, -0.15]];
+        const V = B.map(v => { const r = rotz(v, yaw); return [cx + s * r[0], cy + s * r[1], cz + s * r[2]]; });
+        return edges(V, [[0,1],[0,2],[1,2],[0,3],[3,1],[3,2],[0,4],[4,1],[4,2]]);
+      };
+      return [...ship(0.5, 0.05, 0.6, -20 * deg, 0.48), ...ship(-0.5, -0.05, -0.6, 160 * deg, 0.48)];
+    }
+  }
+}
+function setOptics() {
+  g = design(); if (!g.fixo) fitAperture(g, FIELD);
+  placa();
+  VC = viewCone(g.field || FIELD);
+  if (!isFinite(S.eyeTh) || S.eyeTh < VC.tmin || S.eyeTh > VC.tmax) S.eyeTh = VC.tmed;
+}
+function conjugar() {                              // pontos do padrão e conjugados (sem o giro animado)
+  PTS = samplePoints(); CONJ = PTS.map(objConj);
+}
+function agendar() {                               // giro do padrão: pela simetria, conj(R·Q) = R·conj(Q)
+  const a = S.animAng * deg; RIN = S.eixo / 2;
+  FL = PTS.map((Q, i) => CONJ[i] ? planFlash(rotz(Q, a), rotz(CONJ[i].P, a), i) : { i, Q: rotz(Q, a), ok: false, why: "sem conjugado" });
+  const ok = FL.filter(f => f.ok);
+  // passes: em ordem de fase, cada pulso vai para a primeira volta em que o galvo chega a tempo do pulso anterior dela
+  // (tempo de salto = assentamento + ângulo/ω; o ângulo é o do espelho, metade do giro do feixe)
+  // voxels que caem no mesmo ponto do mesmo degrau (dentro de meio ponto) são um pulso só
+  const unicos = [];
+  for (const f of ok) { f.mesmo = unicos.find(u => u.k === f.k && Math.hypot(...sub(u.B, f.B)) < S.spot / 2) || null; if (!f.mesmo) unicos.push(f); }
+  const T = 1 / S.rps, ord = unicos.slice().sort((x, y) => x.psi - y.psi), voltas = [];
+  if (S.fonte === "dlp") {                         // fatias de fase; conflito só se dois voxels caem no mesmo pixel da mesma fatia
+    const nF = Math.max(1, Math.floor(S.fdlp * 1000 / S.rps)), pixel = 2 * S.R / 1024, usados = [];
+    for (const f of ord) {
+      const fat = Math.floor(f.psi / (2 * Math.PI) * nF), ch = fat + ":" + Math.round(f.B[0] / pixel) + ":" + Math.round(f.B[1] / pixel);
+      let v = 0; while (usados[v] && usados[v].has(ch)) v++;
+      (usados[v] = usados[v] || new Set()).add(ch); f.volta = v;
+    }
+    voltas.length = usados.length;
+  } else for (const f of ord) {
+    const tf = f.psi / (2 * Math.PI) * T;
+    // ângulo óptico entre feixes; ponto a ponto: assenta + metade (espelho)/ω + pulso;
+    // vetorial: ⌈Δθ/passo⌉ pontos do DAC, sem assentar (o atraso fixo do galvo é compensado adiantando a sequência)
+    const salto = ang => S.fonte === "vetor" ? Math.max(Math.max(1, Math.ceil(ang / S.passo)) / (S.pps * 1000), S.pulso * 1e-6)
+                                             : S.assenta * 1e-6 + ang / 2 / S.omega * 1e-3 + S.pulso * 1e-6;
+    let v = voltas.find(V => { const q = V[V.length - 1], ang = Math.acos(Math.min(1, dot(q.b, f.b))) / deg;
+      return tf - q.t >= salto(ang); });
+    if (!v) voltas.push(v = []);
+    v.push({ t: tf, b: f.b }); f.volta = voltas.indexOf(v);
+  }
+  for (const f of ok) if (f.mesmo) f.volta = f.mesmo.volta;
+  const nV = Math.max(1, voltas.length);
+  const why = {}; for (const f of FL) if (!f.ok) why[f.why] = (why[f.why] || 0) + 1;
+  STATS = { ok: ok.length, viz: ok.filter(f => f.vizinho).length, pulsos: unicos.length, tot: FL.length, why, nV, qps: S.rps / nV, dz: (S.zMax - Z0) / Math.max(1, S.M - 1),
+            eq: ok.length ? ok.reduce((s, f) => s + f.e, 0) / ok.length : 0,
+            borrao: 2 * Math.PI * S.R * S.rps * (S.fonte === "dlp" ? 1 / (S.fdlp * 1000) : S.pulso * 1e-6) };
+  if (bloco()) {                                   // face de cima: Fresnel na entrada e na saída, e o reflexo do feixe
+    const n = nMeio(LAMBDA[1]), Rs = fresnelR(Math.cos(13 * deg), 1, n);
+    let br = 0, T = 0; for (const f of unicos) { f.brilho = brilhoDe(f); if (f.brilho.anel) br++; T += (1 - f.brilho.R) * (1 - Rs); }
+    STATS.brilho = br; STATS.Tf = unicos.length ? T / unicos.length : 0;
+    STATS.Rf = unicos.length ? unicos.reduce((a, f) => a + f.brilho.R, 0) / unicos.length : 0;
+  }
+}
+function build() { setOptics(); conjugar(); agendar(); renderAll(); }
+
+/* ==========================================================
+   CÂMERA DO OBSERVADOR — traçado pixel a pixel, soma de uma volta
+   ========================================================== */
+function eyePos(off) {
+  const C = centroImg(), ph = S.eyePh * deg;
+  return add(add(C, mul(dirTP(S.eyeTh * deg, ph), S.eyeDist)), mul([-Math.sin(ph), Math.cos(ph), 0], off));
+}
+let VISTOS = 0;
+const VERDE = [0.2, 1, 0.43];
+function renderEye(E, N, img, ox, W, conta) {
+  const C = centroImg(), F = unit(sub(C, E));
+  const R = unit([F[1], -F[0], 0]), U = cross(R, F);
+  const th = (S.size * 1.5 + 2) / S.eyeDist;
+  const pix = 2 * th * S.eyeDist / N;              // pegada do pixel na imagem (relé ×m: no objeto, ÷m)
+  const tol = Math.max(S.spot / 2, 0.6 * pix / PRESETS[S.preset].m), gain = Math.min(1, S.spot / 2 / tol) * 1.6;
+  const lit = FL.filter(f => f.ok), vis = new Set();
+  // grade de voxels (células em xy × fatias em z): cada reta só testa as células por onde passa
+  const cel = Math.max(0.2, 2 * tol), fz = 1, grade = new Map(), chave = (a, b, c) => ((a + 2048) * 4096 + b + 2048) * 64 + c;
+  let zLo = Infinity, zHi = -Infinity;
+  for (const f of lit) { zLo = Math.min(zLo, f.B[2]); zHi = Math.max(zHi, f.B[2]); }
+  for (const f of lit) { const c = chave(Math.floor(f.B[0] / cel), Math.floor(f.B[1] / cel), Math.floor((f.B[2] - zLo) / fz));
+    let L = grade.get(c); if (!L) grade.set(c, L = []); L.push(f); }
+  const nFz = Math.floor((zHi - zLo) / fz) + 1;
+  const candidatos = l => {
+    const az = Math.abs(l.d[2]); if (az < 0.1) return lit;
+    const rs = 1.5 * tol / az + Math.hypot(l.d[0], l.d[1]) / az * fz / 2, out = [];
+    for (let sz = 0; sz < nFz; sz++) {
+      const zc = zLo + (sz + 0.5) * fz, k = (zc - l.A[2]) / l.d[2], X = l.A[0] + k * l.d[0], Y = l.A[1] + k * l.d[1];
+      for (let a = Math.floor((X - rs) / cel); a <= Math.floor((X + rs) / cel); a++)
+        for (let b = Math.floor((Y - rs) / cel); b <= Math.floor((Y + rs) / cel); b++) { const L = grade.get(chave(a, b, sz)); if (L) out.push(...L); }
+    }
+    return out;
+  };
+  const acc = new Float32Array(N * N * 3), bgs = new Uint8Array(N * N), gr = bloco(), ns = LAMBDA.map(nMeio);
+  const d2de = (B, l) => { const w = sub(B, l.A), t = dot(w, l.d); if (t <= 0) return 9; const p = sub(w, mul(l.d, t)); return dot(p, p) / (tol * tol); };
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const u = (2 * (i + 0.5) / N - 1) * th, v = (1 - 2 * (j + 0.5) / N) * th;
+    const d = unit(add(F, add(mul(R, u), mul(U, v))));
+    const q = j * N + i, l0 = objLine(E, d);
+    // no bloco, a reta do pixel refrata na face de cima — uma reta por cor (dispersão)
+    const ls = l0 && gr ? ns.map(n => noMeio(l0, n)) : null, l = ls ? ls[1] : l0;
+    let cr = 0, cg = 0, cb = 0; bgs[q] = l ? (l.direto ? 10 : 6) : 0;
+    if (l) for (const f of candidatos(l)) {
+      const d2 = d2de(f.B, l); if (d2 > 2.25 && !ls) continue;   // feixe gaussiano: I ∝ exp(−2r²/w²), corte em 1,5w
+      const dc = ls ? [0, 1, 2].map(c => ls[c] ? d2de(f.Bc ? f.Bc[c] : f.B, ls[c]) : 9) : [d2, d2, d2];
+      if (Math.min(...dc) > 2.25) continue;
+      if (tapado(f.B, mul(l.d, -1), f.sp, f.k, 0)) continue;     // outro degrau na frente, naquela fase
+      const c = S.cor ? COR[f.i] || VERDE : VERDE, gw = dc.map(x => x > 2.25 ? 0 : gain * Math.exp(-2 * x));
+      cr += gw[0] * c[0]; cg += gw[1] * c[1]; cb += gw[2] * c[2]; if (d2 <= 1) vis.add(f.i);
+    }
+    // névoa: a luz ambiente espalhada pelos pontos apagados; média de uma volta = Σ fração do círculo que o degrau cobre
+    if (l && S.amb > 0) { let hz = 0;
+      for (let k = 0; k < S.M; k++) { const t = (zK(k) - l.A[2]) / l.d[2]; if (t <= 0) continue;
+        const r = Math.hypot(l.A[0] + t * l.d[0], l.A[1] + t * l.d[1]); if (r > RIN && r < S.R) hz += S.fio / (2 * Math.PI * r); }
+      cr += S.amb * hz; cg += S.amb * hz; cb += S.amb * hz; }
+    acc[3 * q] = cr; acc[3 * q + 1] = cg; acc[3 * q + 2] = cb;
+  }
+  // exposição: se mais de 2% dos pixels acesos saturam (superfície densa), baixa o ganho como uma câmera faria
+  const mx = []; for (let q = 0; q < N * N; q++) { const m = Math.max(acc[3 * q], acc[3 * q + 1], acc[3 * q + 2]); if (m > 0.02) mx.push(m); }
+  mx.sort((a, b) => a - b); const p98 = mx.length ? mx[Math.floor(0.98 * (mx.length - 1))] : 1, ex = p98 > 1 ? 1 / p98 : 1;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const q = j * N + i, px = (j * W + ox + i) * 4, bg = bgs[q];
+    img[px] = bg + 255 * Math.min(1, ex * acc[3 * q]); img[px + 1] = bg + 255 * Math.min(1, ex * acc[3 * q + 1]);
+    img[px + 2] = bg + 2 + 255 * Math.min(1, ex * acc[3 * q + 2]); img[px + 3] = 255;
+  }
+  if (conta) VISTOS = vis.size;
+  return { F, R, U, th };
+}
+function renderCam(fast) {
+  const cv = document.getElementById("cam"), ctx = cv.getContext("2d");
+  const N = Math.round(S.res * (fast ? 0.6 : 1)), nE = S.stereo ? 2 : 1, W = N * nE;
+  const off = document.createElement("canvas"); off.width = W; off.height = N;
+  const octx = off.getContext("2d"), id = octx.createImageData(W, N);
+  const eyes = S.stereo ? [eyePos(32), eyePos(-32)] : [eyePos(0)];
+  const cams = eyes.map((E, k) => renderEye(E, N, id.data, k * N, W, k === 0));
+  octx.putImageData(id, 0, 0);
+  const H = Math.round(cv.width * N / W); cv.height = H;
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, H);
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, cv.width, H);
+  ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.filter = "blur(3px)"; ctx.globalAlpha = 0.9;
+  ctx.drawImage(off, 0, 0, cv.width, H); ctx.restore();
+  if (S.alvo) eyes.forEach((E, k) => {
+    ctx.save(); ctx.fillStyle = "rgba(242,178,92,.6)"; const cam = cams[k], sc = cv.width / W;
+    for (const f of FL) { const w = sub(f.Q, E), z = dot(w, cam.F);
+      const x = k * N + (dot(w, cam.R) / z / cam.th + 1) / 2 * N, y = (1 - dot(w, cam.U) / z / cam.th) / 2 * N;
+      ctx.fillRect(x * sc - 1, y * sc - 1, 2, 2); }
+    ctx.restore();
+  });
+  document.getElementById("camLbl").textContent = S.stereo ? "olho direito | olho esquerdo — cruze os olhos" : "";
+  document.getElementById("camInfo").textContent = "θ " + S.eyeTh.toFixed(1) + "° · φ " + S.eyePh + "° · " + N + "² px · soma de 1 volta";
+}
+
+/* ==========================================================
+   ROTOR, AGENDA E CORTE
+   ========================================================== */
+function renderRotor() {
+  const cv = document.getElementById("rotor"), ctx = cv.getContext("2d"), W = cv.width;
+  ctx.fillStyle = "#05090B"; ctx.fillRect(0, 0, W, W);
+  const ext = (bloco() ? RB() : S.R) * 1.12, sc = W / 2 / ext, X = x => W / 2 + x * sc, Y = y => W / 2 - y * sc;
+  ctx.strokeStyle = "#26424E"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(W / 2, W / 2, S.R * sc, 0, 7); ctx.stroke();
+  const psi = S.psi * deg, half = Math.PI / S.M;
+  for (let k = 0; k < S.M; k++) {
+    const s = spoke(k, psi), l = 30 + 50 * k / S.M;
+    ctx.strokeStyle = "hsl(195,20%," + l + "%)"; ctx.lineWidth = Math.max(1, S.fio * sc);
+    ctx.beginPath(); ctx.moveTo(X(s.a[0]), Y(s.a[1])); ctx.lineTo(X(s.b[0]), Y(s.b[1])); ctx.stroke();
+  }
+  if (bloco()) { ctx.strokeStyle = "rgba(150,220,255,.5)"; ctx.beginPath(); ctx.arc(W / 2, W / 2, RB() * sc, 0, 7); ctx.stroke(); }
+  else { ctx.fillStyle = "#7C99A4"; ctx.beginPath(); ctx.arc(W / 2, W / 2, RIN * sc, 0, 7); ctx.fill(); }
+  for (const f of FL) {
+    if (!f.B) continue;
+    const h = f.psi / (2 * Math.PI) * 300;
+    ctx.fillStyle = f.ok ? "hsla(" + h + ",70%,60%,.55)" : "rgba(226,105,74,.8)";
+    ctx.fillRect(X(f.B[0]) - 1.5, Y(f.B[1]) - 1.5, 3, 3);
+  }
+  for (const f of FL) {                           // pulsos desta fatia de fase
+    if (!f.ok) continue;
+    let d = Math.abs(f.psi - psi); d = Math.min(d, 2 * Math.PI - d); if (d > half) continue;
+    ctx.fillStyle = "#3CFF7A"; ctx.beginPath(); ctx.arc(X(f.B[0]), Y(f.B[1]), 4, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle = "#7C99A4"; ctx.font = "11px IBM Plex Mono, monospace";
+  ctx.fillText("ψ = " + S.psi.toFixed(0) + "° · claro = degrau mais alto · cor do voxel = fase do pulso", 14, 18);
+  ctx.fillRect(14, W - 18, 2 * sc, 2); ctx.fillText("2 mm", 14, W - 24);
+}
+function renderAgenda() {
+  const cv = document.getElementById("agenda"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  ctx.fillStyle = "#05090B"; ctx.fillRect(0, 0, W, H);
+  const x0 = 46, x1 = W - 12, y0 = H - 26, y1 = 14;
+  const X = p => x0 + (x1 - x0) * p / (2 * Math.PI), Y = k => y0 + (y1 - y0) * k / Math.max(1, S.M - 1);
+  ctx.strokeStyle = "#1A2E37"; ctx.lineWidth = 1;
+  for (let k = 0; k < S.M; k++) { ctx.beginPath(); ctx.moveTo(x0, Y(k)); ctx.lineTo(x1, Y(k)); ctx.stroke(); }
+  for (const f of FL) if (f.B) {
+    ctx.fillStyle = f.ok ? "hsl(" + (140 + 50 * (f.volta || 0)) % 360 + ",80%,60%)" : "#E2694A";
+    ctx.fillRect(X(f.psi) - 1.5, Y(f.k) - 1.5, 3, 3);
+  }
+  ctx.strokeStyle = "#F2B25C"; ctx.beginPath(); ctx.moveTo(X(S.psi * deg), y0 + 4); ctx.lineTo(X(S.psi * deg), y1 - 4); ctx.stroke();
+  ctx.fillStyle = "#7C99A4"; ctx.font = "10.5px IBM Plex Mono, monospace";
+  ctx.fillText("0°", x0 - 4, H - 8); ctx.fillText("fase do pulso ψ →", W / 2 - 50, H - 8); ctx.fillText("360°", x1 - 26, H - 8);
+  ctx.save(); ctx.translate(14, H / 2 + 40); ctx.rotate(-Math.PI / 2); ctx.fillText("degrau k (altura) →", 0, 0); ctx.restore();
+}
+function renderCut() {
+  const cv = document.getElementById("cut"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  ctx.fillStyle = "#05090B"; ctx.fillRect(0, 0, W, H);
+  const G = galvoP(), zmax = G[2] + 12, xr = Math.max(g.R1, g.R2) + 10;
+  const sc = Math.min(W / (2 * xr), (H - 20) / (zmax + 12)), X = u => W / 2 + u * sc, Y = z => H - 10 - (z + 6) * sc;
+  const ph = S.eyePh * deg, U = p => p[0] * Math.cos(ph) + p[1] * Math.sin(ph);
+  ctx.lineWidth = 2; ctx.strokeStyle = "#7FB6E8";
+  for (const s of [-1, 1]) { ctx.beginPath(); for (let i = 0; i <= 60; i++) { const r = g.hole + (g.R1 - g.hole) * i / 60; i ? ctx.lineTo(X(s * r), Y(zTop(r, g))) : ctx.moveTo(X(s * r), Y(zTop(r, g))); } ctx.stroke(); }
+  ctx.beginPath(); for (let i = 0; i <= 120; i++) { const r = -g.R2 + 2 * g.R2 * i / 120; i ? ctx.lineTo(X(r), Y(zBot(Math.abs(r), g))) : ctx.moveTo(X(r), Y(zBot(Math.abs(r), g))); } ctx.stroke();
+  ctx.fillStyle = "#26424E"; ctx.fillRect(X(-S.R), Y(S.zMax), 2 * S.R * sc, Math.max(1, S.zMax * sc));
+  if (bloco()) { ctx.strokeStyle = "rgba(150,220,255,.6)"; ctx.lineWidth = 1; ctx.strokeRect(X(-RB()), Y(zTopo()), 2 * RB() * sc, zTopo() * sc); }
+  ctx.strokeStyle = "rgba(60,255,122,.35)"; ctx.lineWidth = 0.8;
+  FL.filter(f => f.ok).filter((_, i) => i % 6 === 0).forEach(f => { ctx.beginPath(); ctx.moveTo(X(U(G)), Y(G[2])); ctx.lineTo(X(U(f.B)), Y(f.B[2])); ctx.stroke(); });
+  ctx.fillStyle = "#F2B25C"; ctx.beginPath(); ctx.arc(X(0), Y(G[2]), 4, 0, 7); ctx.fill();
+  ctx.fillStyle = "rgba(242,178,92,.8)"; for (const f of FL) ctx.fillRect(X(U(f.Q)) - 1, Y(f.Q[2]) - 1, 2, 2);
+  ctx.fillStyle = "#7C99A4"; ctx.font = "11px IBM Plex Mono, monospace";
+  ctx.fillText("galvo", X(0) + 8, Y(G[2]) + 4); ctx.fillText("rotor", X(S.R) + 6, Y(S.zMax / 2)); ctx.fillText("alvo no ar", X(S.size) + 8, Y(g.z2 + S.h0));
+}
+function hud() {
+  const cell = (k, v, cls, sm) => '<div><span class="k">' + k + '</span><span class="v ' + (cls || "") + '">' + v + (sm ? "<small>" + sm + "</small>" : "") + '</span></div>';
+  const P = PRESETS[S.preset], st = STATS, miss = st.tot - st.ok;
+  document.getElementById("hud").innerHTML =
+    cell("relé", P.nome || "×" + P.m + " · " + P.dz / 10 + " cm", "", "") +
+    cell("voxels acesos", st.ok + " / " + st.tot, miss ? "warn" : "good", miss ? " " + Object.entries(st.why).map(([k, v]) => v + " " + k).join(", ") : "") +
+    cell("vistos neste olho", VISTOS, VISTOS ? "good" : "warn", "") +
+    cell("passo de profundidade", st.dz.toFixed(2), "", "mm") +
+    cell("erro de quantização", st.eq.toFixed(2), "", "mm méd." + (st.viz ? " · " + st.viz + " no degrau vizinho" : "")) +
+    cell("pulsos", (st.pulsos * S.rps / 1000).toFixed(1), "", "k/s" + (st.pulsos < st.ok ? " · " + (st.ok - st.pulsos) + " voxels repetidos" : "")) +
+    cell("voltas por quadro", st.nV, st.qps >= 24 ? "good" : st.qps >= 12 ? "warn" : "bad", " → " + st.qps.toFixed(1) + " quadros/s") +
+    cell("borrão do pulso", (st.borrao * 1000).toFixed(0), st.borrao > S.spot ? "warn" : "good", "µm") +
+    (bloco() ? cell("índice do meio", nMeio(LAMBDA[1]).toFixed(4), "", " @532 nm · R/B " + nMeio(LAMBDA[0]).toFixed(4) + " / " + nMeio(LAMBDA[2]).toFixed(4)) +
+      cell("Fresnel na face", (100 * st.Tf).toFixed(1), "", "% atravessa (entra e sai) · reflete " + (100 * st.Rf).toFixed(1) + "% do feixe") +
+      cell("reflexo do feixe no anel", st.brilho + " / " + st.pulsos, st.brilho ? "warn" : "good", " pulsos: brilho colimado (ofusca)") : "");
+  document.getElementById("meioNote").textContent = bloco()
+    ? "Bloco " + (S.meio === "vidro" ? "de vidro K9" : "de acrílico") + " ⌀ " + (2 * RB()).toFixed(1) + " × " + zTopo().toFixed(2) + " mm. A escada é gravada " +
+      "como fileiras de microfissuras (" + nuvemN() + " pontos). O feixe entra e a luz espalhada sai pela face de cima, polida: os conjugados já incluem a refração."
+    : "Arame fosco no ar, preso a um cubo opaco de ⌀ " + S.eixo.toFixed(2) + " mm.";
+  document.getElementById("optNote").textContent = (P.mirage ? "Mirage: dois paraboloides de f = 80,6 mm, furo ⌀ 62,5 mm, imagem no plano do furo. Rotor de ⌀ " : "D = 278 mm, imagem a " + P.dz + " mm acima da abertura. Rotor de ⌀ ") +
+    (2 * S.R).toFixed(1) + " mm no vértice de M2; galvo no eixo, " + S.gH + " mm acima da imagem.";
+}
+/* ==========================================================
+   ARAME E RAIOS EM 3D — o rotor na fase do voxel escolhido e os raios traçados:
+   galvo → furo → ponto aceso B → M1 → M2 → ar (convergem no alvo)
+   ========================================================== */
+const V3 = { modo: "rotor", yaw: -55, pitch: 24, zoom: 1, sel: 0, n: 48, fatia: false };
+function render3D() {
+  const cv = document.getElementById("v3"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  ctx.fillStyle = "#05090B"; ctx.fillRect(0, 0, W, H);
+  const ok = FL.filter(f => f.ok), sel = document.getElementById("v3Sel");
+  sel.max = Math.max(0, ok.length - 1); V3.sel = Math.min(V3.sel, Math.max(0, ok.length - 1)); sel.value = V3.sel;
+  document.getElementById("v3SelV").textContent = ok.length ? (V3.sel + 1) + "/" + ok.length : "—";
+  const f = ok[V3.sel], psi = f ? f.psi : S.psi * deg, zImg = g.z2 + S.h0;
+  // câmera orbital
+  const T = V3.modo === "rotor" ? [0, 0, S.zMax / 2] : [0, 0, zImg * 0.5];
+  const dist = (V3.modo === "rotor" ? 5.2 * Math.max(S.R, S.zMax) : 2.6 * Math.max(g.R1, zImg)) / V3.zoom;
+  const y = V3.yaw * deg, p = V3.pitch * deg;
+  const E = add(T, mul([Math.cos(p) * Math.cos(y), Math.cos(p) * Math.sin(y), Math.sin(p)], dist));
+  const F = unit(sub(T, E)), R = unit(cross(F, [0, 0, 1])), U = cross(R, F), fl = W * 0.85;
+  const pj = P => { const w = sub(P, E), z = dot(w, F); return z < 0.05 * dist ? null : [W / 2 + fl * dot(w, R) / z, H / 2 - fl * dot(w, U) / z, z]; };
+  V3.cam = { E, F, R, fl };
+  const itens = [];                                   // pintor: do mais longe ao mais perto
+  const seg = (a, b, cor, lw, mundo) => { const A = pj(a), B = pj(b); if (!A || !B) return;
+    const z = (A[2] + B[2]) / 2; itens.push({ z, t: 0, A, B, cor, lw: mundo ? Math.max(lw, fl * mundo / z) : lw }); };
+  const pt = (P, cor, r) => { const A = pj(P); if (A) itens.push({ z: A[2] - 1e-3, t: 1, A, cor, r }); };
+  // espelhos em arame: meridianos e paralelos sobre as superfícies
+  const malha = (r0, r1, zf, cor) => {
+    for (let m = 0; m < 24; m++) { const a = m / 24 * 2 * Math.PI;
+      for (let i = 0; i < 16; i++) { const ra = r0 + (r1 - r0) * i / 16, rb = r0 + (r1 - r0) * (i + 1) / 16;
+        seg([ra * Math.cos(a), ra * Math.sin(a), zf(ra)], [rb * Math.cos(a), rb * Math.sin(a), zf(rb)], cor, 0.7); } }
+    for (const ra of [r0, (r0 + r1) / 2, r1]) for (let m = 0; m < 48; m++) { const a = m / 48 * 2 * Math.PI, b = (m + 1) / 48 * 2 * Math.PI;
+      seg([ra * Math.cos(a), ra * Math.sin(a), zf(ra)], [ra * Math.cos(b), ra * Math.sin(b), zf(ra)], cor, 0.7); }
+  };
+  malha(g.hole, g.R1, r => zTop(r, g), "rgba(127,182,232,.22)");
+  malha(V3.modo === "rotor" ? g.plateR : 0, g.R2, r => zBot(r, g), "rgba(127,182,232,.22)");
+  // base preta do rotor e cubo
+  for (let m = 0; m < 64; m++) { const a = m / 64 * 2 * Math.PI, b = (m + 1) / 64 * 2 * Math.PI;
+    seg([g.plateR * Math.cos(a), g.plateR * Math.sin(a), 0], [g.plateR * Math.cos(b), g.plateR * Math.sin(b), 0], "#3A5560", 1.2); }
+  if (!bloco()) for (let i = 0; i < 12; i++) seg([0, 0, S.zMax * i / 12], [0, 0, S.zMax * (i + 1) / 12], "#56707A", 2, 2 * RIN);
+  else { const rb = RB(), zT = zTopo(), cor = "rgba(150,220,255,.4)";       // o bloco transparente
+    for (let m = 0; m < 64; m++) { const a = m / 64 * 2 * Math.PI, b = (m + 1) / 64 * 2 * Math.PI;
+      for (const z of [0, zT]) seg([rb * Math.cos(a), rb * Math.sin(a), z], [rb * Math.cos(b), rb * Math.sin(b), z], cor, 1);
+      if (m % 8 === 0) seg([rb * Math.cos(a), rb * Math.sin(a), 0], [rb * Math.cos(a), rb * Math.sin(a), zT], cor, 0.7); } }
+  // os raios de arame na fase do pulso: cor pela altura; o degrau aceso em verde
+  const sp = []; for (let k = 0; k < S.M; k++) sp.push(spoke(k, psi));
+  for (const s of sp) {
+    const aceso = f && s.k === f.k, l = 32 + 45 * s.k / Math.max(1, S.M - 1);
+    if (bloco()) { for (let i = 0; i <= 16; i++) pt(lerp(s.a, s.b, i / 16), aceso ? "#9BFFC0" : "hsl(195,22%," + l + "%)", aceso ? 1.6 : 1); continue; }
+    for (let i = 0; i < 8; i++) seg(lerp(s.a, s.b, i / 8), lerp(s.a, s.b, (i + 1) / 8), aceso ? "#9BFFC0" : "hsl(195,22%," + l + "%)", 1.4, S.fio);
+  }
+  for (let k = 0; k + 1 < S.M; k++) seg(sp[k].b, sp[k + 1].b, "rgba(124,153,164,.25)", 0.6);   // guia da escada
+  // feixes do galvo
+  const G = galvoP(), feixes = V3.fatia ? ok.filter(q => { const d = Math.abs(q.psi - psi); return Math.min(d, 2 * Math.PI - d) <= Math.PI / S.M; }) : (f ? [f] : []);
+  for (const q of feixes) { if (q.X) { seg(G, q.X, q === f ? "rgba(60,255,122,.95)" : "rgba(60,255,122,.4)", q === f ? 1.6 : 0.8); seg(q.X, q.B, q === f ? "rgba(60,255,122,.95)" : "rgba(60,255,122,.4)", q === f ? 1.6 : 0.8); pt(q.B, "#3CFF7A", 3); continue; }
+    seg(G, q.B, q === f ? "rgba(60,255,122,.95)" : "rgba(60,255,122,.4)", q === f ? 1.6 : 0.8); pt(q.B, "#3CFF7A", 3); }
+  // alvos (e, no aparelho inteiro, pontos acesos) dos outros voxels
+  const css = (q, a) => { const c = S.cor ? COR[q.i] || VERDE : [0.95, 0.7, 0.36]; return "rgba(" + c.map(v => Math.round(255 * v)).join(",") + "," + a + ")"; };
+  for (const q of ok) if (q !== f) { pt(q.Q, css(q, 0.8), 1.8); if (V3.modo === "aparelho") pt(q.B, "rgba(60,255,122,.35)", 1.2); }
+  // raios espalhados do ponto aceso: traçados (trace) pelo relé, com o tapado dos outros degraus
+  let nAr = 0, nTap = 0, nPerd = 0; const saidas = [];
+  if (f) {
+    for (let i = 0; i < V3.n; i++) {
+      const u = (i + 0.5) / V3.n, r = Math.sqrt(g.hole ** 2 + u * (g.R1 ** 2 - g.hole ** 2)), ph = i * 2.399963229728653;
+      const P1 = [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)];
+      const O = bloco() ? pelaFace(f.B, P1, nMeio(LAMBDA[1]), 1, zTopo()) : f.B, d0 = unit(sub(bloco() ? O : P1, f.B));   // no bloco: sai pela face, refrata
+      if (tapado(f.B, d0, f.sp, f.k, 0)) { nTap++; seg(f.B, add(f.B, mul(d0, (S.zMax + 0.6 - f.B[2]) / d0[2])), "rgba(226,105,74,.9)", 1.2); continue; }
+      const t = Math.hypot(O[0], O[1]) > (bloco() ? RB() : Infinity) ? null : trace(O, P1);
+      if (!t) { nPerd++; seg(f.B, P1, "rgba(124,153,164,.18)", 0.6); continue; }
+      nAr++; saidas.push({ P2: t.P2, d: t.d });
+      if (O !== f.B) seg(f.B, O, "rgba(242,178,92,.75)", 0.8);
+      seg(O, P1, "rgba(242,178,92,.55)", 0.8); seg(P1, t.P2, "rgba(127,182,232,.55)", 0.8);
+      const d = unit(t.d); seg(t.P2, add(t.P2, mul(d, (zImg + 40 - t.P2[2]) / d[2])), "rgba(232,242,245,.6)", 0.8);
+    }
+    pt(f.Q, "#F2B25C", 4);
+    const bh = f.brilho || (f.X && brilhoDe(f));      // reflexo do feixe na face de cima
+    if (bh && bh.P1) { seg(f.X, bh.P1, "rgba(255,90,220,.9)", 1.2);
+      if (bh.P2) { seg(bh.P1, bh.P2, "rgba(255,90,220,.9)", 1.2); seg(bh.P2, add(bh.P2, mul(bh.d, (zImg + 40 - bh.P2[2]) / bh.d[2])), "rgba(255,90,220,.9)", 1.2); } }
+  }
+  const c = saidas.length >= 3 ? converge(saidas) : null;
+  if (c) pt(c.P, "#FFFFFF", 2.5);
+  pt(G, "#F2B25C", 4);
+  const C = centroImg(), cr = Math.max(0.6, S.size * 0.25);                 // centro da projeção em cima
+  seg(sub(C, [cr, 0, 0]), add(C, [cr, 0, 0]), "#F2B25C", 1.2); seg(sub(C, [0, cr, 0]), add(C, [0, cr, 0]), "#F2B25C", 1.2);
+  seg([C[0], C[1], g.z2], C, "rgba(242,178,92,.5)", 0.8);
+  itens.sort((a, b) => b.z - a.z);
+  ctx.lineCap = "round";
+  for (const it of itens) {
+    if (it.t) { ctx.fillStyle = it.cor; ctx.beginPath(); ctx.arc(it.A[0], it.A[1], it.r, 0, 7); ctx.fill(); continue; }
+    ctx.strokeStyle = it.cor; ctx.lineWidth = it.lw; ctx.beginPath(); ctx.moveTo(it.A[0], it.A[1]); ctx.lineTo(it.B[0], it.B[1]); ctx.stroke();
+  }
+  // ficha do arame e legenda
+  ctx.font = "11px IBM Plex Mono, monospace"; ctx.fillStyle = "#7C99A4";
+  const dz = (S.zMax - Z0) / Math.max(1, S.M - 1);
+  [ (bloco() ? (S.meio === "vidro" ? "vidro K9" : "acrílico") + " n " + nMeio(LAMBDA[1]).toFixed(3) + " · microfissuras ⌀ " : "arame fosco ⌀ ") + S.fio.toFixed(2) + " mm · " + S.M + " raios de " + RIN.toFixed(1) + " a " + S.R.toFixed(2) + " mm do eixo",
+    "degrau Δz = " + dz.toFixed(3) + " mm · Δφ = " + (360 / S.M).toFixed(1) + "° · altura " + Z0.toFixed(1) + "–" + S.zMax.toFixed(2) + " mm · " + (bloco() ? "sem cubo: gravação começa a " + RIN.toFixed(2) + " mm do eixo" : "cubo ⌀ " + (2 * RIN).toFixed(1) + " mm"),
+    f ? "voxel " + (V3.sel + 1) + ": degrau " + f.k + (f.vizinho ? " (vizinho)" : "") + " (z " + zK(f.k).toFixed(2) + " mm) · pulso em ψ = " + (f.psi / deg).toFixed(1) + "° · volta " + ((f.volta || 0) + 1) : "nenhum voxel aceso"
+  ].forEach((t, i) => ctx.fillText(t, 14, 20 + 15 * i));
+  const leg = [["#3CFF7A", "feixe do galvo → ponto aceso"], ["#F2B25C", "ponto aceso → M1"], ["#7FB6E8", "M1 → M2"], ["#E8F2F5", "M2 → ar (passa no alvo)"], ["#E2694A", "tapado por outro degrau"]].concat(bloco() ? [["#FF5ADC", "reflexo do feixe na face de cima"]] : []);
+  leg.forEach(([cor, t], i) => { const yy = H - 16 - 15 * (leg.length - 1 - i);
+    ctx.fillStyle = cor; ctx.fillRect(14, yy - 4, 18, 3); ctx.fillStyle = "#7C99A4"; ctx.fillText(t, 38, yy); });
+  const tot = nAr + nTap + nPerd;
+  document.getElementById("v3Info").textContent = f ? tot + " raios do ponto aceso: " + nAr + " chegam ao ar, " + nTap + " tapados, " + nPerd + " perdidos" +
+    (c ? " · cruzam a " + Math.hypot(...sub(c.P, f.Q)).toFixed(3) + " mm do alvo" : "") + " · arraste para girar, roda para zoom" : "";
+}
+function renderAll(fast) { render3D(); renderCam(fast); renderRotor(); renderAgenda(); renderCut(); hud(); }
+
+/* ==========================================================
+   VERIFICAÇÃO — do ponto aceso, pelo relé, até o ar
+   ========================================================== */
+function imagemDe(B, f, filtro, n) {
+  const rays = []; let tot = 0, tap = 0;
+  const gr = bloco(), nn = n || nMeio(LAMBDA[1]), zT = zTopo(), rb = RB();
+  for (let i = 0; i < 400; i++) {
+    const u = (i + 0.5) / 400, r = Math.sqrt(g.hole ** 2 + u * (g.R1 ** 2 - g.hole ** 2)), ph = i * 2.399963229728653;
+    const P1 = [r * Math.cos(ph), r * Math.sin(ph), zTop(r, g)], O = gr ? pelaFace(B, P1, nn, 1, zT) : B;   // no bloco: sai pela face
+    if (gr && Math.hypot(O[0], O[1]) > rb) continue;
+    const t = trace(O, P1); if (!t) continue;
+    const d = unit(t.d), th = Math.acos(d[2]) / deg, az = Math.atan2(d[1], d[0]);
+    if (filtro && !filtro(th, az)) continue;
+    tot++;
+    if (f && tapado(B, unit(sub(gr ? O : P1, B)), f.sp, f.k, 0)) { tap++; continue; }
+    rays.push({ P2: t.P2, d: t.d });
+  }
+  return { c: rays.length >= 3 ? converge(rays) : null, tot, tap };
+}
+function runVerify() {
+  const box = document.getElementById("ver"), busy = document.getElementById("busy");
+  busy.textContent = "verificando…";
+  setTimeout(() => {
+    const rows = [], row = (lb, m, cls, e) => rows.push('<div class="r"><span class="lb">' + lb + '</span><span class="m ' + cls + '">' + m + '</span><span class="e">' + (e || "") + '</span></div>');
+    const ok = FL.filter(f => f.ok), pick = []; const n = Math.min(12, ok.length);
+    for (let j = 0; j < n; j++) pick.push(ok[Math.floor(j * ok.length / n)]);
+    const st = (a) => a.length ? [a.reduce((x, y) => x + y, 0) / a.length, Math.max(...a)] : [NaN, NaN];
+    const fm = ([m, x]) => m.toFixed(3) + " / " + x.toFixed(3) + " mm";
+    // 1. conjugado exato: Q° traçado para a frente cai em Q?
+    const e1 = []; for (const f of pick) { const r = imagemDe(f.Qo, null); if (r.c) e1.push(Math.hypot(...sub(r.c.P, f.Q))); }
+    row("relé: conjugado Q° traçado de volta ao ar vs alvo (médio / máx)", fm(st(e1)), st(e1)[1] < 0.3 ? "ok" : "off", "aberração do relé");
+    // 2. ponto realmente aceso (no degrau) → imagem
+    const e2 = [], ez = [], tp = [];
+    for (const f of pick) { const r = imagemDe(f.B, f); if (r.c) { e2.push(Math.hypot(...sub(r.c.P, f.Q))); ez.push(r.c.P[2] - f.Q[2]); } if (r.tot) tp.push(r.tap / r.tot); }
+    row("ponto aceso no degrau → imagem vs alvo (médio / máx)", fm(st(e2)), "info", "inclui o passo Δz = " + STATS.dz.toFixed(2));
+    row("oclusão: fração da pupila tapada por outros degraus (médio / máx)", (100 * st(tp)[0]).toFixed(1) + " / " + (100 * st(tp)[1]).toFixed(1) + " %", st(tp)[1] < 0.2 ? "ok" : "off", "fio " + S.fio + " mm");
+    // 3. paralaxe completa: o mesmo ponto visto de elevações e azimutes diferentes
+    const tm = VC.tmed, ev = [], ea = [];
+    for (const f of pick) {
+      const lo = imagemDe(f.B, f, th => th < tm).c, hi = imagemDe(f.B, f, th => th >= tm).c;
+      const l = imagemDe(f.B, f, (th, az) => Math.cos(az) < 0).c, r = imagemDe(f.B, f, (th, az) => Math.cos(az) >= 0).c;
+      if (lo && hi) ev.push(Math.hypot(...sub(lo.P, hi.P))); if (l && r) ea.push(Math.hypot(...sub(l.P, r.P)));
+    }
+    row("paralaxe vertical: ponto visto de baixo vs de cima do lóbulo (médio / máx)", fm(st(ev)), st(ev)[1] < 0.5 ? "ok" : "off", "gravura: 1,7–2,7 mm");
+    row("paralaxe horizontal: ponto visto de lados opostos (médio / máx)", fm(st(ea)), st(ea)[1] < 0.5 ? "ok" : "off", "");
+    // 4. simetria do programa: girar o padrão de α = adiantar cada pulso de α
+    if (ok.length) {
+      const f0 = ok[0], a = 40 * deg, f1 = planFlash(rotz(f0.Q, a), rotz(f0.Qo, a), -1);
+      let dp = mod2pi(f1.psi - f0.psi - a); dp = Math.min(dp, 2 * Math.PI - dp);
+      row("padrão girado 40° → mesmo degrau, pulso 40° depois (resíduo de fase)", (dp / deg).toExponential(1) + "°", dp < 1e-9 && f1.k === f0.k ? "ok" : "off", "simetria");
+    }
+    if (bloco()) {                                 // dispersão: cada cor acende e é vista com o seu n(λ)
+      const ec = [];
+      for (const f of pick) { const r1 = imagemDe(f.B, f).c; if (!r1) continue;
+        for (const c of [0, 2]) { const r = imagemDe(f.Bc[c], f, null, nMeio(LAMBDA[c])).c; if (r) ec.push(Math.hypot(...sub(r.P, r1.P))); } }
+      row("dispersão: imagem do ponto vermelho e do azul vs a do verde (médio / máx)", fm(st(ec)), st(ec)[1] < S.spot / 2 ? "ok" : "off", "meio ponto = " + (S.spot / 2).toFixed(3));
+      row("reflexo de Fresnel na face: pulsos cujo reflexo sai pelo anel de visão", STATS.brilho + " / " + STATS.pulsos, STATS.brilho ? "off" : "ok",
+          (100 * STATS.Rf).toFixed(1) + "% do laser, colimado");
+    }
+    // difração: feixe gaussiano focado no meio da escada, e o limite do próprio relé
+    const lam = LAMBDA[1] * 1e-3, w0 = S.spot / 2, nn = bloco() ? nMeio(LAMBDA[1]) : 1, zR = Math.PI * w0 * w0 * nn / lam, meia = (S.zMax - Z0) / 2;
+    row("difração do feixe: alcance de Rayleigh z_R · ⌀ nas pontas da escada (foco no meio)", zR.toFixed(1) + " mm · ×" + Math.sqrt(1 + (meia / zR) ** 2).toFixed(3),
+        meia < zR ? "ok" : "off", "w₀ " + (w0 * 1000).toFixed(0) + " µm, λ 532 nm" + (bloco() ? ", z_R × n" : ""));
+    const Lg = g.z2 + S.gH - S.zMax / 2, wMin = lam * Lg / (Math.PI * 1.5);
+    row("menor ⌀ que a difração permite com feixe de ⌀ 3 mm no galvo", (2000 * wMin).toFixed(0) + " µm", 2 * wMin <= S.spot ? "ok" : "off", "a " + Lg.toFixed(0) + " mm do rotor");
+    row("difração do relé: raio de Airy 0,61·λ/NA do lóbulo", (0.61 * lam / Math.sin(VC.tmax * deg) * 1000).toFixed(2) + " µm", "info", "desprezível perto do ponto");
+    row("orçamento: voxels / voltas por quadro / quadros por segundo", STATS.ok + " / " + STATS.nV + " / " + STATS.qps.toFixed(1), STATS.qps >= 24 ? "ok" : "off", "persistência ≳ 24/s");
+    box.innerHTML = rows.join(""); busy.textContent = "";
+  }, 20);
+}
+
+/* ==========================================================
+   INTERFACE
+   ========================================================== */
+const fmt = {
+  npts: v => v, size: v => "±" + (+v).toFixed(2) + " mm", h0: v => "+" + (+v).toFixed(2) + " mm", zk: v => (+v).toFixed(2),
+  animRate: v => v + " °/s", M: v => v, R: v => (+v).toFixed(2) + " mm", zMax: v => (+v).toFixed(2) + " mm",
+  fio: v => (+v).toFixed(2) + " mm", eixo: v => "⌀ " + (+v).toFixed(2) + " mm", rps: v => v + " voltas/s", gH: v => v + " mm", spot: v => (+v).toFixed(2) + " mm",
+  fdlp: v => v + " k/s", pulso: v => v + " µs", assenta: v => v + " µs", omega: v => v + " °/ms", pps: v => v + " k/s", passo: v => (+v).toFixed(2) + "° ópt.", eyeTh: v => (+v).toFixed(1) + "°", eyePh: v => v + "°", eyeDist: v => v + " mm", res: v => v + " px",
+  psi: v => (+v).toFixed(0) + "°", topo: v => (+v).toFixed(1) + " mm", borda: v => (+v).toFixed(1) + " mm", pg: v => (+v * 1000).toFixed(0) + " µm", amb: v => Math.round(100 * v) + " %", ox: v => (+v).toFixed(2) + " mm", oy: v => (+v).toFixed(2) + " mm", giro: v => v + "°"
+};
+const RECONJ = new Set(["npts", "size", "h0", "zk", "ox", "oy", "giro", "topo", "borda"]), REPLAN = new Set(["M", "R", "zMax", "fio", "eixo", "gH", "spot", "rps", "pulso", "assenta", "omega", "fdlp", "pps", "passo"]);
+let tSlow = null;
+function schedule(kind, k) {
+  clearTimeout(tSlow);
+  if (kind === "plan" && bloco() && k !== "pg") kind = "conj";     // no bloco a face de cima acompanha a escada: reconjuga
+  if (kind === "conj") { tSlow = setTimeout(() => { placa(); conjugar(); agendar(); renderAll(); }, 200); return; }
+  if (kind === "plan") { tSlow = setTimeout(() => { placa(); agendar(); renderAll(); }, 120); return; }
+  if (kind === "painel") { renderRotor(); renderAgenda(); return; }
+  renderAll(true); tSlow = setTimeout(() => renderAll(false), 170);
+}
+function syncRanges() {
+  for (const k of Object.keys(fmt)) {
+    const el = document.getElementById(k); if (!el) continue;
+    if (k === "eyeTh") { el.min = VC.tmin.toFixed(1); el.max = VC.tmax.toFixed(1); }
+    el.value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]);
+  }
+}
+for (const k of Object.keys(fmt)) {
+  const el = document.getElementById(k); if (!el) continue;
+  el.addEventListener("input", () => {
+    S[k] = +el.value; document.getElementById(k + "v").textContent = fmt[k](S[k]);
+    schedule(RECONJ.has(k) ? "conj" : REPLAN.has(k) ? "plan" : k === "psi" ? "painel" : "vista", k);
+  });
+}
+(function () {
+  const box = document.getElementById("objSeg"), bs = [...box.querySelectorAll("button")];
+  const paint = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.obj));
+  bs.forEach(b => b.addEventListener("click", () => { S.obj = b.dataset.v; paint(); schedule("conj"); }));
+  paint();
+  const pb = document.getElementById("presets");
+  pb.innerHTML = PRESETS.map((P, i) => '<button id="pr' + i + '">' + (P.nome ? '<b>' + P.nome + '</b>brinquedo' : '<b>×' + P.m + '</b>' + P.dz / 10 + ' cm') + '</button>').join("");
+  const paintP = () => PRESETS.forEach((_, i) => document.getElementById("pr" + i).setAttribute("aria-pressed", i === S.preset));
+  PRESETS.forEach((_, i) => document.getElementById("pr" + i).addEventListener("click", () => { S.preset = i; S.eyeTh = NaN; build(); syncRanges(); paintP(); }));
+  paintP();
+})();
+(function () {
+  const bs = [...document.getElementById("fonteSeg").querySelectorAll("button")];
+  const paint = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.fonte));
+  bs.forEach(b => b.addEventListener("click", () => { S.fonte = b.dataset.v; paint(); schedule("plan"); })); paint();
+})();
+for (const k of ["stereo", "alvo"]) document.getElementById(k).addEventListener("change", e => { S[k] = e.target.checked; schedule("vista"); });
+document.getElementById("anim").addEventListener("change", e => { S.anim = e.target.checked; iniciar(); });
+document.getElementById("passeio").addEventListener("change", e => { S.passeio = e.target.checked; iniciar(); });
+document.getElementById("tombar").addEventListener("change", e => { S.tombar = e.target.checked; if (!S.tombar) { S.tomb = 0; schedule("conj"); } });
+document.getElementById("cor").addEventListener("change", e => { S.cor = e.target.checked; schedule("vista"); });
+document.getElementById("cor").checked = S.cor;
+document.getElementById("vortice").addEventListener("change", e => { S.vortice = e.target.checked; schedule("plan"); });
+(function () {
+  const bs = [...document.getElementById("meioSeg").querySelectorAll("button")];
+  const paint = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.meio));
+  // trocar o meio muda a profundidade aparente (≈ ÷n): a altura da projeção é reajustada para o objeto continuar no meio da escada
+  const meioZ = () => { const z = CONJ.filter(Boolean).map(c => c.P[2]); return z.length ? (Math.min(...z) + Math.max(...z)) / 2 : NaN; };
+  bs.forEach(b => b.addEventListener("click", () => {
+    const z0 = meioZ(); S.meio = b.dataset.v; paint(); setOptics(); conjugar();
+    for (let it = 0; it < 6 && isFinite(z0); it++) { const dz = meioZ() - z0; if (Math.abs(dz) < 0.005) break;
+      S.h0 = Math.max(0, Math.min(14, S.h0 - dz / (bloco() ? nMeio(LAMBDA[1]) : 1))); conjugar(); }
+    document.getElementById("h0b").value = S.h0; document.getElementById("h0bv").textContent = fmt.h0(S.h0);
+    agendar(); syncRanges(); renderAll();
+  })); paint();
+})();
+document.getElementById("bXyz").addEventListener("click", () => exportarNuvem("xyz"));
+document.getElementById("bDxf").addEventListener("click", () => exportarNuvem("dxf"));
+function resMax() {
+  if (S.obj === "onda") { S.npts = Math.min(6000, Math.round(Math.PI * (S.size / S.spot) ** 2)); }
+  else if (S.obj === "rosto" && S.cheio)          // malha hexagonal de passo ⌀·√3/2: os discos dos pontos cobrem a superfície sem frestas
+    S.npts = Math.min(6000, Math.round(Math.PI * 0.74 * 0.98 * S.size ** 2 / (0.866 * (0.866 * S.spot) ** 2)));
+  else { let L = 0; for (const c of curves()) { let p = c(0); for (let i = 1; i <= 400; i++) { const q = c(i / 400);
+      L += Math.hypot((q[0] - p[0]) * S.size, (q[1] - p[1]) * S.size, (q[2] - p[2]) * S.size * S.zk); p = q; } }
+    S.npts = Math.min(6000, Math.round(L / S.spot)); }
+}
+document.getElementById("bMax").addEventListener("click", () => { resMax(); syncRanges(); schedule("conj"); });
+document.getElementById("cheio").addEventListener("change", e => { S.cheio = e.target.checked; schedule("conj"); });
+/* rosto pleno: superfície cheia, eixo fino passando ao lado do rosto (nenhum voxel no cubo), escada ajustada à
+   profundidade do objeto (degrau mais fino), DLP */
+document.getElementById("bPleno").addEventListener("click", () => {
+  Object.assign(S, { obj: "rosto", cheio: true, size: 4, zk: 0.8, h0: 4, giro: 0, tombar: false, tomb: 0, anim: false, animAng: 0,
+    eixo: 0.4, fio: 0.1, R: 8, fonte: "dlp", fdlp: 20, rps: 30, cor: true });
+  S.ox = 0.74 * S.size + 0.8; S.oy = 0;                   // perto do eixo os degraus de cima se cruzam sobre o feixe
+  resMax(); setOptics(); conjugar();
+  for (let it = 0; it < (bloco() ? 5 : 1); it++) {
+    let zBot = Infinity; for (const c of CONJ) if (c) zBot = Math.min(zBot, c.P[2]);
+    S.h0 = Math.max(0, S.h0 - (zBot - Z0 - 0.15) / (bloco() ? nMeio(LAMBDA[1]) : 1)); conjugar();   // fundo do rosto logo acima do primeiro degrau
+    let zTop = 0; for (const c of CONJ) if (c) zTop = Math.max(zTop, c.P[2]);
+    S.zMax = Math.min(14, zTop + 0.05); S.M = Math.min(64, Math.max(24, Math.ceil((S.zMax - Z0) / S.spot) + 1));
+    if (bloco()) { placa(); conjugar(); }
+  }
+  document.querySelectorAll("#objSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.obj));
+  document.querySelectorAll("#fonteSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.fonte));
+  for (const k of ["cor", "tombar", "anim", "cheio"]) document.getElementById(k).checked = S[k];
+  for (const k of ["ox", "oy", "giro"]) { document.getElementById(k).value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]); }
+  syncRanges(); agendar(); renderAll();
+});
+/* Mirage: o miolo do espelho de baixo (r < furo) não participa do relé — o rotor cabe ali. O objeto fica sob o cone
+   dos raios que sobem de M2 para o furo: r < 31·(1 − z/80,6) mm. Escada ajustada à profundidade, Δz ≈ ponto */
+function mirage(spot) {
+  const iP = PRESETS.findIndex(P => P.mirage);
+  Object.assign(S, { preset: iP, obj: "toro", cheio: false, size: 12, zk: 0.8, h0: 10, giro: 0, tombar: false, tomb: 0, anim: false, animAng: 0,
+    ox: 0, oy: 0, meio: "arame", R: 18, eixo: 3, fio: Math.min(1.2, Math.max(0.1, 0.6 * spot)), spot, fonte: "vetor", pps: 30, rps: 120, gH: 100, cor: true });
+  S.eyeTh = NaN; resMax(); setOptics(); conjugar();
+  let zB = Infinity; for (const c of CONJ) if (c) zB = Math.min(zB, c.P[2]);
+  S.h0 = Math.max(0, S.h0 - (zB - Z0 - 0.3)); conjugar();
+  let zT = 0; for (const c of CONJ) if (c) zT = Math.max(zT, c.P[2]);
+  S.zMax = Math.min(30, zT + 0.1); S.M = Math.min(64, Math.max(6, Math.ceil((S.zMax - Z0) / spot) + 1));
+  document.querySelectorAll("#objSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.obj));
+  document.querySelectorAll("#fonteSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.fonte));
+  document.querySelectorAll("#meioSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.meio));
+  PRESETS.forEach((_, i) => document.getElementById("pr" + i).setAttribute("aria-pressed", i === S.preset));
+  for (const k of ["cor", "tombar", "anim", "cheio"]) document.getElementById(k).checked = S[k];
+  document.getElementById("h0b").value = S.h0; document.getElementById("h0bv").textContent = fmt.h0(S.h0);
+  for (const k of ["ox", "oy", "giro"]) { document.getElementById(k).value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]); }
+  syncRanges(); agendar(); renderAll();
+}
+document.getElementById("bMir").addEventListener("click", () => mirage(2));
+document.getElementById("bMirF").addEventListener("click", () => mirage(0.2));
+document.getElementById("bDemo").addEventListener("click", () => {
+  S.obj = "toro"; S.npts = 200; S.size = 5; S.zk = 1; S.animRate = 40; S.rps = 120; S.fonte = "vetor";
+  document.querySelectorAll("#fonteSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.fonte)); S.cor = true; S.tombar = true; S.anim = true; S.passeio = true;
+  document.querySelectorAll("#objSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.obj));
+  for (const k of ["cor", "tombar", "anim", "passeio"]) document.getElementById(k).checked = S[k];
+  syncRanges(); conjugar(); agendar(); iniciar();
+});
+document.getElementById("bVer").addEventListener("click", runVerify);
+(function () {
+  const cv = document.getElementById("v3"), bs = [...document.getElementById("v3Seg").querySelectorAll("button")];
+  const paint = () => bs.forEach(b => b.setAttribute("aria-pressed", b.dataset.v === V3.modo));
+  bs.forEach(b => b.addEventListener("click", () => { V3.modo = b.dataset.v; V3.zoom = 1; paint(); render3D(); })); paint();
+  const sel = document.getElementById("v3Sel"), n = document.getElementById("v3N");
+  n.value = V3.n; document.getElementById("v3NV").textContent = V3.n;
+  sel.addEventListener("input", () => { V3.sel = +sel.value; render3D(); });
+  n.addEventListener("input", () => { V3.n = +n.value; document.getElementById("v3NV").textContent = V3.n; render3D(); });
+  document.getElementById("v3Fat").addEventListener("change", e => { V3.fatia = e.target.checked; render3D(); });
+  const h0b = document.getElementById("h0b"), h0 = document.getElementById("h0");
+  const syncH = () => { h0b.value = S.h0; document.getElementById("h0bv").textContent = fmt.h0(S.h0); };
+  h0b.addEventListener("input", () => { S.h0 = +h0b.value; h0.value = S.h0; document.getElementById("h0v").textContent = fmt.h0(S.h0); syncH(); schedule("conj"); });
+  h0.addEventListener("input", syncH); syncH();
+  const setPos = () => { for (const k of ["ox", "oy", "giro"]) { document.getElementById(k).value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]); } };
+  document.getElementById("v3Cent").addEventListener("click", () => { S.ox = S.oy = S.giro = 0; setPos(); schedule("conj"); });
+  let arr = null;
+  cv.addEventListener("pointerdown", e => { arr = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; });
+  cv.addEventListener("pointermove", e => { if (!arr) return;
+    if (e.shiftKey && V3.cam) {                    // move a projeção no plano horizontal, sob o cursor
+      const c = V3.cam, k = cv.width / cv.clientWidth, z = dot(sub(centroImg(), c.E), c.F) / c.fl;
+      const Rh = unit([c.R[0], c.R[1], 0]), Fh = unit([c.F[0], c.F[1], 0]);
+      const dx = (e.clientX - arr[0]) * k * z, dy = (e.clientY - arr[1]) * k * z / Math.max(0.2, Math.abs(c.F[2]));
+      const cl = v => Math.max(-25, Math.min(25, v));
+      S.ox = cl(S.ox + dx * Rh[0] - dy * Fh[0]); S.oy = cl(S.oy + dx * Rh[1] - dy * Fh[1]);
+      arr = [e.clientX, e.clientY]; setPos(); schedule("conj"); render3D(); return; }
+    V3.yaw -= (e.clientX - arr[0]) * 0.4; V3.pitch = Math.max(-80, Math.min(85, V3.pitch + (e.clientY - arr[1]) * 0.3));
+    arr = [e.clientX, e.clientY]; render3D(); });
+  cv.addEventListener("pointerup", () => { arr = null; cv.style.cursor = "grab"; });
+  cv.addEventListener("wheel", e => { e.preventDefault(); V3.zoom = Math.max(0.3, Math.min(12, V3.zoom * Math.exp(-e.deltaY * 0.0015))); render3D(); }, { passive: false });
+})();
+
+let last = 0;
+let rodando = false;
+function iniciar() { if (rodando) return; rodando = true; last = performance.now(); requestAnimationFrame(tick); }
+function tick(now) {
+  if (!S.anim && !S.passeio) { rodando = false; renderAll(false); return; }
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (S.anim) {
+    S.animAng = (S.animAng + S.animRate * dt) % 360; S.tempo += dt;
+    if (S.tombar) S.tomb = (S.tomb + S.animRate * 0.8 * dt) % 360;
+    S.psi = (S.psi + 40 * dt) % 360;               // painel do rotor em câmera lenta
+    document.getElementById("psi").value = S.psi; document.getElementById("psiv").textContent = fmt.psi(S.psi);
+    if (S.obj === "onda" || S.tombar) conjugar();
+    agendar();
+  }
+  if (S.passeio) {                                 // dá a volta no aparelho e sobe/desce dentro do anel de visão
+    S.eyePh = ((S.eyePh + 20 * dt + 180) % 360 + 360) % 360 - 180;
+    const meio = (VC.tmin + VC.tmax) / 2, amp = 0.3 * (VC.tmax - VC.tmin);
+    S.eyeTh = meio + amp * Math.sin(performance.now() / 1000 * 0.7);
+    for (const k of ["eyePh", "eyeTh"]) { document.getElementById(k).value = S[k]; document.getElementById(k + "v").textContent = fmt[k](S[k]); }
+  }
+  renderAll(true);
+  requestAnimationFrame(tick);
+}
+
+setOptics(); syncRanges(); build();
+</script>
+</body>
+</html>
