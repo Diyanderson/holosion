@@ -169,6 +169,8 @@ Guia completo: **[impressao/GUIA-DE-IMPRESSAO.md](impressao/GUIA-DE-IMPRESSAO.md
 | 3 | ABS metalizado a vácuo | melhor opção impressa |
 | 4 | PLA lixado + verniz + metalização | trabalhoso; linhas dominam |
 
+**Espelhos que dá para comprar** (simulados antes, 3MF prontos; meça o foco do seu): espelho de maquiagem 3x ⌀ 17 cm → tela inteira 96 × 44 mm, 145 mm fora da janela, borrão 0,14 mm, ≈ 16,5 L; Mirascópio de 15 cm → metade da tela, 85 × 40 mm, ≈ 7,7 L. Detalhes e links (de afiliado) no [guia](impressao/GUIA-DE-IMPRESSAO.md#-consoles-com-espelhos-que-dá-para-comprar).
+
 **Aberração medida no traçado:** ondulação de **0,25 mrad** com período de 10 mm já leva o borrão de 0,11 para 0,45 mm e derruba de 35 para 14 os pontos visíveis — acabamento óptico é obrigatório.
 
 ---
@@ -217,7 +219,9 @@ holosion/
 │
 ├── 📂 3mf/
 │   ├── 🏭 Console-L-meialua-iPhone.3mf
-│   ├── 🏭 Console-L-maquiagem-iPhone.3mf  (espelho de maquiagem comprado)
+│   ├── 🏭 Console-L-maquiagem-iPhone.3mf  (espelho de maquiagem ⌀ 20 cm)
+│   ├── 🏭 Console-L-maquiagem3x-17cm-iPhone.3mf  (espelho 3x ⌀ 17 cm à venda)
+│   ├── 🏭 Console-L-mirascopio-15cm-iPhone.3mf   (Mirascópio de 15 cm, metade da tela)
 │   ├── 🏭 Model-iphone-estereo-ajustado.3mf
 │   └── 🏭 Model-esboco-do-autor.3mf
 │

@@ -145,6 +145,67 @@ O aumento real é menor que o da fórmula clássica porque ela só vale perto do
 
 ---
 
+## 🛒 Consoles com espelhos que dá para comprar
+
+Os anúncios não informam o foco, e as medidas abaixo partem de um foco **estimado**. **Meça o foco do seu antes de imprimir:** aponte o espelho para o sol e procure, com um papel, a distância em que o ponto de luz fica menor. Os dois arranjos saíram de uma busca pelo traçado no simulador, cada um com o seu botão, com iPhone 15 Pro e nenhum raio bloqueado pelo degrau.
+
+> Links de afiliado do Mercado Livre: o autor pode ganhar uma comissão, sem custo extra para você.
+
+### Espelho de maquiagem 3x, ⌀ 17 cm
+
+Arquivo: [`3mf/Console-L-maquiagem3x-17cm-iPhone.3mf`](../3mf/Console-L-maquiagem3x-17cm-iPhone.3mf). Botão no simulador: *console em L com espelho de maquiagem 3x comprado*. Produto: https://meli.la/2pkx5vN
+
+O espelho é esférico e "3x" ≈ 1 + 250/f, então o foco fica em torno de 125 mm (R 250).
+
+| Item | Valor (traçado) |
+|------|-----------------|
+| Celular | iPhone 15 Pro a **300 mm** do espelho (≈ 2,4 f), 55 mm abaixo do eixo, inclinado 30°, tela inteira |
+| Imagem | **tela inteira 96 × 44 mm** (0,68×), quase em pé (2°), a 208 mm do espelho, **145 mm fora da janela** |
+| Borrão / distorção | **0,14 mm** / 4,4 → 0,0 mm compensada |
+| Olho | 600 mm além da imagem; janela da cabeça **120 × 220 mm** |
+| Gabinete | 253 × 256 × 378 mm (com o degrau) **≈ 16,5 L** |
+| Se o seu foco for outro | mantenha o celular a ≈ 2,4 f: f 100 → 240 mm (imagem 93 mm); f 150 → 360 mm (97 mm, 18,7 L) |
+
+| Peça | Tamanho (mm) | Observação |
+|------|--------------|------------|
+| Gabinete (fundo + 4 paredes) | 253 × 110 × 256 | preto fosco |
+| Frente com janela e passagem | 253 × 3 × 256 | preto fosco |
+| Degrau do L com chanfro | 253 × 266 × 141 | preto fosco |
+| Anel da borda do espelho | ⌀ 186 × 3 | segura o vidro pela frente |
+| Cruz de apoio + 4 colunas | 178 × 60 × 178 | apoia o vidro por trás (espessura do vidro: 4 mm) |
+| Suporte do celular | 151 × 45 × 69 | inclinado 30°, como a tela |
+
+O suporte do espelho foi feito para um vidro solto. Se o seu espelho tiver moldura e pé, tire o vidro ou ajuste o anel.
+
+### Mirascópio de 15 cm (espelho de baixo)
+
+Arquivo: [`3mf/Console-L-mirascopio-15cm-iPhone.3mf`](../3mf/Console-L-mirascopio-15cm-iPhone.3mf). Botão no simulador: *console em L com o espelho de baixo de um Mirascópio de 15 cm*. Produto: https://meli.la/1eSAPGq
+
+O Mirascópio é a versão menor do Mirage. Usa-se só o espelho de **baixo**, que não tem furo: um parabolóide de ⌀ ≈ 140 mm. O foco ≈ 50 mm foi estimado pela proporção do Mirage, em que a borda fica em r = √2 f.
+
+| Item | Valor (traçado) |
+|------|-----------------|
+| Celular | iPhone 15 Pro a 90 mm do espelho, 35 mm abaixo do eixo, inclinado 40°, **só a metade central da tela (70 × 32 mm)** |
+| Imagem | **85 × 40 mm**, quase em pé (3°), a 134 mm do espelho, **94 mm fora da janela** |
+| Borrão / distorção | 0,58 mm / 7,3 → 0,0 mm compensada |
+| Olho | 560 mm além da imagem; janela da cabeça **280 × 440 mm** |
+| Gabinete | 239 × 227 × 183 mm (com o degrau) **≈ 7,7 L**, o menor de todos |
+
+O espelho tem quase o tamanho do iPhone. Por isso, com a tela inteira, nenhum arranjo da busca deixa o degrau passar entre os dois feixes. Se quiser a tela inteira, use o espelho de 9″ do Mirage (*Console com o espelho do Mirage*, acima).
+
+| Peça | Tamanho (mm) | Observação |
+|------|--------------|------------|
+| Gabinete (fundo + 4 paredes) | 239 × 98 × 227 | preto fosco |
+| Frente com janela e passagem | 239 × 3 × 227 | preto fosco |
+| Degrau do L com chanfro | 239 × 82 × 106 | preto fosco |
+| Anel da borda do espelho | ⌀ 156 × 3 | segura a casca de plástico pela frente |
+| Cruz de apoio + 4 colunas | 148 × 79 × 148 | apoia o espelho por trás (casca de 2 mm) |
+| Suporte do celular | 151 × 55 × 63 | inclinado 40°, como a tela |
+
+Os dois 3MF foram gerados por [`ferramentas/gerar3mf-consoleComprado.js`](../ferramentas/gerar3mf-consoleComprado.js) a partir das medidas do simulador ([`consoleMaq17-dados.json`](../ferramentas/consoleMaq17-dados.json), [`consoleMirascopio-dados.json`](../ferramentas/consoleMirascopio-dados.json)). Se o seu foco for outro, refaça a busca no simulador e gere de novo com `node gerar3mf-consoleComprado.js <dados.json> <pasta> "<título>"`.
+
+---
+
 ## 🔬 Quanto a superfície do espelho pode errar
 
 Medido no simulador (`S.erroSup = {sig, lam}`: ondulação fixa da superfície, inclinação rms *sig*, período *lam*), console L com o iPhone 15 Pro, olho a 140 mm de altura, 600 mm além da imagem:
@@ -184,7 +245,9 @@ O 3MF já posiciona tudo: no fatiador, desmarque os objetos *REFERÊNCIA* e use-
 | Arquivo | O que é |
 |---------|---------|
 | [`Console-L-meialua-iPhone.3mf`](../3mf/Console-L-meialua-iPhone.3mf) | console em L dos vídeos v6 e Short (este guia) |
-| [`Console-L-maquiagem-iPhone.3mf`](../3mf/Console-L-maquiagem-iPhone.3mf) | console em L com espelho de maquiagem comprado |
+| [`Console-L-maquiagem-iPhone.3mf`](../3mf/Console-L-maquiagem-iPhone.3mf) | console em L com espelho de maquiagem ⌀ 20 cm, f 100 |
+| [`Console-L-maquiagem3x-17cm-iPhone.3mf`](../3mf/Console-L-maquiagem3x-17cm-iPhone.3mf) | console em L com o espelho de maquiagem 3x ⌀ 17 cm à venda |
+| [`Console-L-mirascopio-15cm-iPhone.3mf`](../3mf/Console-L-mirascopio-15cm-iPhone.3mf) | console em L com o espelho de baixo de um Mirascópio de 15 cm (metade da tela) |
 | [`Model-iphone-estereo-ajustado.3mf`](../3mf/Model-iphone-estereo-ajustado.3mf) | acessório estéreo: fatia do espelho do Mirage (R 161,2) inclinada 16°, iPhone 15 Pro deitado no foco (77,48 mm), abertura 60 × 56 mm |
 | [`Model-esboco-do-autor.3mf`](../3mf/Model-esboco-do-autor.3mf) | esboço original do autor (caixa comprida) |
 

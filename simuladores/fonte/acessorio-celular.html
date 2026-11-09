@@ -106,6 +106,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <button class="btn" id="bConsoleR700">▶ console em L dos vídeos: meia-lua impressa R 700 ⌀ 460 + iPhone a 700 mm, imagem 1:1 334 mm fora da janela (≈ 148 L)</button>
     <button class="btn" id="bConsoleMaq">▶ console em L com espelho de maquiagem (⌀ 20 cm, f 100, esférico), sem Fresnel: tela inteira 112 × 54 mm, 16,6 L (busca pelo traçado)</button>
     <button class="btn" id="bConsoleMirage">▶ console em L com o espelho de baixo do Mirage inteiro (⌀ 229, f 80,6): imagem 155 × 77 mm à frente da janela, 19,1 L (busca pelo traçado)</button>
+    <button class="btn" id="bConsoleMaq17">▶ console em L com espelho de maquiagem 3x comprado (⌀ 17 cm, f ≈ 125: meça o seu): tela inteira 96 × 44 mm, 16,5 L (busca pelo traçado)</button>
+    <button class="btn" id="bConsoleMirasc">▶ console em L com o espelho de baixo de um Mirascópio de 15 cm (⌀ 140, f ≈ 50: meça o seu): metade central da tela, 85 × 40 mm, 7,7 L</button>
     <button class="btn" id="bPortatil">▶ acessório portátil: meia-lua do Mirage embaixo do iPhone deitado, abertura do outro lado (busca pelo traçado)</button>
     <button class="btn" id="bModelo">▶ proposta do Model.3mf ajustada: caixa comprida, iPhone deitado em 2/3 do tampo, abertura quadrada no resto</button>
     <button class="btn" id="bOpB">▶ opção B: a tela inteira do iPhone (fatia maior do espelho do Mirage), cubo com paralaxe e olho rastreado</button>
@@ -1568,7 +1570,7 @@ document.getElementById("bPortatil").addEventListener("click", () => {
 });
 // todo preset (menos o do espelho de maquiagem e os botões que só ajustam a cena atual) volta ao espelho e à tela comuns
 document.addEventListener("click", e => { const bt = e.target.closest && e.target.closest("button.btn"); if (!bt) return;
-  const id = bt.id.replace(/^cel_/, ""); if (!/^b[A-Z]/.test(id) || ["bConsoleMaq", "bJogar", "bParar", "bComp", "bTreino", "bIncl"].includes(id)) return;
+  const id = bt.id.replace(/^cel_/, ""); if (!/^b[A-Z]/.test(id) || ["bConsoleMaq", "bConsoleMaq17", "bConsoleMirasc", "bJogar", "bParar", "bComp", "bTreino", "bIncl"].includes(id)) return;
   S.esfera = false; S.fresnel = null; }, true);
 document.getElementById("bConsoleMaq").addEventListener("click", () => {
   // console em L com um espelho barato: espelho de maquiagem redondo ⌀ 20 cm, ESFÉRICO, foco 100 mm (meça o seu!), sem Fresnel.
@@ -1580,6 +1582,28 @@ document.getElementById("bConsoleMaq").addEventListener("click", () => {
     fresnel: null, caixa: true, tampa: false, quadrada: false, folga: 40, zpF: 0.3, comp: true, cheio: false, girar: true, paralaxe: false,
     estereo: false, divisor: false, ex: 0, ed: 350, eh: 170, raios: true, dentro: true, erroSup: null });
   ORB.dist = 900; tudo();
+});
+document.getElementById("bConsoleMaq17").addEventListener("click", () => {
+  // o espelho de maquiagem 3x que dá para comprar (⌀ 17 cm, esférico; "3x" ≈ 1 + 250/f → f ≈ 125, R 250 — meça o foco com o sol e um papel).
+  // Busca pelo traçado (iPhone 15 Pro, tela inteira, nenhum raio no degrau): celular a 300 mm (≈ 2,4 f), 55 mm abaixo do eixo, inclinado 30°,
+  // olho 600 mm além da imagem → 96 × 44 mm (0,68×) quase em pé (2°), 145 mm fora da janela, borrão 0,14 mm, janela 120 × 220 mm, caixa ≈ 16,5 L.
+  // Com outro foco, mantenha u ≈ 2,4 f: f 100 → u 240 (93 mm), f 150 → u 360 (97 mm, 18,7 L).
+  semear(); TEMPO.t = 0;
+  Object.assign(S, { tela: "ip15p", forma: "lua", esfera: true, lado: 1, Wm: 170, R: 250, oy: -170, u: 300, dy: -55, tau: 30, uso: 1, usoB: 0, incl: 0, prof: 0, corte: null,
+    fresnel: null, caixa: true, tampa: false, quadrada: false, folga: 40, zpF: 0.3, comp: true, cheio: false, girar: true, paralaxe: false,
+    estereo: false, divisor: false, ex: 0, ed: 600, eh: 189, raios: true, dentro: true, erroSup: null });
+  ORB.dist = 1100; tudo();
+});
+document.getElementById("bConsoleMirasc").addEventListener("click", () => {
+  // o espelho de BAIXO de um Mirascópio de 15 cm (parabolóide ⌀ 140, f ≈ 50 estimado pela proporção do Mirage: borda em r = √2 f — meça o seu).
+  // O espelho é quase do tamanho do iPhone: com a tela inteira o degrau não passa entre os feixes em nenhum arranjo da busca;
+  // com a metade central da tela (70 × 32 mm): celular a 90 mm, 35 mm abaixo do eixo, inclinado 40°, olho 560 mm além da imagem →
+  // 85 × 40 mm quase em pé (3°), 94 mm fora da janela, borrão 0,58 mm, janela 280 × 440 mm, caixa ≈ 7,7 L.
+  semear(); TEMPO.t = 0;
+  Object.assign(S, { tela: "ip15p", forma: "lua", esfera: false, lado: 1, Wm: 140, R: 100, oy: -140, u: 90, dy: -35, tau: 40, uso: 0.5, usoB: 0, incl: 0, prof: 0, corte: null,
+    fresnel: null, caixa: true, tampa: false, quadrada: false, folga: 40, zpF: 0.3, comp: true, cheio: false, girar: true, paralaxe: false,
+    estereo: false, divisor: false, ex: 0, ed: 560, eh: 216, raios: true, dentro: true, erroSup: null });
+  ORB.dist = 800; tudo();
 });
 document.getElementById("bConsoleR700").addEventListener("click", () => {
   // o console em L dos vídeos (v6 e Short): meia-lua impressa de parabolóide R 700, ⌀ 460, corda em y = −40; iPhone 15 Pro a 700 mm
